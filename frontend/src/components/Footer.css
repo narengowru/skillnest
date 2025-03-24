@@ -1,0 +1,95 @@
+.footer-container {
+    background-color: #1A1A1A;
+    color: #ffffff;
+    padding: 50px 20px 20px;
+  }
+  
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 30px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  .footer-brand {
+    flex: 1;
+  }
+  
+  .footer-logo {
+    color: #4ECDC4;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+  
+  .footer-contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #9CA3AF;
+  }
+  
+  .contact-item i {
+    color: #4ECDC4;
+  }
+  
+  .footer-links {
+    display: flex;
+    gap: 50px;
+  }
+  
+  .footer-column h3 {
+    color: #ffffff;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+  }
+  
+  .footer-column ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .footer-column ul li {
+    margin-bottom: 10px;
+  }
+  
+  .footer-column ul li a {
+    color: #9CA3AF;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .footer-column ul li a:hover {
+    color: #4ECDC4;
+  }
+  
+  .footer-bottom {
+    text-align: center;
+    padding-top: 20px;
+    color: #9CA3AF;
+    font-size: 0.9rem;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+      gap: 30px;
+    }
+  
+    .footer-links {
+      flex-direction: column;
+    }
+  }
+  
+  /* Placeholder icons - you would replace these with actual icon implementations */
+  .icon-location::before { content: "📍"; margin-right: 5px; }
+  .icon-phone::before { content: "📞"; margin-right: 5px; }
+  .icon-email::before { content: "✉️"; margin-right: 5px; }

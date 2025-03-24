@@ -1,0 +1,115 @@
+.freelancers-specialty-container {
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 50px 20px;
+    overflow: hidden;
+  }
+  
+  .specialty-title {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 2.5rem;
+    color: #333;
+  }
+  
+  .specialty-title span {
+    color: #FF6B6B;
+  }
+  
+  .specialty-items {
+    position: relative;
+    z-index: 10;
+  }
+  
+  .specialty-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .specialty-item:hover {
+    transform: translateX(10px);
+  }
+  
+  .specialty-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 20px;
+  }
+  
+  .specialty-content h3 {
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 1.2rem;
+  }
+  
+  .specialty-content p {
+    color: #666;
+    line-height: 1.6;
+  }
+  
+  .decorative-shapes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+  
+  .shape {
+    position: absolute;
+    opacity: 0.2;
+    border-radius: 50%;
+  }
+  
+  .shape-1 {
+    width: 100px;
+    height: 100px;
+    top: 10%;
+    left: -50px;
+  }
+  
+  .shape-2 {
+    width: 80px;
+    height: 80px;
+    top: 40%;
+    right: -40px;
+  }
+  
+  .shape-3 {
+    width: 120px;
+    height: 120px;
+    bottom: 20%;
+    left: 10%;
+  }
+  
+  .shape-4 {
+    width: 90px;
+    height: 90px;
+    bottom: 10%;
+    right: -45px;
+  }
+  
+  @media (max-width: 768px) {
+    .specialty-title {
+      font-size: 2rem;
+    }
+  
+    .specialty-item {
+      flex-direction: column;
+      text-align: center;
+    }
+  
+    .specialty-dot {
+      margin-right: 0;
+      margin-bottom: 15px;
+    }
+  }

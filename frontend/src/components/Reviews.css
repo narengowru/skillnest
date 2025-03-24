@@ -1,0 +1,117 @@
+.reviews-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .reviews-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+    color: #333;
+  }
+  
+  .highlight {
+    color: #ff6b6b;
+  }
+  
+  .reviews-slider {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+  
+  .review-card {
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 30px;
+    width: 80%;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .stars {
+    color: #ffd700;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  .review-text {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  
+  .reviewer-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+  
+  .reviewer-image {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .reviewer-name {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  
+  .reviewer-position {
+    color: #888;
+    font-size: 0.9rem;
+  }
+  
+  .slider-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #ff6b6b;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    z-index: 20;
+  }
+  
+  .slider-btn:hover {
+    color: #ff4757;
+  }
+  
+  .cherry-blossoms {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .blossom {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 192, 203, 0.7);
+    border-radius: 50%;
+    animation: fall 5s linear infinite;
+  }
+  
+  @keyframes fall {
+    0% {
+      transform: translateY(-100%) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
