@@ -7,7 +7,10 @@ import FreelancersSpecialty from "./components/FreelancersSpecialty";
 const Home = () => {
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
-      <Carousel />  {/* Add carousel here */}
+      <div style={{
+        marginBottom: '40px'
+      }}><Carousel />  {/* Add carousel here */}
+      </div>
       <WhyChooseSkillnest />
       <Reviews />
       <FreelancersSpecialty />

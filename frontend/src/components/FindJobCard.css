@@ -1,0 +1,53 @@
+.find-job-card {
+    width: 250px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+  }
+  
+  .find-job-card:hover {
+    transform: scale(1.02);
+  }
+  
+  .find-job-card-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    padding: 10px;
+  }
+  
+  .find-job-card-image {
+    width: 700px;
+    height: 150px;
+    object-fit: cover;
+  }
+  
+  .find-job-card-category {
+    background-color: #40E0D0;
+    color: white;
+    text-align: center;
+    padding: 8px;
+    font-weight: bold;
+    border-radius: 10px;
+  }
+  
+  .find-job-card-date {
+    color: #666;
+    font-size: 12px;
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .find-job-card-description {
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+    padding: 12px;
+    text-align: center;
+  }

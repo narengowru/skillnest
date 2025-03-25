@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import './FindJobs.css';
 
-const FindJobs = () => {
+const FindJobs = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Implement search functionality here
-    console.log('Searching for:', searchTerm);
+    onSearch(searchTerm); // Send search term to parent
   };
 
   return (
