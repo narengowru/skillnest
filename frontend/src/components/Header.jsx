@@ -18,9 +18,15 @@ const Header = () => {
 
   return (
     <nav>
-      {/* Logo */}
+      {/* Logo with Home link */}
       <div className="logo-container">
-        <img src="https://i.ibb.co/cSJbN5jL/logo.png" alt="Logo" className="logo" />
+        <Link to="/"> {/* Wrap the logo inside Link */}
+          <img 
+            src="https://i.ibb.co/cSJbN5jL/logo.png" 
+            alt="Logo" 
+            className="logo"
+          />
+        </Link>
         <span>SkillNest</span>
       </div>
 

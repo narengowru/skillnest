@@ -1,0 +1,116 @@
+.freelancer-card {
+    width: 100%;
+    max-width: 350px;
+    height: 100%; 
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .card-title {
+    font-weight: bold;
+    padding: 10px 15px;
+    background-color: #f5f5f5;
+  }
+  
+  .card-time-price {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 15px;
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  .card-time-price .price {
+    color: black;
+    font-weight: bold;
+  }
+  
+  .card-profile {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .profile-image-container {
+    margin-right: 15px;
+  }
+  
+  .profile-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .profile-details {
+    flex-grow: 1;
+  }
+  
+  .profile-name {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+  }
+  
+  .star-rating {
+    font-size: 1.2rem;
+  }
+  
+  .star-rating .star {
+    color: #ddd;
+    margin-right: 2px;
+  }
+  
+  .star-rating .star.active {
+    color: #ffc107;
+  }
+  
+  /* .profile-actions {
+    display: flex;
+    padding: 10px 15px;
+    gap: 10px;
+    border-bottom: 1px solid #e0e0e0;
+  } */
+  
+  .see-profile {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+  }
+  
+  .message-icon {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+  }
+  
+  .profile-actions {
+    display: flex;
+    padding: 10px 15px;
+    gap: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-top: auto; /* This pushes the actions section to the bottom of the available space */
+  }
+  
+  .customer-reviews {
+    padding: 10px 15px;
+    text-align: center;
+    color: #666;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .book-now {
+    width: 100%;
+    padding: 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    font-weight: bold;
+  }

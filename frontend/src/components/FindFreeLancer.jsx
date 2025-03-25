@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import './FindFreeLancer.css';
 
-const FindFreeLancer = () => {
+const FindFreeLancer = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Implement search functionality here
-    console.log('Searching for freelancer:', searchTerm);
+    onSearch(searchTerm); // Pass the search term to filter freelancers
   };
 
   return (
@@ -15,12 +14,12 @@ const FindFreeLancer = () => {
       <div className="find-freelancer-overlay">
         <div className="find-freelancer-content">
           <h1 className="find-freelancer-title">Find Freelancer</h1>
-          <p className="find-freelancer-subtitle">Want Your work done, We got your back!!</p>
+          <p className="find-freelancer-subtitle">Want your work done? We got your back!</p>
           
           <form onSubmit={handleSearch} className="find-freelancer-search">
             <input 
               type="text" 
-              placeholder="Find FindFreelancer" 
+              placeholder="Find Freelancer" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="find-freelancer-input"
