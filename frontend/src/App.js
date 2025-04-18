@@ -8,7 +8,7 @@ import ProjectDetailPage from "./ProjectDetailPage";
 import PostProject from "./PostProject";
 import ViewProfile from "./ViewProfile";
 import Profile from "./Profile";
-
+import ToastContainer from "./components/ToastContainer"; // Make sure the path is correct
 
 const App = () => (
   <Router>
@@ -23,6 +23,7 @@ const App = () => (
       <Route path="/profile" element={<Profile />} />
     </Routes>
     <Footer />
+    <ToastContainer /> {/* Mount the Toast system globally */}
   </Router>
 );
 
