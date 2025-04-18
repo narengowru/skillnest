@@ -1,0 +1,1716 @@
+/*** ViewProfile.css - Comprehensive styling for freelancer profile ***/
+
+/* Global Styles and Variables */
+:root {
+    --primary-color: #3a86ff;
+    --primary-dark: #2667cc;
+    --primary-light: #61a0ff;
+    --secondary-color: #00c4a7;
+    --accent-color: #ff6b6b;
+    --light-accent: #ff8e8e;
+    --dark-bg: #2d3748;
+    --light-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-primary: #1a202c;
+    --text-secondary: #4a5568;
+    --text-light: #718096;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --transition-standard: all 0.3s ease;
+    --transition-slow: all 0.5s ease;
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 16px;
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  /* Base Styles */
+  .view-profile-container {
+    font-family: var(--font-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    background-color: var(--light-bg);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 3rem;
+  }
+  
+  /* Animation Keyframes */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideInUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideInDown {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  @keyframes glowPulse {
+    0% { box-shadow: 0 0 0 0 rgba(58, 134, 255, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(58, 134, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(58, 134, 255, 0); }
+  }
+  
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  @keyframes ripple {
+    0% {
+      box-shadow: 0 0 0 0 rgba(58, 134, 255, 0.5);
+    }
+    100% {
+      box-shadow: 0 0 0 20px rgba(58, 134, 255, 0);
+    }
+  }
+  
+  /* Toast Notification */
+  .toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--card-bg);
+    border-left: 4px solid var(--secondary-color);
+    color: var(--text-primary);
+    padding: 16px 20px;
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    animation: slideInDown 0.5s forwards, fadeIn 0.5s;
+    max-width: 400px;
+  }
+  
+  .toast-notification svg {
+    color: var(--secondary-color);
+    flex-shrink: 0;
+  }
+  
+  .toast-notification.success {
+    border-left-color: #10b981;
+  }
+  
+  .toast-notification.success svg {
+    color: #10b981;
+  }
+  
+  /* Profile Header */
+  .profile-header {
+    position: relative;
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+    animation: fadeIn 0.8s ease-in;
+  }
+  
+  .header-background {
+    height: 240px;
+    background: linear-gradient(135deg, #6366f1, #3b82f6, #0ea5e9);
+    background-size: 400% 400%;
+    animation: gradientShift 12s ease infinite;
+    position: relative;
+  }
+  
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('https://i.pinimg.com/originals/3e/a5/ec/3ea5ec0fe0d47fb67c0bff1bef3cfbc3.png');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.15;
+    mix-blend-mode: soft-light;
+    z-index: 1;
+  }
+  
+  .profile-header-content {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 2rem 2rem;
+    z-index: 5;
+    margin-top: -120px;
+    animation: slideInUp 0.8s ease-out;
+  }
+  
+  .profile-photo-container {
+    position: relative;
+    margin-right: 2rem;
+  }
+  
+  .profile-photo {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid white;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-standard);
+  }
+  
+  .profile-photo:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .online-indicator {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #10b981;
+    border-radius: 50%;
+    border: 3px solid white;
+    bottom: 15px;
+    right: 15px;
+    animation: ripple 2s infinite;
+  }
+  
+  .profile-header-info {
+    flex: 1;
+    padding-bottom: 0.5rem;
+  }
+  
+  .profile-header-info h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .tagline {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0 0 1rem;
+    font-weight: 500;
+  }
+  
+  .profile-meta {
+    display: flex;
+    gap: 1.25rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+  }
+  
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+  }
+  
+  .stars-container {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  
+  .rating-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .rating-text {
+    font-weight: 500;
+  }
+  
+  .profile-header-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1rem;
+  }
+  
+  .book-now-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition-standard);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .book-now-button:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .book-now-button:active {
+    transform: translateY(0);
+  }
+  
+  .book-now-button.large {
+    padding: 14px 28px;
+    font-size: 1.1rem;
+  }
+  
+  .hourly-rate {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 8px 16px;
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: baseline;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .rate-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+  
+  .rate-unit {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-left: 2px;
+  }
+  
+  .favorite-button {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    margin-left: 10px;
+    transition: var(--transition-standard);
+  }
+  
+  .favorite-button:hover {
+    transform: scale(1.15);
+  }
+  
+  .favorite-button.favorited svg {
+    animation: pulse 0.4s ease-in-out;
+  }
+  
+  /* Main Content Layout */
+  .profile-main-content {
+    display: flex;
+    gap: 2rem;
+    padding: 0 2rem;
+  }
+  
+  .profile-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    animation: slideInRight 0.8s ease-out;
+  }
+  
+  .profile-content {
+    flex: 1;
+    animation: fadeIn 1s ease-out;
+  }
+  
+  /* Sidebar Sections */
+  .sidebar-section {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-standard);
+  }
+  
+  .sidebar-section:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+  }
+  
+  .sidebar-section h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    position: relative;
+    padding-bottom: 0.75rem;
+  }
+  
+  .sidebar-section h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background-color: var(--primary-color);
+  }
+  
+  /* Quick Info Section */
+  .quick-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+  
+  .quick-info-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .quick-info-item svg {
+    color: var(--primary-color);
+    margin-top: 3px;
+  }
+  
+  .info-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 2px;
+  }
+  
+  .info-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    display: block;
+  }
+  
+  .info-subtext {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 2px;
+  }
+  
+  .email {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: var(--transition-standard);
+  }
+  
+  .email:hover {
+    text-decoration: underline;
+    color: var(--primary-dark);
+  }
+  
+  /* Skills Section */
+  .skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .skill-item {
+    width: 100%;
+  }
+  
+  .skill-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  
+  .skill-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  
+  .skill-level {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  
+  .skill-progress-bg {
+    height: 8px;
+    background-color: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .skill-progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+    border-radius: 4px;
+    transition: width 1.5s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    box-shadow: 0 0 8px rgba(58, 134, 255, 0.3);
+  }
+  
+  /* Education Section */
+  .education-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .university {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  
+  .degree {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+  }
+  
+  .year {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-light);
+  }
+  
+  .education-detail {
+    display: flex;
+    gap: 6px;
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+  
+  .detail-label {
+    font-weight: 500;
+  }
+  
+  .detail-value {
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+  
+  .relevant-courses h5 {
+    margin: 12px 0 8px;
+    font-size: 0.95rem;
+  }
+  
+  .courses-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .course-tag {
+    background-color: #f0f9ff;
+    color: var(--primary-color);
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: var(--transition-standard);
+  }
+  
+  .course-tag:hover {
+    background-color: #e0f2fe;
+    transform: translateY(-2px);
+  }
+  
+  /* Languages Section */
+  .languages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .language-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .language-flag {
+    font-size: 1.2rem;
+  }
+  
+  .language-name {
+    font-size: 0.95rem;
+  }
+  
+  /* Tabs */
+  .profile-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1.5rem;
+  }
+  
+  .tab-button {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-standard);
+    margin-right: 8px;
+  }
+  
+  .tab-button:hover {
+    color: var(--primary-color);
+  }
+  
+  .tab-button.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+  }
+  
+  .tab-content {
+    display: none;
+    animation: fadeIn 0.6s ease-out;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+  
+  .section-title {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  
+  /* Portfolio Carousel */
+  .portfolio-carousel {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  
+  .portfolio-item {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    animation: fadeIn 0.8s ease-out;
+  }
+  
+  @media (min-width: 768px) {
+    .portfolio-item {
+      flex-direction: row;
+    }
+  }
+  
+  .portfolio-image-container {
+    flex: 1;
+    min-height: 300px;
+    max-height: 400px;
+    overflow: hidden;
+  }
+  
+  .portfolio-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition-standard);
+  }
+  
+  .portfolio-image:hover {
+    transform: scale(1.03);
+  }
+  
+  .portfolio-details {
+    flex: 1;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .portfolio-details h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+  }
+  
+  .portfolio-client {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+  }
+  
+  .client-label {
+    font-weight: 500;
+  }
+  
+  .portfolio-description {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+  
+  .portfolio-feedback {
+    background-color: #f8fafc;
+    padding: 1rem;
+    border-radius: var(--border-radius-md);
+    border-left: 4px solid var(--primary-color);
+  }
+  
+  .portfolio-feedback h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+  }
+  
+  .portfolio-feedback blockquote {
+    margin: 0;
+    font-style: italic;
+    color: var(--text-primary);
+  }
+  
+  .carousel-button {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-standard);
+  }
+  
+  .carousel-button:hover {
+    background-color: white;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .carousel-button.prev {
+    left: 16px;
+  }
+  
+  .carousel-button.next {
+    right: 16px;
+  }
+  
+  .carousel-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1rem;
+  }
+  
+  .indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    cursor: pointer;
+    transition: var(--transition-standard);
+  }
+  
+  .indicator:hover {
+    background-color: var(--text-light);
+  }
+  
+  .indicator.active {
+    background-color: var(--primary-color);
+    transform: scale(1.2);
+  }
+  
+  /* About Tab */
+  .bio-section {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .bio-text {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--text-primary);
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+  }
+  
+  .social-profiles {
+    margin-bottom: 1.5rem;
+  }
+  
+  .social-profiles h4 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+  }
+  
+  .social-links {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition-standard);
+    font-size: 0.9rem;
+  }
+  
+  .social-link.github {
+    background-color: #24292e;
+    color: white;
+  }
+  
+  .social-link.linkedin {
+    background-color: #0a66c2;
+    color: white;
+  }
+  
+  .social-link.portfolio {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .social-link:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .about-sections {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .about-sections {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  .why-hire-me, .work-process {
+    background-color: #f8fafc;
+    padding: 1.25rem;
+    border-radius: var(--border-radius-md);
+  }
+  
+  .why-hire-me h4, .work-process h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .why-hire-me ul, .work-process ol {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--text-primary);
+  }
+  
+  .why-hire-me ul li, .work-process ol li {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Reviews Tab */
+  .rating-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+  }
+  
+  @media (min-width: 768px) {
+    .rating-summary {
+      flex-direction: row;
+    }
+  }
+  
+  .overall-rating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-right: 1.5rem;
+  }
+  
+  .rating-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+  }
+  
+  .stars-display {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .total-reviews {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  
+  .rating-breakdown {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .stars-label {
+    width: 60px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  
+  .progress-bar-container {
+    flex: 1;
+    height: 12px;
+    background-color: #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ffdd00, #ffb800);
+    border-radius: 6px;
+    transition: width 1.2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+  }
+  
+  .count-label {
+    width: 30px;
+    text-align: right;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  
+  .reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .review-card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-standard);
+  }
+  
+  .review-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .review-header {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+  
+  .client-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .review-meta {
+    flex: 1;
+  }
+  
+  .client-name {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+  }
+  
+  .review-details {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  
+  .review-stars {
+    display: flex;
+    gap: 3px;
+  }
+  
+  .review-date {
+    font-size: 0.85rem;
+    color: var(--text-light);
+  }
+  
+  .review-content p {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  
+  /* Achievements Tab */
+  .achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .achievement-card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-standard);
+  }
+  
+  .achievement-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .achievement-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .achievement-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+  }
+  
+  .achievement-date {
+    font-size: 0.85rem;
+    color: var(--text-light);
+  }
+  
+  .stats-section {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .stats-section h3 {
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+    font-size: 1.25rem;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .stats-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  .stat-card {
+    background-color: #f8fafc;
+    border-radius: var(--border-radius-md);
+    padding: 1.25rem;
+    text-align: center;
+    transition: var(--transition-standard);
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-3px);
+    background-color: var(--primary-color);
+  }
+  
+  .stat-card:hover .stat-value,
+  .stat-card:hover .stat-label {
+    color: white;
+  }
+  
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+    transition: var(--transition-standard);
+  }
+  
+  .stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    transition: var(--transition-standard);
+  }
+  
+  /* CTA Section */
+  /* CTA Section (continued) */
+.cta-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    border-radius: var(--border-radius-md);
+    padding: 2rem;
+    margin: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    box-shadow: var(--shadow-lg);
+    animation: fadeIn 1s ease-out;
+  }
+  
+  @media (min-width: 768px) {
+    .cta-section {
+      flex-direction: row;
+      justify-content: space-between;
+      text-align: left;
+    }
+  }
+  
+  .cta-content h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+  
+  .cta-content p {
+    margin: 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+  
+  .cta-section .book-now-button {
+    background-color: white;
+    color: var(--primary-color);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .cta-section .book-now-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    background-color: #f8f9fa;
+  }
+  
+  /* Enhanced Animations & Transitions */
+  /* Animate skill bars on scroll/appear */
+  .skill-progress {
+    animation: skillProgress 1.5s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    transform-origin: left;
+  }
+  
+  @keyframes skillProgress {
+    from { width: 0%; }
+  }
+  
+  /* Hover effects for interactive elements */
+  .sidebar-section, .review-card, .achievement-card, .stat-card, .portfolio-carousel {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  /* Tab transitions */
+  .tab-content.active {
+    animation: tabFadeIn 0.5s ease;
+  }
+  
+  @keyframes tabFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Portfolio image zoom effect */
+  .portfolio-image-container {
+    overflow: hidden;
+  }
+  
+  .portfolio-image {
+    transition: transform 0.6s ease;
+  }
+  
+  .portfolio-image:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Skill tag animation */
+  .course-tag {
+    animation: fadeIn 0.3s ease, slideInUp 0.4s ease;
+    transition: all 0.3s ease;
+  }
+  
+  .course-tag:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Achievement cards */
+  .achievement-card {
+    transition: all 0.3s ease;
+  }
+  
+  .achievement-card:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  .achievement-icon {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  /* Portfolio carousel indicator animation */
+  .indicator {
+    transition: all 0.3s ease;
+  }
+  
+  .indicator.active {
+    animation: pulseIndicator 1.5s infinite;
+  }
+  
+  @keyframes pulseIndicator {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  
+  /* Review card animations */
+  .review-card {
+    transition: all 0.3s ease;
+  }
+  
+  .review-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Book now button */
+  .book-now-button {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .book-now-button:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .book-now-button:hover:after {
+    transform: translateX(0);
+  }
+  
+  /* Responsive Styles */
+  @media (max-width: 1024px) {
+    .profile-main-content {
+      flex-direction: column;
+    }
+    
+    .profile-sidebar {
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+    
+    .skills-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .achievement-card {
+      flex-direction: row;
+      text-align: left;
+      align-items: center;
+    }
+    
+    .achievement-icon {
+      margin-bottom: 0;
+      margin-right: 1rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .profile-header-content {
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    
+    .profile-photo-container {
+      margin-right: 0;
+    }
+    
+    .profile-header-info {
+      text-align: center;
+    }
+    
+    .profile-meta {
+      justify-content: center;
+    }
+    
+    .profile-header-actions {
+      width: 100%;
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    
+    .tab-button {
+      padding: 10px 16px;
+      font-size: 0.9rem;
+    }
+    
+    .skills-list {
+      grid-template-columns: 1fr;
+    }
+    
+    .portfolio-carousel {
+      flex-direction: column;
+    }
+    
+    .portfolio-image-container {
+      min-height: 200px;
+    }
+    
+    .carousel-button {
+      top: 100px;
+    }
+    
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .profile-tabs {
+      flex-wrap: wrap;
+    }
+    
+    .tab-button {
+      flex: 1 0 40%;
+      margin-bottom: 0.5rem;
+    }
+    
+    .achievements-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .review-header {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    
+    .review-meta {
+      width: 100%;
+    }
+    
+    .review-details {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .cta-section {
+      padding: 1.5rem;
+      margin: 1.5rem;
+    }
+    
+    .cta-content h2 {
+      font-size: 1.5rem;
+    }
+    
+    .cta-content p {
+      font-size: 1rem;
+    }
+  }
+  
+  /* Additional Animations */
+  /* Loading animation for skills */
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  .skill-progress.loading {
+    background: linear-gradient(90deg, 
+      var(--primary-color) 0%, 
+      var(--primary-light) 50%, 
+      var(--primary-color) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  /* Ripple effect for buttons */
+  .book-now-button:active::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 1;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+    animation: rippleEffect 0.6s ease-out;
+  }
+  
+  @keyframes rippleEffect {
+    0% {
+      transform: scale(0, 0);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(20, 20);
+      opacity: 0;
+    }
+  }
+  
+  /* Rotating border animation for profile photo */
+  .profile-photo-container::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color), var(--accent-color), var(--primary-color));
+    background-size: 300% 300%;
+    animation: gradientRotate 4s linear infinite;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  @keyframes gradientRotate {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .profile-photo-container:hover::before {
+    opacity: 1;
+  }
+  
+  /* Project counter animation */
+  @keyframes countUp {
+    from { content: "0"; }
+    to { content: attr(data-count); }
+  }
+  
+  .stat-value[data-animate="true"]::before {
+    content: "0";
+    animation: countUp 2s forwards;
+  }
+  
+  /* Progress bar loading animation */
+  @keyframes progressPulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+  
+  .skill-progress.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: progressPulse 1.5s infinite;
+  }
+  
+  /* Toast notification animation */
+  .toast-notification {
+    animation: slideInDown 0.5s forwards, fadeOut 0.5s 2.5s forwards;
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+  }
+  
+  /* Skill bar animation when visible */
+  .skill-progress[data-aos="width"] {
+    width: 0;
+    transition-property: width;
+  }
+  
+  .skill-progress[data-aos="width"].aos-animate {
+    width: var(--skill-percent);
+  }
+  
+  /* Animated background for card hover */
+  .achievement-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(58, 134, 255, 0.05), rgba(0, 196, 167, 0.05));
+    border-radius: var(--border-radius-md);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .achievement-card:hover::before {
+    opacity: 1;
+  }
+  
+  /* Typewriter effect for section headings */
+  @keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+  }
+  
+  .section-title.typing {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    animation: typing 2s steps(30, end);
+  }
+  
+  /* Advanced shine effect for buttons */
+  .book-now-button {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .book-now-button::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    transition: transform 0.7s;
+    opacity: 0;
+  }
+  
+  .book-now-button:hover::before {
+    transform: rotate(30deg) translate(100%, -100%);
+    opacity: 1;
+    transition: transform 0.7s, opacity 0.1s;
+  }
+  
+  /* 3D card hover effect for review cards */
+  .review-card {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+  
+  .review-card:hover {
+    transform: rotateX(5deg) rotateY(5deg) translateY(-5px);
+  }
+  
+  /* Enhanced animation for notifications */
+  @keyframes notificationPulse {
+    0% { transform: scale(1); }
+    10% { transform: scale(1.1); }
+    20% { transform: scale(1); }
+    100% { transform: scale(1); }
+  }
+  
+  .online-indicator::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.5);
+    z-index: -1;
+    animation: notificationPulse 2s infinite;
+  }
+  
+  /* Final polishing touches */
+  ::selection {
+    background: var(--primary-light);
+    color: white;
+  }
+  
+  :focus {
+    outline: 2px solid var(--primary-light);
+    outline-offset: 2px;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+  
+  /* Dynamic content loading effect */
+  .loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  /* Pulsing effect for CTA */
+  @keyframes ctaPulse {
+    0% { box-shadow: 0 0 0 0 rgba(58, 134, 255, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(58, 134, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(58, 134, 255, 0); }
+  }
+  
+  .cta-section .book-now-button {
+    animation: ctaPulse 2s infinite;
+  }
+  
+  /* Fancy hover for social links */
+  .social-link::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: white;
+    transition: width 0.3s ease;
+  }
+  
+  .social-link:hover::before {
+    width: 100%;
+  }
+  
+  /* Print styles for profiles */
+  @media print {
+    .profile-header-actions,
+    .book-now-button,
+    .carousel-button,
+    .carousel-indicators,
+    .profile-tabs button:not(.active) {
+      display: none !important;
+    }
+    
+    .profile-main-content {
+      flex-direction: column;
+    }
+    
+    .tab-content {
+      display: block !important;
+      page-break-inside: avoid;
+    }
+    
+    .view-profile-container {
+      box-shadow: none;
+    }
+    
+    .profile-header {
+      background: none;
+      color: black;
+    }
+    
+    * {
+      color: black !important;
+      box-shadow: none !important;
+    }
+  }
