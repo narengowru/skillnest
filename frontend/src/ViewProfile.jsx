@@ -353,13 +353,7 @@ const ViewProfile = ({ freelancerId }) => {
               </button>
               
               <div className="portfolio-item">
-                <div className="portfolio-image-container">
-                  <img 
-                    src={freelancer.previousWork[currentProjectIndex].image} 
-                    alt={freelancer.previousWork[currentProjectIndex].title}
-                    className="portfolio-image"
-                  />
-                </div>
+                
                 <div className="portfolio-details">
                   <h3>{freelancer.previousWork[currentProjectIndex].title}</h3>
                   <p className="portfolio-client">

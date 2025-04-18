@@ -5,7 +5,13 @@ import "slick-carousel/slick/slick-theme.css";
 import "./Carousel.css";
 
 const Carousel = () => {
-  const userName = localStorage.getItem("userName") || "User";
+  var userName = localStorage.getItem("user") || "User";
+console.log(userName);
+
+if (userName !== "User") {
+  const parsedUser = JSON.parse(userName); // parse the JSON string
+  userName = parsedUser.name;
+}
 
   const slides = [
     { title: `Welcome, ${userName}`, subtitle: "Happy to see you back", img: "https://i.ibb.co/cXKqRXMN/s3-6af90c49ed3ead48f32b.jpg" },

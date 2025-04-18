@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Plus, X, Upload, Check } from 'lucide-react';
 import './PostProject.css';
+import { jobAPI } from './api/api';
+
 
 const PostProject = () => {
   const [step, setStep] = useState(1);
@@ -10,6 +12,7 @@ const PostProject = () => {
   
   const [project, setProject] = useState({
     title: '',
+    category: '',
     imageUrl: '',
     budget: '',
     description: '',
@@ -74,9 +77,10 @@ const PostProject = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Project submitted:", project);
+    try {
+      // Use the jobAPI to create the job
+      const response =  jobAPI.createJob(project);
+      console.log("Project submitted:", response);
       setIsSubmitting(false);
       setSubmitSuccess(true);
       
@@ -84,7 +88,11 @@ const PostProject = () => {
       setTimeout(() => {
         setSubmitSuccess(false);
       }, 3000);
-    }, 1500);
+    } catch (error) {
+      console.error("Error submitting project:", error);
+      setIsSubmitting(false);
+      // You might want to add error handling state and UI
+    }
   };
 
   const handleNext = () => {
@@ -171,6 +179,26 @@ const PostProject = () => {
                 </div>
                 
                 <div className="form-group">
+                  <label htmlFor="category">Project Category</label>
+                  <select
+                    id="category"
+                    name="category"
+                    value={project.category}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select category</option>
+                    <option value="Writing & Translation">Writing & Translation</option>
+                    <option value="Programming & Development">Programming & Development</option>
+                    <option value="Administrative & Secretarial">Administrative & Secretarial</option>
+                    <option value="Design & Art">Design & Art</option>
+                    <option value="Business & Finance">Business & Finance</option>
+                    <option value="Sales & Marketing">Sales & Marketing</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+                
+                <div className="form-group">
                   <label htmlFor="budget">Budget Range</label>
                   <input
                     type="text"
@@ -193,9 +221,10 @@ const PostProject = () => {
                     required
                   >
                     <option value="">Select duration</option>
-                    <option value="Less than 1 month">Less than 1 month</option>
-                    <option value="1-2 months">1-2 months</option>
-                    <option value="2-3 months">2-3 months</option>
+                    <option value="Less than 1 month">Less than a week</option>
+                    <option value="1-2 months">1-2 weeks</option>
+                    <option value="2-3 months">2-4 weeks</option>
+                    <option value="3-6 months">1-3 months</option>
                     <option value="3-6 months">3-6 months</option>
                     <option value="More than 6 months">More than 6 months</option>
                   </select>
@@ -247,6 +276,7 @@ const PostProject = () => {
                     <h3>Project Preview</h3>
                     <div className="preview-card">
                       <h4>{project.title}</h4>
+                      {project.category && <p>Category: {project.category}</p>}
                       {project.budget && <p>Budget: {project.budget}</p>}
                       {project.projectDuration && <p>Duration: {project.projectDuration}</p>}
                       <p>Experience: {project.experienceLevel}</p>

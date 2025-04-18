@@ -1,10 +1,10 @@
 import React from "react";
 import "./Filter.css";
 
-const Filter = ({ 
-  selectedCategories, setSelectedCategories, 
-  postedTimeline, setPostedTimeline, 
-  jobDuration, setJobDuration 
+const Filter = ({
+  selectedCategories, setSelectedCategories,
+  postedTimeline, setPostedTimeline,
+  jobDuration, setJobDuration
 }) => {
   const categories = [
     "Writing & Translation",
@@ -42,8 +42,7 @@ const Filter = ({
     console.log("Selected Duration:", duration); // Debugging
     setJobDuration(duration);
   };
-  
-
+    
   const clearAllFilters = () => {
     setSelectedCategories([]);
     setPostedTimeline(null);
@@ -56,7 +55,7 @@ const Filter = ({
         <span className="red-line"></span>
         <h2>Filter by:</h2>
       </div>
-
+      
       <div className="filter-section">
         <div className="category-filter">
           <div className="filter-subheader">
@@ -77,7 +76,7 @@ const Filter = ({
             ))}
           </div>
         </div>
-
+        
         <div className="timeline-filter">
           <div className="filter-subheader">
             <span className="red-line"></span>
@@ -98,14 +97,14 @@ const Filter = ({
             ))}
           </div>
         </div>
-
+        
         <div className="duration-filter">
           <div className="filter-subheader">
             <span className="red-line"></span>
             <h3>Job Duration</h3>
           </div>
           <select 
-            value={jobDuration} 
+            value={jobDuration}
             onChange={(e) => handleJobDurationChange(e.target.value)}
             className="duration-select"
           >
@@ -116,7 +115,7 @@ const Filter = ({
             ))}
           </select>
         </div>
-
+        
         <button 
           className="clear-filters-btn"
           onClick={clearAllFilters}

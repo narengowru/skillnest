@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 import { motion, AnimatePresence } from 'framer-motion';
+import { freelancerAPI } from './api/api'; // Import your API
+import { useNavigate } from 'react-router-dom'; // Import for navigation
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,6 +14,10 @@ const Login = () => {
   });
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,41 +29,99 @@ const Login = () => {
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
+    // Reset form data when toggling
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+    });
   };
 
-  const showToastMessage = (message) => {
+  const showToastMessage = (message, type = 'success') => {
     setToastMessage(message);
+    setToastType(type);
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
     }, 3000);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    if (isLogin) {
-      // Handle login
-      if (formData.email && formData.password) {
-        // Simulate login success
-        localStorage.setItem('user', JSON.stringify({
-          email: formData.email,
-          isLoggedIn: true
-        }));
-        showToastMessage('Login successful! Welcome back!');
+    try {
+      if (isLogin) {
+        // Handle login with API
+        if (formData.email && formData.password) {
+          const response = await freelancerAPI.login({
+            email: formData.email,
+            password: formData.password
+          });
+          
+          // Store token and user data
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('user', JSON.stringify({
+            id: response.data.freelancer.id,
+            name: response.data.freelancer.name,
+            email: response.data.freelancer.email,
+            isLoggedIn: true
+          }));
+          
+          showToastMessage('Login successful! Welcome back!');
+          
+          // Redirect to dashboard after successful login
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1500);
+        }
+      } else {
+        // Handle signup with API
+        if (formData.name && formData.email && formData.phone && formData.password) {
+          const response = await freelancerAPI.register({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            // Add other required fields with default values
+            tagline: 'Professional Freelancer',
+            bio: 'New to the platform',
+            profilePhoto: 'https://via.placeholder.com/150',
+            hourlyRate: '0',
+            jobsCompleted: 0,
+            location: 'Remote',
+            languages: ['English']
+          });
+          
+          // Store token and user data
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('user', JSON.stringify({
+            id: response.data.freelancer.id,
+            name: response.data.freelancer.name,
+            email: response.data.freelancer.email,
+            isLoggedIn: true
+          }));
+          
+          showToastMessage('Registration successful! Welcome to SkillNest!');
+          
+          // Redirect to dashboard after successful registration
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1500);
+        }
       }
-    } else {
-      // Handle signup
-      if (formData.name && formData.email && formData.phone && formData.password) {
-        // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          isLoggedIn: true
-        }));
-        showToastMessage('Registration successful! Welcome to SkillNest!');
-      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      
+      // Handle error messages from the API
+      const errorMessage = error.response?.data?.message || 
+                          (isLogin ? 'Login failed. Please check your credentials.' : 
+                                     'Registration failed. Please try again.');
+      
+      showToastMessage(errorMessage, 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -166,39 +230,17 @@ const Login = () => {
               className="submit-btn"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              disabled={isLoading}
             >
-              {isLogin ? 'Login' : 'Sign Up'}
+              {isLoading ? 
+                (isLogin ? 'Logging in...' : 'Signing up...') : 
+                (isLogin ? 'Login' : 'Sign Up')}
             </motion.button>
-            
-            {/* <div className="form-divider">
-              <span>or continue with</span>
-            </div> */}
-            
-            {/* <div className="social-login">
-              <motion.button 
-                type="button" 
-                className="social-btn google"
-                whileHover={{ y: -5 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <i className="fab fa-google"></i>
-                Google
-              </motion.button>
-              <motion.button 
-                type="button" 
-                className="social-btn facebook"
-                whileHover={{ y: -5 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <i className="fab fa-facebook-f"></i>
-                Facebook
-              </motion.button>
-            </div> */}
             
             <div className="form-footer">
               <p>
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <button type="button" onClick={toggleForm} className="toggle-btn">
+                <button type="button" onClick={toggleForm} className="toggle-btn" disabled={isLoading}>
                   {isLogin ? 'Sign Up' : 'Login'}
                 </button>
               </p>
@@ -210,12 +252,12 @@ const Login = () => {
       <AnimatePresence>
         {showToast && (
           <motion.div 
-            className="toast-message success"
+            className={`toast-message ${toastType}`}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
           >
-            <div className="toast-icon">✓</div>
+            <div className="toast-icon">{toastType === 'success' ? '✓' : '!'}</div>
             <p>{toastMessage}</p>
           </motion.div>
         )}

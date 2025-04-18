@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./Header.css";
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const navigate = useNavigate();
   useEffect(() => {
     // Check if user item exists in localStorage
     const user = localStorage.getItem("user");
@@ -42,7 +43,7 @@ const Header = () => {
       {isLoggedIn ? (
         <button className="logout-btn" onClick={handleLogout}>Logout</button>
       ) : (
-        <button className="logout-btn">Login</button>
+        <button className="logout-btn" onClick={()=>navigate('/login')}>Login</button>
       )}
     </nav>
   );

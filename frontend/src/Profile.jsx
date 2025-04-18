@@ -1,6 +1,8 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { FaLinkedin, FaGithub, FaGlobe, FaEdit, FaCamera, FaTrash, FaPlus, FaStar, FaCheckCircle, FaSignOutAlt, FaIdCard, FaMedal, FaTimes } from 'react-icons/fa';
 import { MessageSquare, Eye, Check, X, Award } from 'lucide-react';
+import { freelancerAPI, jobAPI } from './api/api';
 import './Profile.css';
 
 const Profile = ({ freelancerId }) => {
@@ -18,218 +20,98 @@ const Profile = ({ freelancerId }) => {
   const [newAchievement, setNewAchievement] = useState({ title: "", icon: "🏆", date: "" });
   const [educationEditMode, setEducationEditMode] = useState(false);
   const [portfolioEditMode, setPortfolioEditMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
 
   const showToast2 = (message, type) => {
     // This is where you would call your toast notification system
-    window.showToast(message, type);
-    // Implementation depends on which toast library you're using
+    window.showToast?.(message, type) || showSuccessToast(message);
   };
+  
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [viewingProject, setViewingProject] = useState(false);
   const [projectDetails, setProjectDetails] = useState(null);
-  const handleViewProject = (order) => {
-    // In a real app, this would fetch project details from an API
-    setProjectDetails({
-      title: order.project,
-      imageUrl: '/api/placeholder/400/250',
-      budget: order.amount,
-      description: 'This is a sample project description. In a real application, this would be fetched from the server based on the project ID.',
-      skills: ['React', 'Node.js', 'UI/UX'],
-      projectDuration: '2 weeks',
-      experienceLevel: 'Intermediate',
-      client: {
-        name: order.client,
-        avatar: '/api/placeholder/50/50',
-        rating: 4.8,
-        totalReviews: 24,
-        memberSince: 'Jan 2023',
-        location: 'New York, USA',
-        verificationBadge: true,
-        whatsappNumber: '+1234567890' // This would come from the real client data
-      }
-    });
-    setViewingProject(true);
-  };
-  const handleAcceptOrder = (orderId) => {
-    // In a real app, this would make an API call to update the order status
-    showToast2('Order accepted successfully!', 'success');
-    // Here you would typically update the order status in your state
-  };
-
-  const handleRejectOrder = (orderId) => {
-    // In a real app, this would make an API call to update the order status
-    showToast2('Order rejected', 'success');
-    // Here you would typically update the order status in your state
-  };
-
-  const handleCompleteOrder = (orderId) => {
-    // In a real app, this would make an API call to update the order status
-    showToast2('Order marked as completed!', 'success');
-    // Here you would typically update the order status in your state
-  };
-
-  const openWhatsAppChat = (phoneNumber) => {
-    const whatsappUrl = `https://wa.me/${phoneNumber.replace(/[^0-9]/g, '')}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
+  const [orders, setOrders] = useState([]);
   
-
-  const closeProjectDetails = () => {
-    setViewingProject(false);
-    setProjectDetails(null);
-  };
-
-
-
   const [newPortfolioItem, setNewPortfolioItem] = useState({
     title: "",
     description: "",
-    image: "https://i.pinimg.com/564x/31/79/8a/31798af2cf73bf8539c2c73829d41f47.jpg",
+    image: "/api/placeholder/400/250",
     client: "",
     feedback: ""
   });
   
   const fileInputRef = useRef(null);
-  
-  const [freelancer, setFreelancer] = useState({
-    id: freelancerId || 'fl-12345',
-    name: 'Alex Johnson',
-    tagline: 'Full Stack Developer & UI/UX Designer',
-    profilePhoto: 'https://i.ibb.co/MDkndWx5/images.jpg',
-    bio: "I'm a passionate Computer Science student with 3+ years experience in building modern web applications. I specialize in React, Node.js, and UI/UX design. I believe in creating clean, efficient code and intuitive user experiences. Currently pursuing my Bachelor's degree while taking on freelance projects that challenge me to grow.",
-    email: 'alex.johnson@university.edu',
-    phone: '+1 (555) 123-4567', 
-    password: '••••••••',
-    achievements: [
-      { id: 1, title: 'Top Rated Freelancer', icon: '🏆', date: 'January 2025' },
-      { id: 2, title: 'Rising Talent Award', icon: '🚀', date: 'November 2024' },
-      { id: 3, title: 'Hackathon Winner', icon: '🥇', date: 'August 2024' },
-      { id: 4, title: '50+ Projects Completed', icon: '🎯', date: 'April 2024' }
-    ],
-    education: {
-      university: 'Tech State University',
-      degree: 'Bachelor of Science in Computer Science',
-      year: '3rd Year (Expected graduation 2026)',
-      gpa: '3.85/4.0',
-      relevantCourses: ['Data Structures & Algorithms', 'Full Stack Development', 'UI/UX Design', 'Database Systems', 'Mobile App Development']
-    },
-    previousWork: [
-      {
-        id: 1,
-        title: 'E-commerce Platform',
-        description: 'Built a full-featured e-commerce platform with React, Node.js, and MongoDB. Implemented user authentication, product catalog, and payment processing.',
-        image: 'https://i.pinimg.com/564x/b8/66/7e/b8667e5f5d2f912af2dab39ccccda1d9.jpg',
-        client: 'FashionMart',
-        feedback: 'Alex delivered exceptional work! The platform exceeded our expectations and was delivered ahead of schedule.'
-      },
-      {
-        id: 2,
-        title: 'Learning Management System',
-        description: 'Developed a comprehensive LMS for a local university with user roles, course management, assignment submissions, and real-time messaging.',
-        image: 'https://i.pinimg.com/564x/2f/c8/1e/2fc81e1f27cca39bf8d1e12fb2a9cb5d.jpg',
-        client: 'EducationPlus',
-        feedback: 'Outstanding work! Alex understood our requirements perfectly and built a system that our faculty and students love.'
-      },
-      {
-        id: 3,
-        title: 'Task Management App',
-        description: 'Created a mobile-responsive task management application with drag-and-drop interfaces, task prioritization, and team collaboration features.',
-        image: 'https://i.pinimg.com/564x/31/79/8a/31798af2cf73bf8539c2c73829d41f47.jpg',
-        client: 'ProductivityPro',
-        feedback: 'Alex is a talented developer who delivered a beautiful and functional app that has significantly improved our workflow.'
+  const [freelancer, setFreelancer] = useState(null);
+
+  // Fetch freelancer data when component mounts or freelancerId changes
+  useEffect(() => {
+    const fetchFreelancerData = async () => {
+      if (!freelancerId) {
+        // If no ID provided, assume we're using the logged-in user's token for auth
+        const user = JSON.parse(localStorage.user);  // Convert string to JS object
+        const userId = user.id;                      // Now you can access the id
+        console.log(userId); 
+        if (userId) {
+          fetchFreelancer(userId);
+        } else {
+          setError("You must be logged in to view this profile");
+          setIsLoading(false);
+        }
+      } else {
+        fetchFreelancer(freelancerId);
       }
-    ],
-    skills: [
-      { name: 'React', level: 95 },
-      { name: 'JavaScript', level: 90 },
-      { name: 'Node.js', level: 85 },
-      { name: 'UI/UX Design', level: 88 },
-      { name: 'MongoDB', level: 80 },
-      { name: 'Express.js', level: 82 },
-      { name: 'HTML/CSS', level: 92 },
-      { name: 'TypeScript', level: 78 },
-      { name: 'Git/GitHub', level: 85 },
-      { name: 'Responsive Design', level: 90 }
-    ],
-    hourlyRate: '$25',
-    availability: {
-      hoursPerWeek: 20,
-      schedule: 'Evenings and weekends'
-    },
-    jobsCompleted: 57,
-    ratings: {
-      average: 4.8,
-      breakdown: {
-        5: 42,
-        4: 12,
-        3: 2,
-        2: 1,
-        1: 0
-      },
-      total: 57
-    },
-    reviews: [
-      {
-        id: 1,
-        clientName: 'Emma Smith',
-        clientAvatar: 'https://i.pinimg.com/564x/47/c4/23/47c423d58431d343cf78c8b0f940b2e0.jpg',
-        rating: 5,
-        date: 'March 15, 2025',
-        comment: 'Alex is a phenomenal developer! He understood my project requirements perfectly and delivered ahead of schedule. His communication was excellent, and he was always open to feedback. Would definitely hire again!'
-      },
-      {
-        id: 2,
-        clientName: 'Marcus Chen',
-        clientAvatar: 'https://i.pinimg.com/564x/31/3c/35/313c35f16a5a03ccd0ae41d99b02d660.jpg',
-        rating: 5,
-        date: 'February 28, 2025',
-        comment: 'Incredible work! Alex went above and beyond what I expected. He not only built exactly what I asked for but also suggested improvements that made the final product even better. Very professional and skilled.'
-      },
-      {
-        id: 3,
-        clientName: 'Sarah Johnson',
-        clientAvatar: 'https://i.pinimg.com/564x/0d/8c/82/0d8c82c3fbb6070a890d764ea397b1e1.jpg',
-        rating: 4,
-        date: 'January 10, 2025',
-        comment: 'Great developer with solid skills. Communication was good throughout the project. The only reason for 4 stars instead of 5 is that we had a slight delay, but Alex was transparent about it and worked hard to catch up.'
-      }
-    ],
-    orders: [
-      { 
-        id: 'ORD-2025-001', 
-        client: 'DataViz Corp', 
-        project: 'Data Visualization Dashboard', 
-        amount: '$750', 
-        status: 'Completed', 
-        date: 'April 10, 2025' 
-      },
-      { 
-        id: 'ORD-2025-002', 
-        client: 'TechStart Inc', 
-        project: 'Mobile App UI Design', 
-        amount: '$550', 
-        status: 'In Progress', 
-        date: 'April 5, 2025' 
-      },
-      { 
-        id: 'ORD-2025-003', 
-        client: 'EduLearn', 
-        project: 'Interactive Course Platform', 
-        amount: '$1,200', 
-        status: 'Pending', 
-        date: 'April 2, 2025' 
-      }
-    ],
-    location: 'Boston, MA',
-    joinedDate: 'March 2023',
-    languages: ['English (Native)', 'Spanish (Conversational)'],
-    socialProfiles: {
-      github: 'github.com/alex-johnson-dev',
-      linkedin: 'linkedin.com/in/alexjohnsondev',
-      portfolio: 'alexjohnson.dev'
+    };
+
+    fetchFreelancerData();
+  }, [freelancerId]);
+
+  const fetchFreelancer = async (id) => {
+    try {
+      setIsLoading(true);
+      const response = await freelancerAPI.getFreelancer(id);
+      setFreelancer(response.data);
+      
+      // Check verification status
+      setIsVerified(response.data.isVerified || false);
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching freelancer data:", err);
+      setError("Failed to load profile data. Please try again later.");
+      setIsLoading(false);
     }
-  });
+  };
+
+  // Fetch orders for the logged-in freelancer
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (freelancer) {
+        try {
+          // Assuming your API has an endpoint for freelancer orders
+          const response = await jobAPI.getAllJobs();
+          // Filter jobs that are assigned to this freelancer
+          const freelancerOrders = response.data.filter(job => 
+            job.assignedFreelancer === freelancer._id
+          );
+          
+          if (freelancerOrders.length > 0) {
+            setOrders(freelancerOrders);
+          } else {
+            // If API doesn't return orders, keep the static data for demo
+            setOrders(freelancer.orders || []);
+          }
+        } catch (error) {
+          console.error("Error fetching orders:", error);
+          // Fallback to static data in case of error
+          setOrders(freelancer.orders || []);
+        }
+      }
+    };
+
+    fetchOrders();
+  }, [freelancer]);
 
   useEffect(() => {
     if (showToast) {
@@ -249,32 +131,72 @@ const Profile = ({ freelancerId }) => {
     fileInputRef.current.click();
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setFreelancer({...freelancer, profilePhoto: reader.result});
-        showSuccessToast("Profile photo updated successfully!");
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Create FormData object to send file to server
+        const formData = new FormData();
+        formData.append('profilePhoto', file);
+        
+        // Update the profile photo on the server
+        await freelancerAPI.updateFreelancer(freelancer._id, formData);
+        
+        // Show preview before server response (optimistic UI)
+        const reader = new FileReader();
+        reader.onload = () => {
+          setFreelancer({...freelancer, profilePhoto: reader.result});
+          showSuccessToast("Profile photo updated successfully!");
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Error uploading profile photo:", error);
+        showSuccessToast("Failed to update profile photo. Please try again.");
+      }
     }
   };
 
-  const saveProfileChanges = () => {
-    setProfileEditMode(false);
-    showSuccessToast("Profile information updated successfully!");
-    // Here you would typically send the updated profile to your backend
+  const saveProfileChanges = async () => {
+    try {
+      // Prepare the data to be sent to the API
+      const profileData = {
+        name: freelancer.name,
+        tagline: freelancer.tagline,
+        // Include other basic profile fields that might have changed
+      };
+      
+      // Send update request to the API
+      await freelancerAPI.updateFreelancer(freelancer._id, profileData);
+      
+      setProfileEditMode(false);
+      showSuccessToast("Profile information updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      showSuccessToast("Failed to update profile. Please try again.");
+    }
   };
 
-  const saveBioChanges = () => {
-    setBioEditMode(false);
-    showSuccessToast("Bio updated successfully!");
+  const saveBioChanges = async () => {
+    try {
+      console.log(freelancer);
+      await freelancerAPI.updateFreelancer(freelancer._id, { bio: freelancer.bio });
+      setBioEditMode(false);
+      showSuccessToast("Bio updated successfully!");
+    } catch (error) {
+      console.error("Error updating bio:", error);
+      showSuccessToast("Failed to update bio. Please try again.");
+    }
   };
 
-  const saveEducationChanges = () => {
-    setEducationEditMode(false);
-    showSuccessToast("Education details updated successfully!");
+  const saveEducationChanges = async () => {
+    try {
+      await freelancerAPI.updateFreelancer(freelancer._id, { education: freelancer.education });
+      setEducationEditMode(false);
+      showSuccessToast("Education details updated successfully!");
+    } catch (error) {
+      console.error("Error updating education details:", error);
+      showSuccessToast("Failed to update education details. Please try again.");
+    }
   };
 
   const handleInputChange = (e) => {
@@ -332,71 +254,145 @@ const Profile = ({ freelancerId }) => {
     }));
   };
 
-  const addNewSkill = () => {
+  const addNewSkill = async () => {
     if (newSkill.name.trim()) {
-      const updatedSkills = [...freelancer.skills, { ...newSkill }];
+      try {
+        const updatedSkills = [...freelancer.skills, { ...newSkill }];
+        
+        // Update on the server
+        await freelancerAPI.updateFreelancer(freelancer._id, { skills: updatedSkills });
+        
+        // Update local state
+        setFreelancer({...freelancer, skills: updatedSkills});
+        setNewSkill({ name: "", level: 75 });
+        showSuccessToast("New skill added successfully!");
+      } catch (error) {
+        console.error("Error adding skill:", error);
+        showSuccessToast("Failed to add skill. Please try again.");
+      }
+    }
+  };
+
+  const removeSkill = async (skillName) => {
+    try {
+      const updatedSkills = freelancer.skills.filter(skill => skill.name !== skillName);
+      
+      // Update on the server
+      await freelancerAPI.updateFreelancer(freelancer._id, { skills: updatedSkills });
+      
+      // Update local state
       setFreelancer({...freelancer, skills: updatedSkills});
-      setNewSkill({ name: "", level: 75 });
-      showSuccessToast("New skill added successfully!");
+      showSuccessToast("Skill removed successfully!");
+    } catch (error) {
+      console.error("Error removing skill:", error);
+      showSuccessToast("Failed to remove skill. Please try again.");
     }
   };
 
-  const removeSkill = (skillName) => {
-    const updatedSkills = freelancer.skills.filter(skill => skill.name !== skillName);
-    setFreelancer({...freelancer, skills: updatedSkills});
-    showSuccessToast("Skill removed successfully!");
-  };
-
-  const addNewAchievement = () => {
+  const addNewAchievement = async () => {
     if (newAchievement.title.trim() && newAchievement.date.trim()) {
-      const updatedAchievements = [
-        ...freelancer.achievements, 
-        { ...newAchievement, id: Date.now() }
-      ];
+      try {
+        const updatedAchievements = [
+          ...freelancer.achievements, 
+          { ...newAchievement, id: Date.now() }
+        ];
+        
+        // Update on the server
+        await freelancerAPI.updateFreelancer(freelancer._id, { achievements: updatedAchievements });
+        
+        // Update local state
+        setFreelancer({...freelancer, achievements: updatedAchievements});
+        setNewAchievement({ title: "", icon: "🏆", date: "" });
+        showSuccessToast("New achievement added successfully!");
+      } catch (error) {
+        console.error("Error adding achievement:", error);
+        showSuccessToast("Failed to add achievement. Please try again.");
+      }
+    }
+  };
+
+  const removeAchievement = async (id) => {
+    try {
+      const updatedAchievements = freelancer.achievements.filter(achievement => achievement.id !== id);
+      
+      // Update on the server
+      await freelancerAPI.updateFreelancer(freelancer._id, { achievements: updatedAchievements });
+      
+      // Update local state
       setFreelancer({...freelancer, achievements: updatedAchievements});
-      setNewAchievement({ title: "", icon: "🏆", date: "" });
-      showSuccessToast("New achievement added successfully!");
+      showSuccessToast("Achievement removed successfully!");
+    } catch (error) {
+      console.error("Error removing achievement:", error);
+      showSuccessToast("Failed to remove achievement. Please try again.");
     }
   };
 
-  const removeAchievement = (id) => {
-    const updatedAchievements = freelancer.achievements.filter(achievement => achievement.id !== id);
-    setFreelancer({...freelancer, achievements: updatedAchievements});
-    showSuccessToast("Achievement removed successfully!");
-  };
-
-  const addNewPortfolioItem = () => {
+  const addNewPortfolioItem = async () => {
     if (newPortfolioItem.title.trim() && newPortfolioItem.description.trim()) {
-      const updatedPortfolio = [
-        ...freelancer.previousWork, 
-        { ...newPortfolioItem, id: Date.now() }
-      ];
-      setFreelancer({...freelancer, previousWork: updatedPortfolio});
-      setNewPortfolioItem({
-        title: "",
-        description: "",
-        image: "https://i.pinimg.com/564x/31/79/8a/31798af2cf73bf8539c2c73829d41f47.jpg",
-        client: "",
-        feedback: ""
-      });
-      showSuccessToast("New portfolio item added successfully!");
+      try {
+        const updatedPortfolio = [
+          ...freelancer.previousWork, 
+          { ...newPortfolioItem, id: Date.now() }
+        ];
+        
+        // Update on the server
+        await freelancerAPI.updateFreelancer(freelancer._id, { previousWork: updatedPortfolio });
+        
+        // Update local state
+        setFreelancer({...freelancer, previousWork: updatedPortfolio});
+        setNewPortfolioItem({
+          title: "",
+          description: "",
+          image: "/api/placeholder/400/250",
+          client: "",
+          feedback: ""
+        });
+        showSuccessToast("New portfolio item added successfully!");
+      } catch (error) {
+        console.error("Error adding portfolio item:", error);
+        showSuccessToast("Failed to add portfolio item. Please try again.");
+      }
     }
   };
 
-  const removePortfolioItem = (id) => {
-    const updatedPortfolio = freelancer.previousWork.filter(item => item.id !== id);
-    setFreelancer({...freelancer, previousWork: updatedPortfolio});
-    showSuccessToast("Portfolio item removed successfully!");
+  const removePortfolioItem = async (id) => {
+    try {
+      const updatedPortfolio = freelancer.previousWork.filter(item => item.id !== id);
+      
+      // Update on the server
+      await freelancerAPI.updateFreelancer(freelancer._id, { previousWork: updatedPortfolio });
+      
+      // Update local state
+      setFreelancer({...freelancer, previousWork: updatedPortfolio});
+      showSuccessToast("Portfolio item removed successfully!");
+    } catch (error) {
+      console.error("Error removing portfolio item:", error);
+      showSuccessToast("Failed to remove portfolio item. Please try again.");
+    }
   };
 
-  const handleVerificationSubmit = (e) => {
+  const handleVerificationSubmit = async (e) => {
     e.preventDefault();
-    // Simulate verification process
-    setTimeout(() => {
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('verificationDocument', verificationFile);
+      // Add other verification data
+      formData.append('university', e.target.university.value);
+      formData.append('studentId', e.target.studentId.value);
+      formData.append('graduationYear', e.target.graduationYear.value);
+      
+      // Send verification request
+      await freelancerAPI.updateFreelancer(freelancer._id, formData);
+      
+      // Update UI (in real app, verification might be pending approval)
       setIsVerified(true);
       setShowVerificationModal(false);
-      showSuccessToast("Your student status has been verified successfully!");
-    }, 1500);
+      showSuccessToast("Your student status verification request has been submitted!");
+    } catch (error) {
+      console.error("Error submitting verification:", error);
+      showSuccessToast("Failed to submit verification. Please try again.");
+    }
   };
 
   const handleVerificationFileChange = (e) => {
@@ -416,10 +412,281 @@ const Profile = ({ freelancerId }) => {
     return stars;
   };
 
-  const logout = () => {
-    alert("Logging out...");
-    // Here you would handle the logout logic
+  const handleViewProject = async (order) => {
+    try {
+      // Try to fetch detailed project info from API
+      const response = await jobAPI.getJob(order.id);
+      const projectData = response.data;
+      
+      setProjectDetails({
+        title: projectData.title || order.project,
+        imageUrl: projectData.imageUrl || '/api/placeholder/400/250',
+        budget: projectData.budget || order.amount,
+        description: projectData.description || 'Project description not available.',
+        skills: projectData.skills || ['React', 'Node.js', 'UI/UX'],
+        projectDuration: projectData.duration || '2 weeks',
+        experienceLevel: projectData.experienceLevel || 'Intermediate',
+        client: {
+          name: projectData.client?.name || order.client,
+          avatar: projectData.client?.avatar || '/api/placeholder/50/50',
+          rating: projectData.client?.rating || 4.8,
+          totalReviews: projectData.client?.totalReviews || 24,
+          memberSince: projectData.client?.memberSince || 'Jan 2023',
+          location: projectData.client?.location || 'New York, USA',
+          verificationBadge: projectData.client?.verificationBadge || true,
+          whatsappNumber: projectData.client?.whatsappNumber || '+1234567890'
+        }
+      });
+      
+    } catch (error) {
+      console.error("Error fetching project details:", error);
+      // Fallback to basic data if API call fails
+      setProjectDetails({
+        title: order.project,
+        imageUrl: '/api/placeholder/400/250',
+        budget: order.amount,
+        description: 'Project details could not be loaded.',
+        skills: ['React', 'Node.js', 'UI/UX'],
+        projectDuration: '2 weeks',
+        experienceLevel: 'Intermediate',
+        client: {
+          name: order.client,
+          avatar: '/api/placeholder/50/50',
+          rating: 4.8,
+          totalReviews: 24,
+          memberSince: 'Jan 2023',
+          location: 'New York, USA',
+          verificationBadge: true,
+          whatsappNumber: '+1234567890'
+        }
+      });
+    }
+    
+    setViewingProject(true);
   };
+
+  const handleAcceptOrder = async (orderId) => {
+    try {
+      // Update order status to "In Progress" via API
+      await jobAPI.updateApplicationStatus(orderId, freelancer._id, { status: 'In Progress' });
+      
+      // Update local state optimistically
+      const updatedOrders = orders.map(order => 
+        order.id === orderId ? {...order, status: 'In Progress'} : order
+      );
+      setOrders(updatedOrders);
+      
+      showToast2('Order accepted successfully!', 'success');
+    } catch (error) {
+      console.error("Error accepting order:", error);
+      showToast2('Failed to accept order. Please try again.', 'error');
+    }
+  };
+
+  const handleRejectOrder = async (orderId) => {
+    try {
+      // Update order status to "Rejected" via API
+      await jobAPI.updateApplicationStatus(orderId, freelancer._id, { status: 'Rejected' });
+      
+      // Update local state optimistically
+      const updatedOrders = orders.map(order => 
+        order.id === orderId ? {...order, status: 'Rejected'} : order
+      );
+      setOrders(updatedOrders);
+      
+      showToast2('Order rejected', 'success');
+    } catch (error) {
+      console.error("Error rejecting order:", error);
+      showToast2('Failed to reject order. Please try again.', 'error');
+    }
+  };
+
+  const handleCompleteOrder = async (orderId) => {
+    try {
+      // Update order status to "Completed" via API
+      await jobAPI.updateApplicationStatus(orderId, freelancer._id, { status: 'Completed' });
+      
+      // Update local state optimistically
+      const updatedOrders = orders.map(order => 
+        order.id === orderId ? {...order, status: 'Completed'} : order
+      );
+      setOrders(updatedOrders);
+      
+      showToast2('Order marked as completed!', 'success');
+    } catch (error) {
+      console.error("Error completing order:", error);
+      showToast2('Failed to complete order. Please try again.', 'error');
+    }
+  };
+
+  const openWhatsAppChat = (phoneNumber) => {
+    const whatsappUrl = `https://wa.me/${phoneNumber.replace(/[^0-9]/g, '')}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+
+  // Handle input changes for personal information
+
+  // Handle social profile input changes
+  const handleSocialInputChange = (e) => {
+    const { name, value } = e.target;
+    setFreelancer(prev => ({
+      ...prev,
+      socialProfiles: {
+        ...prev.socialProfiles,
+        [name]: value
+      }
+    }));
+  };
+
+  // Handle password form changes
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Save all personal information and social profile changes
+  const saveAllChanges = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const updatedData = {
+        name: freelancer.name,
+        email: freelancer.email,
+        phone: freelancer.phone,
+        location: freelancer.location,
+        socialProfiles: freelancer.socialProfiles
+      };
+      
+      await freelancerAPI.updateFreelancer(freelancer._id, updatedData);
+      showSuccessToast("Settings updated successfully!");
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      setError("Failed to update settings. Please try again.");
+      showErrorToast("Failed to update settings. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle password update
+  const handlePasswordUpdate = async () => {
+    // Validation
+    if (!passwordData.currentPassword) {
+      showErrorToast("Please enter your current password");
+      return;
+    }
+   
+    if (passwordData.newPassword.length < 8) {
+      showErrorToast("New password must be at least 8 characters");
+      return;
+    }
+   
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      showErrorToast("New passwords don't match");
+      return;
+    }
+   
+    setIsLoading(true);
+    setError(null);
+   
+    try {
+      // Use updateFreelancer instead of updatePassword
+      await freelancerAPI.updateFreelancer(freelancer._id, {
+        currentPassword: passwordData.currentPassword,
+        password: passwordData.newPassword
+      });
+     
+      // Clear password fields after successful update
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+     
+      showSuccessToast("Password updated successfully!");
+    } catch (error) {
+      console.error("Error updating password:", error);
+     
+      // Handle specific error responses
+      if (error.response && error.response.status === 401) {
+        showErrorToast("Current password is incorrect");
+      } else {
+        showErrorToast("Failed to update password. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle account deletion
+  const confirmDeleteAccount = () => {
+    // Show confirmation dialog
+    if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+      deleteAccount();
+    }
+  };
+
+  const deleteAccount = async () => {
+    setIsLoading(true);
+    
+    try {
+      await freelancerAPI.deleteFreelancer(freelancer._id);
+      // Handle successful deletion (redirect to homepage, clear authentication, etc.)
+      localStorage.removeItem('token');
+      window.location.href = '/';
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      showErrorToast("Failed to delete account. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Toast notification helpers (assumed these functions exist in your app)
+  
+
+  const showErrorToast = (message) => {
+    // Implementation depends on your toast notification system
+    // Example: toast.error(message);
+    console.error("Error:", message);
+  };
+
+  const closeProjectDetails = () => {
+    setViewingProject(false);
+    setProjectDetails(null);
+  };
+
+  const logout = async () => {
+    // Clear local storage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirect to login page
+    window.location.href = '/login';
+  };
+
+  if (isLoading) {
+    return <div className="loading-spinner">Loading profile data...</div>;
+  }
+
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
+
+  if (!freelancer) {
+    return <div className="error-message">Profile not found</div>;
+  }
 
   return (
     <div className="profile-container">
@@ -1134,75 +1401,75 @@ const Profile = ({ freelancerId }) => {
         </div>
         )}
 
-        {activeTab === 'settings' && (
-          <div className="settings-content">
-            <h2>Account Settings</h2>
-            
-            <div className="settings-section">
-              <h3>Personal Information</h3>
-              <div className="settings-form">
-                <div className="form-group">
-                  <label>Full Name</label>
-                  <input type="text" name="name" value={freelancer.name} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Email Address</label>
-                  <input type="email" name="email" value={freelancer.email} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Phone Number</label>
-                  <input type="text" name="phone" value={freelancer.phone} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Location</label>
-                  <input type="text" name="location" value={freelancer.location} onChange={handleInputChange} />
-                </div>
-              </div>
-            </div>
-            
-            <div className="settings-section">
-              <h3>Security</h3>
-              <div className="settings-form">
-                <div className="form-group">
-                  <label>Current Password</label>
-                  <input type="password" value={freelancer.password} disabled />
-                </div>
-                <div className="form-group">
-                  <label>New Password</label>
-                  <input type="password" placeholder="Enter new password" />
-                </div>
-                <div className="form-group">
-                  <label>Confirm New Password</label>
-                  <input type="password" placeholder="Confirm new password" />
-                </div>
-                <button className="update-password-btn">Update Password</button>
-              </div>
-            </div>
-            
-            <div className="settings-section">
-              <h3>Social Profiles</h3>
-              <div className="settings-form">
-                <div className="form-group social-input">
-                  <FaLinkedin className="social-icon" />
-                  <input type="text" value={freelancer.socialProfiles.linkedin} onChange={(e) => setFreelancer({...freelancer, socialProfiles: {...freelancer.socialProfiles, linkedin: e.target.value}})} />
-                </div>
-                <div className="form-group social-input">
-                  <FaGithub className="social-icon" />
-                  <input type="text" value={freelancer.socialProfiles.github} onChange={(e) => setFreelancer({...freelancer, socialProfiles: {...freelancer.socialProfiles, github: e.target.value}})} />
-                </div>
-                <div className="form-group social-input">
-                  <FaGlobe className="social-icon" />
-                  <input type="text" value={freelancer.socialProfiles.portfolio} onChange={(e) => setFreelancer({...freelancer, socialProfiles: {...freelancer.socialProfiles, portfolio: e.target.value}})} />
-                </div>
-              </div>
-            </div>
-            
-            <div className="settings-buttons">
-              <button className="save-changes-btn" onClick={() => showSuccessToast("Settings updated successfully!")}>Save All Changes</button>
-              <button className="delete-account-btn">Delete Account</button>
-            </div>
-          </div>
-        )}
+{activeTab === 'settings' && (
+  <div className="settings-content">
+    <h2>Account Settings</h2>
+    
+    <div className="settings-section">
+      <h3>Personal Information</h3>
+      <div className="settings-form">
+        <div className="form-group">
+          <label>Full Name</label>
+          <input type="text" name="name" value={freelancer.name} onChange={handleInputChange} />
+        </div>
+        <div className="form-group">
+          <label>Email Address</label>
+          <input type="email" name="email" value={freelancer.email} onChange={handleInputChange} />
+        </div>
+        <div className="form-group">
+          <label>Phone Number</label>
+          <input type="text" name="phone" value={freelancer.phone} onChange={handleInputChange} />
+        </div>
+        <div className="form-group">
+          <label>Location</label>
+          <input type="text" name="location" value={freelancer.location} onChange={handleInputChange} />
+        </div>
+      </div>
+    </div>
+    
+    <div className="settings-section">
+      <h3>Security</h3>
+      <div className="settings-form">
+        <div className="form-group">
+          <label>Current Password</label>
+          <input type="password" name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} />
+        </div>
+        <div className="form-group">
+          <label>New Password</label>
+          <input type="password" name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange} placeholder="Enter new password" />
+        </div>
+        <div className="form-group">
+          <label>Confirm New Password</label>
+          <input type="password" name="confirmPassword" value={passwordData.confirmPassword} onChange={handlePasswordChange} placeholder="Confirm new password" />
+        </div>
+        <button className="update-password-btn" onClick={handlePasswordUpdate}>Update Password</button>
+      </div>
+    </div>
+    
+    <div className="settings-section">
+      <h3>Social Profiles</h3>
+      <div className="settings-form">
+        <div className="form-group social-input">
+          <FaLinkedin className="social-icon" />
+          <input type="text" name="linkedin" value={freelancer.socialProfiles.linkedin} onChange={handleSocialInputChange} />
+        </div>
+        <div className="form-group social-input">
+          <FaGithub className="social-icon" />
+          <input type="text" name="github" value={freelancer.socialProfiles.github} onChange={handleSocialInputChange} />
+        </div>
+        <div className="form-group social-input">
+          <FaGlobe className="social-icon" />
+          <input type="text" name="portfolio" value={freelancer.socialProfiles.portfolio} onChange={handleSocialInputChange} />
+        </div>
+      </div>
+    </div>
+    
+    <div className="settings-buttons">
+      <button className="save-changes-btn" onClick={saveAllChanges}>Save All Changes</button>
+      <button className="delete-account-btn" onClick={confirmDeleteAccount}>Delete Account</button>
+    </div>
+  </div>
+)}
       </main>
 
       {/* Student Verification Modal */}

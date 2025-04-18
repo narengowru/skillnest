@@ -2,12 +2,8 @@ import React from 'react';
 import './FindJobCard.css';
 
 const formatDate = (dateString) => {
-  // Convert DD-MM-YY to a Date object
-  const [day, month, year] = dateString.split('-');
-  const date = new Date(`20${year}-${month}-${day}`); // Assuming 21st century (20xx)
-  
-  // Format to "Day Month Date Year"
-  return date.toDateString();
+  const date = new Date(dateString);
+  return date.toDateString(); // Example: "Mon Jan 29 2024"
 };
 
 const FindJobCard = ({ 
@@ -16,6 +12,7 @@ const FindJobCard = ({
   postedDate,  // Expected in DD-MM-YY format
   description
 }) => {
+  console.log(postedDate);
   return (
     <div className="find-job-card">
       <div className="find-job-card-image-container">
