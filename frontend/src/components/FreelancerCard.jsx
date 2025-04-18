@@ -49,10 +49,10 @@ export default function FreelancerCard({
       
       <div className="profile-actions">
         <button className="see-profile">See Profile</button>
-        <button className="message-icon">💬</button>
+        
       </div>
       
-      <div className="customer-reviews">Customer Reviews</div>
+      
       
       <button className="book-now">BOOK NOW</button>
     </div>
