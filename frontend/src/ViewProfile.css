@@ -151,13 +151,13 @@
     animation: fadeIn 0.8s ease-in;
   }
   
-  .header-background {
+  /* .header-background {
     height: 240px;
-    background: linear-gradient(135deg, #6366f1, #3b82f6, #0ea5e9);
-    background-size: 400% 400%;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    /* background-size: 200% 200%; 
     animation: gradientShift 12s ease infinite;
     position: relative;
-  }
+  } */
   
   .overlay {
     position: absolute;

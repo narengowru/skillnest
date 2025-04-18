@@ -196,16 +196,16 @@ const ViewProfile = ({ freelancerId }) => {
                 <Heart size={24} fill={isFavorite ? "#ff6b6b" : "none"} stroke={isFavorite ? "#ff6b6b" : "#333"} />
               </span>
             </h1>
-            <p className="tagline">{freelancer.tagline}</p>
+            <p className="tagline"  style={{ color: 'white' }}>{freelancer.tagline}</p>
             
             <div className="profile-meta">
-              <div className="meta-item">
+              <div className="meta-item"  style={{ color: 'white' }}>
                 <MapPin size={16} />
-                <span>{freelancer.location}</span>
+                <span  style={{ color: 'white' }}>{freelancer.location}</span>
               </div>
-              <div className="meta-item">
+              <div className="meta-item"  style={{ color: 'white' }}>
                 <Calendar size={16} />
-                <span>Joined {freelancer.joinedDate}</span>
+                <span  style={{ color: 'white' }}>Joined {freelancer.joinedDate}</span>
               </div>
               <div className="meta-item rating-meta">
                 <div className="stars-container">
@@ -301,7 +301,7 @@ const ViewProfile = ({ freelancerId }) => {
             </div>
           </div>
 
-          <div className="sidebar-section languages">
+          {/* <div className="sidebar-section languages">
             <h3>Languages</h3>
             <div className="languages-list">
               {freelancer.languages.map((language, index) => (
@@ -313,7 +313,7 @@ const ViewProfile = ({ freelancerId }) => {
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="profile-content">
@@ -406,7 +406,7 @@ const ViewProfile = ({ freelancerId }) => {
                 </div>
               </div>
               
-              <div className="about-sections">
+              {/* <div className="about-sections">
                 <div className="why-hire-me">
                   <h4>Why hire me? 🚀</h4>
                   <ul>
@@ -429,7 +429,7 @@ const ViewProfile = ({ freelancerId }) => {
                     <li>Delivery and post-project support</li>
                   </ol>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
