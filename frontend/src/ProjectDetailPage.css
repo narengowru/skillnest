@@ -303,6 +303,7 @@
   
   .skill-tag {
     background: var(--gradient-primary);
+    width: 200px;
     color: white;
     padding: 8px 16px;
     border-radius: 30px;

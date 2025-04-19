@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Plus, X, Upload, Check } from 'lucide-react';
 import './PostProject.css';
 import { jobAPI } from './api/api';
-
+import { clientAPI } from './api/api';
 
 const PostProject = () => {
   const [step, setStep] = useState(1);
   const [newSkill, setNewSkill] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [clientData, setClientData] = useState(null);
+  const [showLocationInput, setShowLocationInput] = useState(false);
   
   const [project, setProject] = useState({
     title: '',
@@ -20,6 +22,7 @@ const PostProject = () => {
     projectDuration: '',
     experienceLevel: 'Intermediate',
     client: {
+      _id: '', // Added client ID field
       name: '',
       avatar: '',
       rating: 0,
@@ -29,6 +32,82 @@ const PostProject = () => {
       verificationBadge: false
     }
   });
+
+  // Load client data from localStorage on component mount
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        
+        // Only proceed if the user type is client
+        if (parsedUser && parsedUser.userType === 'client') {
+          // Set the client ID and other basic info from localStorage
+          setProject(prevProject => ({
+            ...prevProject,
+            client: {
+              ...prevProject.client,
+              _id: parsedUser.id || '', // Set the client ID 
+              name: parsedUser.companyName || '',
+              email: parsedUser.email || ''
+            }
+          }));
+          
+          // Fetch additional client data from API
+          fetchClientData(parsedUser.email, parsedUser.id);
+        }
+      } catch (error) {
+        console.error("Error parsing user data from localStorage:", error);
+      }
+    }
+  }, []);
+
+  // Fetch client data from the API
+  const fetchClientData = async (email, clientId) => {
+    try {
+      // In a real implementation, you would fetch the client by ID directly
+      // For now, we're simulating this by assuming we have the client ID
+      const response = await clientAPI.getAllClients();
+      const client = response.data.find(client => client.email === email);
+      
+      if (client) {
+        setClientData(client);
+        
+        // Get formatted member since date
+        const memberSinceFormatted = clientAPI.getClientSince(client);
+        
+        // Get verification status
+        const isVerified = clientAPI.getVerificationStatus(client) === 'Verified';
+        
+        // Get location if available
+        const location = client.location ? 
+          `${client.location.city || ''}, ${client.location.country || ''}`.trim() : 
+          '';
+        
+        setShowLocationInput(!location);
+        
+        // Update project client information including the client ID
+        setProject(prevProject => ({
+          ...prevProject,
+          client: {
+            ...prevProject.client,
+            _id: client._id || clientId, // Use client._id from API or fall back to clientId from localStorage
+            name: client.companyName || prevProject.client.name,
+            memberSince: memberSinceFormatted,
+            verificationBadge: isVerified,
+            location: location,
+            avatar: client.profilePicture || '',
+            rating: clientAPI.getClientRating(client),
+            totalReviews: client.reviews ? client.reviews.length : 0
+          }
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching client data:", error);
+      setShowLocationInput(true);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -73,13 +152,18 @@ const PostProject = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
+      // Make sure the client ID is included in the project data
+      if (!project.client._id) {
+        throw new Error("Client ID is required");
+      }
+      
       // Use the jobAPI to create the job
-      const response =  jobAPI.createJob(project);
+      const response = await jobAPI.createJob(project);
       console.log("Project submitted:", response);
       setIsSubmitting(false);
       setSubmitSuccess(true);
@@ -112,23 +196,6 @@ const PostProject = () => {
         setProject({
           ...project,
           imageUrl: e.target.result
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProject({
-          ...project,
-          client: {
-            ...project.client,
-            avatar: e.target.result
-          }
         });
       };
       reader.readAsDataURL(file);
@@ -387,12 +454,12 @@ const PostProject = () => {
             </div>
           </div>
           
-          {/* Step 3: Client Info */}
+          {/* Step 3: Client Info - Modified to use localStorage and backend data */}
           <div className={`step-panel ${step === 3 ? 'active' : ''}`}>
             <div className="panel-content">
               <div className="input-section">
                 <h2>Client Information</h2>
-                <p>Please provide details about your company or organization.</p>
+                <p>Your company information is automatically filled from your profile.</p>
                 
                 <div className="form-group">
                   <label htmlFor="client.name">Company or Client Name</label>
@@ -401,23 +468,40 @@ const PostProject = () => {
                     id="client.name"
                     name="client.name"
                     value={project.client.name}
-                    onChange={handleChange}
-                    placeholder="Your company or name"
-                    required
+                    disabled={true}
+                    className="disabled-input"
                   />
                 </div>
                 
+                {/* Hidden field for client ID */}
+                <input 
+                  type="hidden" 
+                  name="client._id" 
+                  value={project.client._id} 
+                />
+                
                 <div className="form-group">
                   <label htmlFor="client.location">Location</label>
-                  <input
-                    type="text"
-                    id="client.location"
-                    name="client.location"
-                    value={project.client.location}
-                    onChange={handleChange}
-                    placeholder="City, Country"
-                    required
-                  />
+                  {showLocationInput ? (
+                    <input
+                      type="text"
+                      id="client.location"
+                      name="client.location"
+                      value={project.client.location}
+                      onChange={handleChange}
+                      placeholder="City, Country"
+                      required
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      id="client.location"
+                      name="client.location"
+                      value={project.client.location}
+                      disabled={true}
+                      className="disabled-input"
+                    />
+                  )}
                 </div>
                 
                 <div className="form-group">
@@ -427,52 +511,31 @@ const PostProject = () => {
                     id="client.memberSince"
                     name="client.memberSince"
                     value={project.client.memberSince}
-                    onChange={handleChange}
-                    placeholder="E.g., April 2025"
+                    disabled={true}
+                    className="disabled-input"
                   />
                 </div>
                 
                 <div className="form-group checkbox-group">
-                  <input
-                    type="checkbox"
-                    id="verificationBadge"
-                    name="client.verificationBadge"
-                    checked={project.client.verificationBadge}
-                    onChange={(e) => {
-                      setProject({
-                        ...project,
-                        client: {
-                          ...project.client,
-                          verificationBadge: e.target.checked
-                        }
-                      });
-                    }}
-                  />
-                  <label htmlFor="verificationBadge">Request Verification Badge</label>
+                  <label htmlFor="verificationBadge">
+                    {project.client.verificationBadge ? "Verified Account" : "Verification Pending"}
+                  </label>
                 </div>
               </div>
               
               <div className="preview-section">
-                <div className="client-avatar-upload">
-                  <label htmlFor="clientAvatar" className="avatar-upload-label">
-                    <div className="avatar-upload-area">
-                      {project.client.avatar ? (
-                        <img src={project.client.avatar} alt="Client Avatar" className="uploaded-avatar" />
-                      ) : (
-                        <>
-                          <Upload size={32} />
-                          <p>Upload Logo/Avatar</p>
-                        </>
-                      )}
+                <div className="client-avatar-display">
+                  {project.client.avatar ? (
+                    <div className="avatar-container">
+                      <img src={project.client.avatar} alt="Client Avatar" className="client-avatar-preview" />
+                      <p className="avatar-caption">Profile Photo</p>
                     </div>
-                  </label>
-                  <input
-                    type="file"
-                    id="clientAvatar"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="file-input"
-                  />
+                  ) : (
+                    <div className="no-avatar-container">
+                      <Upload size={32} />
+                      <p>No profile photo available</p>
+                    </div>
+                  )}
                 </div>
                 
                 {project.client.name && (
@@ -480,8 +543,10 @@ const PostProject = () => {
                     <h3>Client Preview</h3>
                     <div className="client-card">
                       <div className="client-header">
-                        {project.client.avatar && (
+                        {project.client.avatar ? (
                           <img src={project.client.avatar} alt="Client" className="client-avatar" />
+                        ) : (
+                          <div className="avatar-placeholder"></div>
                         )}
                         <div className="client-info">
                           <h4>{project.client.name}</h4>
@@ -495,6 +560,23 @@ const PostProject = () => {
                       </div>
                       {project.client.memberSince && (
                         <p className="member-since">Member since {project.client.memberSince}</p>
+                      )}
+                      {project.client.rating > 0 && (
+                        <div className="client-rating">
+                          <span className="rating-stars">
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <span 
+                                key={star} 
+                                className={`star ${star <= Math.round(project.client.rating) ? 'filled' : ''}`}
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </span>
+                          <span className="rating-text">
+                            {project.client.rating} ({project.client.totalReviews} reviews)
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -8,10 +8,10 @@ router.get('/', jobController.getAllJobs);
 router.get('/:id', jobController.getJobById);
 
 // Protected routes
-router.post('/', auth, jobController.createJob);
-router.put('/:id', auth, jobController.updateJob);
-router.delete('/:id', auth, jobController.deleteJob);
-router.post('/:id/apply', auth, jobController.applyToJob);
-router.put('/:jobId/applications/:applicationId', auth, jobController.updateApplicationStatus);
+router.post('/', jobController.createJob);
+router.put('/:id', jobController.updateJob);
+router.delete('/:id', jobController.deleteJob);
+router.post('/:id/apply', jobController.applyToJob);
+router.put('/:jobId/applications/:applicationId', jobController.updateApplicationStatus);
 
 module.exports = router;

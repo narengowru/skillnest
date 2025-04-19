@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const clientSchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Client',
+    required: true
+  },
   name: String,
   avatar: String,
   rating: Number,

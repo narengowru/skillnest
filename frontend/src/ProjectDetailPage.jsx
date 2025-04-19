@@ -1,45 +1,134 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import './ProjectDetailPage.css';
+import { jobAPI } from './api/api';
+import { orderAPI } from './api/api';
 
-const ProjectDetailPage = ({ project }) => {
+const ProjectDetailPage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [project, setProject] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showToast, setShowToast] = useState(false);
   
   useEffect(() => {
-    setIsLoaded(true);
-  }, []);
+    const fetchProjectDetails = async () => {
+      try {
+        setIsLoading(true);
+        const response = await jobAPI.getJob(id);
+        setProject(response.data);
+        setIsLoading(false);
+        setIsLoaded(true);
+      } catch (err) {
+        console.error('Error fetching project details:', err);
+        setError('Failed to load project details. Please try again later.');
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProjectDetails();
+    }
+  }, [id]);
   
-  const handleApply = () => {
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 5000);
+  const handleApply = async () => {
+    try {
+      // Check if user is logged in
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // Redirect to login if not logged in
+        navigate('/login', { state: { redirectTo: `/details/${id}` } });
+        return;
+      }
+      
+      // Get current user info from localStorage
+      const user = JSON.parse(localStorage.getItem('user'));
+      console.log(user);
+      
+      if (!user || !user.id) {
+        console.error('User information not found');
+        setError('User profile information not found. Please log in again.');
+        return;
+      }
+      
+      console.log('Creating order with user:', user);
+      console.log('Project details:', project);
+      
+      // Check if project.client exists
+      if (!project.client) {
+        console.error('Project client information is missing');
+        setError('Client information is missing. Cannot create order.');
+        return;
+      }
+      
+      // Create new order data
+      const orderData = {
+        jobId: project._id,  // Use project._id for jobId
+        clientId: project.client._id || project.client.id || "dummy-client-id", // Add fallback
+        freelancerId: user.id,
+        
+        // Essential details
+        title: project.title,
+        description: project.description || 'Application for project',
+        category: project.category || 'General',
+        
+        // Financial details - with fallbacks
+        amount: project.budget ? parseFloat(project.budget.replace(/[^0-9.]/g, '')) : 100,
+        currency: 'USD',
+        totalAmount: project.budget ? parseFloat(project.budget.replace(/[^0-9.]/g, '')) * 1.1 : 110,
+        
+        // Timeline - set to one month from now
+        dueDate: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)),
+        
+        // Include simple message
+        messages: [{
+          content: "I'm interested in working on your project",
+          sender: user.id,
+          senderModel: 'Freelancer'
+        }]
+      };
+      
+      // Log the complete order data for debugging
+      console.log('Submitting order data:', JSON.stringify(orderData, null, 2));
+      
+      // Call API to create order
+      console.log('Wait');
+      const response = await orderAPI.createOrder(orderData);
+      console.log('Order created successfully:', response.data);
+      
+      // Show success toast notification
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+      }, 5000);
+      
+    } catch (err) {
+      console.error('Error applying to job:', err);
+      
+      // More detailed error handling
+      if (err.response) {
+        console.log('Error response data:', err.response.data);
+        console.log('Error response status:', err.response.status);
+        
+        if (err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+        } else {
+          setError('Failed to submit application. Please try again.');
+        }
+      } else {
+        setError('Network error. Please check your connection and try again.');
+      }
+      
+      // Show error toast
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+      }, 5000);
+    }
   };
 
-  // If no project is provided, show a placeholder
-  const defaultProject = {
-    id: 1,
-    title: "E-commerce Website Redesign",
-    imageUrl: "https://i.pinimg.com/736x/1d/fe/0f/1dfe0f0f330ef4b5f234045d4d39b2c9.jpg",
-    datePosted: "April 15, 2025",
-    budget: "$2,500 - $3,500",
-    description: "Looking for an experienced web designer to redesign our e-commerce platform. The project includes updating the UI/UX, improving mobile responsiveness, and implementing new product filtering features. The ideal candidate will have experience with modern design principles and e-commerce best practices.",
-    skills: ["Web Design", "UI/UX", "Responsive Design", "E-commerce"],
-    client: {
-      name: "TechSolutions Inc.",
-      avatar: "https://i.pinimg.com/736x/15/34/92/153492d5cc36e23919920d27ab4b08cc.jpg",
-      rating: 4.8,
-      totalReviews: 47,
-      memberSince: "May 2022",
-      location: "San Francisco, CA",
-      verificationBadge: true
-    },
-    projectDuration: "2-3 months",
-    experienceLevel: "Intermediate to Expert",
-  };
-
-  const displayProject = project || defaultProject;
-  
   // Function to render star ratings
   const renderStars = (rating) => {
     const stars = [];
@@ -65,6 +154,41 @@ const ProjectDetailPage = ({ project }) => {
     return stars;
   };
 
+  // Format date from ISO to readable format
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loader"></div>
+        <p>Loading project details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Error</h2>
+        <p>{error}</p>
+        <button onClick={() => navigate('/jobs')}>Back to Jobs</button>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="not-found-container">
+        <h2>Project Not Found</h2>
+        <p>The project you're looking for doesn't exist or has been removed.</p>
+        <button onClick={() => navigate('/jobs')}>Browse Other Projects</button>
+      </div>
+    );
+  }
+
   return (
     <div className={`project-detail-container ${isLoaded ? 'fade-in' : ''}`}>
       {showToast && (
@@ -81,67 +205,75 @@ const ProjectDetailPage = ({ project }) => {
       <div className="project-detail-card animate-in">
         <div className="project-image-container">
           <img 
-            src={displayProject.imageUrl} 
-            alt={displayProject.title} 
+            src={project.imageUrl || '/default-project-image.jpg'} 
+            alt={project.title} 
             className="project-image hover-zoom"
           />
-          {/* Removed the image overlay with "View Gallery" text */}
         </div>
         
         <div className="project-info-container">
-          <h1 className="project-title">{displayProject.title}</h1>
+          <h1 className="project-title">{project.title}</h1>
           
           <div className="project-meta">
             <div className="meta-item">
               <span className="meta-label"><i className="icon calendar">📅</i> Posted:</span>
-              <span className="meta-value">{displayProject.datePosted}</span>
+              <span className="meta-value">{formatDate(project.datePosted)}</span>
             </div>
             
             <div className="meta-item">
               <span className="meta-label"><i className="icon money">💰</i> Budget:</span>
-              <span className="meta-value">{displayProject.budget}</span>
+              <span className="meta-value">{project.budget}</span>
             </div>
 
             <div className="meta-item">
               <span className="meta-label"><i className="icon time">⏱️</i> Duration:</span>
-              <span className="meta-value">{displayProject.projectDuration}</span>
+              <span className="meta-value">{project.projectDuration}</span>
+            </div>
+            
+            <div className="meta-item">
+              <span className="meta-label"><i className="icon category">🏷️</i> Category:</span>
+              <span className="meta-value">{project.category}</span>
             </div>
           </div>
           
           <div className="project-highlights">
-            
-            
             <div className="highlight-item pulse">
               <div className="highlight-icon">🏆</div>
               <div className="highlight-text">
-                <span className="highlight-value">{displayProject.experienceLevel}</span>
+                <span className="highlight-value">{project.experienceLevel}</span>
                 <span className="highlight-label">Experience</span>
+              </div>
+            </div>
+            
+            <div className="highlight-item pulse">
+              <div className="highlight-icon">📊</div>
+              <div className="highlight-text">
+                <span className="highlight-value">{project.status === 'open' ? 'Active' : project.status}</span>
+                <span className="highlight-label">Status</span>
               </div>
             </div>
           </div>
           
           <div className="project-description">
             <h2><i className="icon description">📝</i> Project Description</h2>
-            <p>{displayProject.description}</p>
+            <p>{project.description}</p>
           </div>
           
-          {displayProject.skills && displayProject.skills.length > 0 && (
+          {project.skills && project.skills.length > 0 && (
             <div className="project-skills">
               <h2><i className="icon skills">🔧</i> Skills Required</h2>
               <div className="skills-list">
-                {displayProject.skills.map((skill, index) => (
+                {project.skills.map((skill, index) => (
                   <span key={index} className="skill-tag animate-pop" style={{ color: 'white' }}>{skill}</span>
                 ))}
               </div>
             </div>
           )}
-          
-
         </div>
       </div>
       
       {/* Client Information Section */}
-      {displayProject.client && (
+      {project.client && (
         <div className="client-info-card animate-in" style={{animationDelay: "0.2s"}}>
           <h2 className="section-title"><i className="icon client">👤</i> Client Information</h2>
           
@@ -149,56 +281,57 @@ const ProjectDetailPage = ({ project }) => {
             <div className="client-avatar-container">
               <div className="client-avatar">
                 <img 
-                  src={displayProject.client.avatar} 
-                  alt={`${displayProject.client.name} avatar`} 
+                  src={project.client.avatar || '/default-avatar.jpg'} 
+                  alt={`${project.client.name} avatar`} 
                 />
               </div>
-              {displayProject.client.verificationBadge && (
+              {project.client.verificationBadge && (
                 <div className="verification-badge rotate-in" title="Verified Client">✓</div>
               )}
             </div>
             
             <div className="client-details">
               <h3 className="client-name">
-                {displayProject.client.name}
+                {project.client.name}
               </h3>
               
               <div className="client-rating animate-sparkle">
                 <div className="stars">
-                  {renderStars(displayProject.client.rating)}
+                  {renderStars(project.client.rating)}
                 </div>
                 <span className="rating-text">
-                  {displayProject.client.rating.toFixed(1)} 
-                  <span className="reviews-count">({displayProject.client.totalReviews} reviews)</span>
+                  {project.client.rating.toFixed(1)} 
+                  <span className="reviews-count">({project.client.totalReviews} reviews)</span>
                 </span>
               </div>
               
               <div className="client-meta">
-                {displayProject.client.memberSince && (
+                {project.client.memberSince && (
                   <div className="client-meta-item">
                     <span className="meta-icon">🗓️</span>
                     <span className="meta-label">Member since:</span>
-                    <span className="meta-value">{displayProject.client.memberSince}</span>
+                    <span className="meta-value">{project.client.memberSince}</span>
                   </div>
                 )}
                 
-                {displayProject.client.location && (
+                {project.client.location && (
                   <div className="client-meta-item">
                     <span className="meta-icon">📍</span>
                     <span className="meta-label">Location:</span>
-                    <span className="meta-value">{displayProject.client.location}</span>
+                    <span className="meta-value">{project.client.location}</span>
                   </div>
                 )}
               </div>
             </div>
           </div>
-          
         </div>
       )}
       
-      <div className="apply-float-button">
-        <button className="float-btn pulse-button" onClick={handleApply}>Apply Now</button>
-      </div>
+      {project.status === 'open' && (
+        <div className="apply-float-button">
+          <button className="float-btn pulse-button" onClick={handleApply}>Apply Now</button>
+        </div>
+      )}
     </div>
   );
 };

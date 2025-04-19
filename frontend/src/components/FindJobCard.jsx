@@ -1,20 +1,28 @@
 import React from 'react';
 import './FindJobCard.css';
+import { useNavigate } from 'react-router-dom';
 
 const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  return date.toDateString(); // Example: "Mon Jan 29 2024"
+  const dateParts = dateString.split('-'); // Assuming DD-MM-YY
+  const formattedDate = new Date(`20${dateParts[2]}`, dateParts[1] - 1, dateParts[0]);
+  return formattedDate.toDateString(); // Example: "Mon Jan 29 2024"
 };
 
 const FindJobCard = ({ 
+  id,
   image, 
   category, 
   postedDate,  // Expected in DD-MM-YY format
   description
 }) => {
-  console.log(postedDate);
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/details/${id}`);
+  };
+
   return (
-    <div className="find-job-card">
+    <div className="find-job-card" onClick={handleClick} style={{ cursor: 'pointer' }}>
       <div className="find-job-card-image-container">
         <img 
           src={image} 

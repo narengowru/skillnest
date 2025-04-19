@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -18,6 +17,11 @@ mongoose.connect(process.env.MONGODB_URI)
 // Routes
 app.use('/api/freelancers', require('./routes/freelancers'));
 app.use('/api/jobs', require('./routes/jobs'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/clients', require('./routes/clients'));
+
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
 
 // Basic route
 app.get('/api', (req, res) => {
