@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { clientAPI } from './api/api';
+import { clientAPI, jobAPI } from './api/api';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { User, Star, Calendar, MapPin, Phone, Globe, Linkedin, Twitter, CreditCard, Paypal, Building, FileText, CheckCircle, X, Edit, ChevronDown, ChevronUp, Clock, DollarSign, MessageCircle } from 'lucide-react';
+import { User, Star, Calendar, MapPin, Phone, Globe, Linkedin, Twitter, CreditCard, Building, FileText, CheckCircle, X, Edit, ChevronDown, ChevronUp, Clock, DollarSign, MessageCircle, Save } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './ClientDashboard.css';
 import { motion } from 'framer-motion';
+import ProjectsSection from './components/ProjectsSection';
+import ClientOrdersDashboard from './components/ClientOrdersDashboard';
 
 const ClientDashboard = () => {
+  const navigate = useNavigate();
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,8 +18,28 @@ const ClientDashboard = () => {
     profile: true,
     orders: true,
     reviews: true,
-    payments: true
   });
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    companyName: '',
+    email: '',
+    location: {
+      country: '',
+      city: ''
+    },
+    bio: '',
+    contactInfo: {
+      phone: '',
+      website: '',
+      socialMedia: {
+        linkedin: '',
+        twitter: ''
+      }
+    }
+  });
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
 
   // Colors for charts
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -46,6 +70,26 @@ const ClientDashboard = () => {
         // Get full client details with the ID
         const clientDetailsResponse = await clientAPI.getClient(matchingClient._id);
         setClient(clientDetailsResponse.data);
+        
+        // Initialize form data with client data
+        setFormData({
+          companyName: clientDetailsResponse.data.companyName,
+          email: clientDetailsResponse.data.email,
+          location: {
+            country: clientDetailsResponse.data.location?.country || '',
+            city: clientDetailsResponse.data.location?.city || ''
+          },
+          bio: clientDetailsResponse.data.bio || '',
+          contactInfo: {
+            phone: clientDetailsResponse.data.contactInfo?.phone || '',
+            website: clientDetailsResponse.data.contactInfo?.website || '',
+            socialMedia: {
+              linkedin: clientDetailsResponse.data.contactInfo?.socialMedia?.linkedin || '',
+              twitter: clientDetailsResponse.data.contactInfo?.socialMedia?.twitter || ''
+            }
+          }
+        });
+        
         setLoading(false);
       } catch (err) {
         console.error('Error fetching client data:', err);
@@ -80,7 +124,142 @@ const ClientDashboard = () => {
     }
   };
 
-  // Generate random data for demonstration purposes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Handle nested properties
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setFormData({
+        ...formData,
+        [parent]: {
+          ...formData[parent],
+          [child]: value
+        }
+      });
+    } else if (name.includes('socialMedia.')) {
+      const [, social] = name.split('socialMedia.');
+      setFormData({
+        ...formData,
+        contactInfo: {
+          ...formData.contactInfo,
+          socialMedia: {
+            ...formData.contactInfo.socialMedia,
+            [social]: value
+          }
+        }
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
+  };
+
+  const toggleEdit = () => {
+    setEditing(!editing);
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      // Ensure we have client ID
+      if (!client || !client._id) {
+        throw new Error('Client ID not found');
+      }
+      
+      // Update client using the API
+      await clientAPI.updateClient(client._id, formData);
+      
+      // Update local client state
+      setClient({
+        ...client,
+        ...formData
+      });
+      
+      // Turn off edit mode
+      setEditing(false);
+      
+      // Show success toast
+      showToastMessage('Profile updated successfully!', 'success');
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      showToastMessage('Failed to update profile. Please try again.', 'error');
+    }
+  };
+
+  const handleVerify = async () => {
+    try {
+      // Ensure we have client ID
+      if (!client || !client._id) {
+        throw new Error('Client ID not found');
+      }
+      
+      // Update client verification status
+      await clientAPI.updateClient(client._id, { verified: true });
+      
+      // Update local client state
+      setClient({
+        ...client,
+        verified: true
+      });
+      
+      // Show success toast
+      showToastMessage('Account verified successfully!', 'success');
+    } catch (err) {
+      console.error('Error verifying account:', err);
+      showToastMessage('Failed to verify account. Please try again.', 'error');
+    }
+  };
+
+  const showToastMessage = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+    
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000);
+  };
+
+  const handlePostJob = () => {
+    navigate('/post-project');
+  };
+
+  const handleChatClick = () => {
+    alert('Chat feature coming soon!');
+  };
+
+  // Calculate dashboard overview stats from client orders
+  const calculateDashboardStats = () => {
+    if (!client || !client.orders) {
+      return {
+        activeOrders: 0,
+        totalSpent: 0,
+        memberDuration: 0
+      };
+    }
+    
+    const activeOrders = client.orders.filter(order => 
+      ['in_progress', 'pending'].includes(order.status)
+    ).length;
+    
+    const totalSpent = client.orders
+      .filter(order => order.status === 'completed')
+      .reduce((total, order) => total + (order.amount || 0), 0);
+    
+    const memberSince = new Date(client.memberSince || Date.now());
+    const memberDuration = Math.floor((new Date() - memberSince) / (1000 * 60 * 60 * 24 * 30));
+    
+    return {
+      activeOrders,
+      totalSpent,
+      memberDuration
+    };
+  };
+
+  // Generate order status data for charts
   const generateOrderStatusData = () => {
     if (!client || !client.orders) return [];
     
@@ -97,24 +276,13 @@ const ClientDashboard = () => {
         statusCounts[status]++;
       }
     });
+
     
     // Convert to chart format
     return Object.keys(statusCounts).map(status => ({
       name: status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
       value: statusCounts[status]
     }));
-  };
-
-  const generateMonthlySpendingData = () => {
-    // This would normally come from real data
-    return [
-      { name: 'Jan', amount: 4000 },
-      { name: 'Feb', amount: 3000 },
-      { name: 'Mar', amount: 2000 },
-      { name: 'Apr', amount: 2780 },
-      { name: 'May', amount: 1890 },
-      { name: 'Jun', amount: 2390 }
-    ];
   };
 
   if (loading) {
@@ -148,11 +316,24 @@ const ClientDashboard = () => {
     );
   }
 
+  const { activeOrders, totalSpent, memberDuration } = calculateDashboardStats();
   const orderStatusData = generateOrderStatusData();
-  const monthlySpendingData = generateMonthlySpendingData();
 
   return (
     <div className="client-dashboard">
+      {/* Toast Notification */}
+      {showToast && (
+        <div className={`toast-notification ${toastType}`}>
+          <div className="toast-icon">
+            {toastType === 'success' ? <CheckCircle size={20} /> : <X size={20} />}
+          </div>
+          <div className="toast-message">{toastMessage}</div>
+          <button className="toast-close" onClick={() => setShowToast(false)}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
+      
       {/* Dashboard Header */}
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
@@ -182,9 +363,12 @@ const ClientDashboard = () => {
           </div>
         </div>
         <div className="quick-actions">
-          <button className="action-button"><Edit size={16} /> Edit Profile</button>
-          <button className="action-button"><FileText size={16} /> Post New Job</button>
-          <button className="action-button notification-button">
+          <button className="action-button" onClick={() => {
+            handleMenuClick('profile');
+            setTimeout(() => setEditing(true), 500);
+          }}><Edit size={16} /> Edit Profile</button>
+          <button className="action-button" onClick={handlePostJob}><FileText size={16} /> Post New Job</button>
+          <button className="action-button notification-button" onClick={handleChatClick}>
             <MessageCircle size={16} />
             <span className="notification-badge">3</span>
           </button>
@@ -207,9 +391,6 @@ const ClientDashboard = () => {
           </li>
           <li className={activeSection === 'reviews' ? 'active' : ''}>
             <button onClick={() => handleMenuClick('reviews')}>Reviews</button>
-          </li>
-          <li className={activeSection === 'payments' ? 'active' : ''}>
-            <button onClick={() => handleMenuClick('payments')}>Payment Methods</button>
           </li>
           <li className={activeSection === 'profile' ? 'active' : ''}>
             <button onClick={() => handleMenuClick('profile')}>Profile Settings</button>
@@ -236,7 +417,7 @@ const ClientDashboard = () => {
               </div>
               <div className="stat-info">
                 <h3>Active Orders</h3>
-                <p className="stat-value">{client.orders?.length || 0}</p>
+                <p className="stat-value">{activeOrders}</p>
               </div>
             </div>
             
@@ -256,7 +437,7 @@ const ClientDashboard = () => {
               </div>
               <div className="stat-info">
                 <h3>Member Duration</h3>
-                <p className="stat-value">{Math.floor((new Date() - new Date(client.memberSince)) / (1000 * 60 * 60 * 24 * 30))} months</p>
+                <p className="stat-value">{memberDuration} months</p>
               </div>
             </div>
             
@@ -266,105 +447,21 @@ const ClientDashboard = () => {
               </div>
               <div className="stat-info">
                 <h3>Total Spent</h3>
-                <p className="stat-value">$12,450</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="chart-grid">
-            <div className="chart-card">
-              <h3>Order Status <span className="emoji">📈</span></h3>
-              <div className="chart-container">
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={orderStatusData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {orderStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            
-            <div className="chart-card">
-              <h3>Monthly Spending <span className="emoji">💰</span></h3>
-              <div className="chart-container">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlySpendingData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="amount" name="Amount Spent ($)" fill="#0088FE" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <p className="stat-value">${totalSpent.toFixed(2)}</p>
               </div>
             </div>
           </div>
         </motion.section>
 
         {/* Orders Section */}
-        <motion.section 
-          id="orders"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="dashboard-section"
-        >
-          <div className="section-header" onClick={() => toggleSection('orders')}>
-            <h2>Orders & Projects <span className="emoji">📋</span></h2>
-            <button className="toggle-button">
-              {expandedSections.orders ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            </button>
-          </div>
-          
-          {expandedSections.orders && (
-            <div className="order-list">
-              {client.orders && client.orders.length > 0 ? (
-                client.orders.map((order, index) => (
-                  <div className="order-card" key={order._id || index}>
-                    <div className="order-header">
-                      <h3>Order #{order._id?.substring(0, 8) || `DEMO${index + 1}`}</h3>
-                      <span className={`order-status status-${order.status || 'pending'}`}>
-                        {order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || 'Pending'}
-                      </span>
-                    </div>
-                    <div className="order-details">
-                      <p><strong>Freelancer:</strong> {order.freelancerName || 'John Doe'}</p>
-                      <p><strong>Service:</strong> {order.serviceName || 'Web Development'}</p>
-                      <p><strong>Due Date:</strong> {new Date(order.dueDate || Date.now()).toLocaleDateString()}</p>
-                      <p><strong>Amount:</strong> ${order.amount || (1000 + index * 500).toFixed(2)}</p>
-                    </div>
-                    <div className="order-actions">
-                      <button className="action-button">View Details</button>
-                      <button className="action-button">Message Freelancer</button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state">
-                  <FileText size={48} />
-                  <h3>No Orders Yet</h3>
-                  <p>You haven't placed any orders yet. Ready to start a project?</p>
-                  <button className="primary-button">Post a New Job</button>
-                </div>
-              )}
-            </div>
-          )}
-        </motion.section>
+        <ProjectsSection 
+        client={client} 
+        handlePostJob={handlePostJob} 
+      />
+        
+        <ClientOrdersDashboard
+        client={client}
+        />
 
         {/* Reviews Section */}
         <motion.section 
@@ -422,67 +519,6 @@ const ClientDashboard = () => {
           )}
         </motion.section>
 
-        {/* Payment Methods Section */}
-        <motion.section 
-          id="payments"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="dashboard-section"
-        >
-          <div className="section-header" onClick={() => toggleSection('payments')}>
-            <h2>Payment Methods <span className="emoji">💳</span></h2>
-            <button className="toggle-button">
-              {expandedSections.payments ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            </button>
-          </div>
-          
-          {expandedSections.payments && (
-            <div className="payment-methods">
-              {client.paymentMethods && client.paymentMethods.length > 0 ? (
-                client.paymentMethods.map((method, index) => (
-                  <div className="payment-card" key={index}>
-                    <div className="payment-icon">
-                      {method.type === 'credit_card' && <CreditCard size={24} />}
-                      {method.type === 'paypal' && <Paypal size={24} />}
-                      {method.type === 'bank_transfer' && <Building size={24} />}
-                    </div>
-                    <div className="payment-details">
-                      <h3>
-                        {method.type === 'credit_card' && 'Credit Card'}
-                        {method.type === 'paypal' && 'PayPal'}
-                        {method.type === 'bank_transfer' && 'Bank Transfer'}
-                        {method.isDefault && <span className="default-badge">Default</span>}
-                      </h3>
-                      {method.last4Digits && (
-                        <p>•••• •••• •••• {method.last4Digits}</p>
-                      )}
-                      {method.expiryDate && (
-                        <p>Expires: {method.expiryDate}</p>
-                      )}
-                    </div>
-                    <div className="payment-actions">
-                      <button className="action-button">Edit</button>
-                      <button className="action-button danger">Remove</button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state">
-                  <CreditCard size={48} />
-                  <h3>No Payment Methods</h3>
-                  <p>You haven't added any payment methods yet. Add one to start hiring freelancers.</p>
-                  <button className="primary-button">Add Payment Method</button>
-                </div>
-              )}
-
-              <button className="add-payment-button">
-                <span>+ Add New Payment Method</span>
-              </button>
-            </div>
-          )}
-        </motion.section>
-
         {/* Profile Settings Section */}
         <motion.section 
           id="profile"
@@ -503,29 +539,73 @@ const ClientDashboard = () => {
               <div className="profile-form">
                 <div className="form-group">
                   <label>Company Name</label>
-                  <input type="text" value={client.companyName} readOnly />
+                  {editing ? (
+                    <input 
+                      type="text" 
+                      name="companyName" 
+                      value={formData.companyName} 
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <input type="text" value={client.companyName} readOnly />
+                  )}
                 </div>
                 
                 <div className="form-group">
                   <label>Email Address</label>
-                  <input type="email" value={client.email} readOnly />
+                  {editing ? (
+                    <input 
+                      type="email" 
+                      name="email" 
+                      value={formData.email} 
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <input type="email" value={client.email} readOnly />
+                  )}
                 </div>
                 
                 <div className="form-row">
                   <div className="form-group">
                     <label>Country</label>
-                    <input type="text" value={client.location?.country || ''} readOnly />
+                    {editing ? (
+                      <input 
+                        type="text" 
+                        name="location.country" 
+                        value={formData.location.country} 
+                        onChange={handleInputChange}
+                      />
+                    ) : (
+                      <input type="text" value={client.location?.country || ''} readOnly />
+                    )}
                   </div>
                   
                   <div className="form-group">
                     <label>City</label>
-                    <input type="text" value={client.location?.city || ''} readOnly />
+                    {editing ? (
+                      <input 
+                        type="text" 
+                        name="location.city" 
+                        value={formData.location.city} 
+                        onChange={handleInputChange}
+                      />
+                    ) : (
+                      <input type="text" value={client.location?.city || ''} readOnly />
+                    )}
                   </div>
                 </div>
                 
                 <div className="form-group">
                   <label>Bio / Company Description</label>
-                  <textarea readOnly value={client.bio || 'No bio provided yet.'} />
+                  {editing ? (
+                    <textarea 
+                      name="bio" 
+                      value={formData.bio} 
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <textarea readOnly value={client.bio || 'No bio provided yet.'} />
+                  )}
                 </div>
                 
                 <div className="form-group">
@@ -533,25 +613,73 @@ const ClientDashboard = () => {
                   <div className="contact-info">
                     <div className="contact-item">
                       <Phone size={16} />
-                      <span>{client.contactInfo?.phone || 'Not provided'}</span>
+                      {editing ? (
+                        <input 
+                          type="text" 
+                          name="contactInfo.phone" 
+                          value={formData.contactInfo.phone} 
+                          onChange={handleInputChange}
+                          placeholder="Phone number"
+                        />
+                      ) : (
+                        <span>{client.contactInfo?.phone || 'Not provided'}</span>
+                      )}
                     </div>
                     <div className="contact-item">
                       <Globe size={16} />
-                      <span>{client.contactInfo?.website || 'Not provided'}</span>
+                      {editing ? (
+                        <input 
+                          type="text" 
+                          name="contactInfo.website" 
+                          value={formData.contactInfo.website} 
+                          onChange={handleInputChange}
+                          placeholder="Website URL"
+                        />
+                      ) : (
+                        <span>{client.contactInfo?.website || 'Not provided'}</span>
+                      )}
                     </div>
                     <div className="contact-item">
                       <Linkedin size={16} />
-                      <span>{client.contactInfo?.socialMedia?.linkedin || 'Not linked'}</span>
+                      {editing ? (
+                        <input 
+                          type="text" 
+                          name="socialMedia.linkedin" 
+                          value={formData.contactInfo.socialMedia.linkedin} 
+                          onChange={handleInputChange}
+                          placeholder="LinkedIn profile"
+                        />
+                      ) : (
+                        <span>{client.contactInfo?.socialMedia?.linkedin || 'Not linked'}</span>
+                      )}
                     </div>
                     <div className="contact-item">
                       <Twitter size={16} />
-                      <span>{client.contactInfo?.socialMedia?.twitter || 'Not linked'}</span>
+                      {editing ? (
+                        <input 
+                          type="text" 
+                          name="socialMedia.twitter" 
+                          value={formData.contactInfo.socialMedia.twitter} 
+                          onChange={handleInputChange}
+                          placeholder="Twitter profile"
+                        />
+                      ) : (
+                        <span>{client.contactInfo?.socialMedia?.twitter || 'Not linked'}</span>
+                      )}
                     </div>
                   </div>
                 </div>
                 
                 <div className="form-actions">
-                  <button className="primary-button">Edit Profile</button>
+                  {editing ? (
+                    <button className="primary-button save-button" onClick={handleSaveChanges}>
+                      <Save size={16} /> Save Changes
+                    </button>
+                  ) : (
+                    <button className="primary-button" onClick={toggleEdit}>
+                      <Edit size={16} /> Edit Profile
+                    </button>
+                  )}
                   <button className="secondary-button">Change Password</button>
                 </div>
               </div>
@@ -585,7 +713,7 @@ const ClientDashboard = () => {
                     )}
                   </div>
                   {!client.verified && (
-                    <button className="verify-button">Verify Now</button>
+                    <button className="verify-button" onClick={handleVerify}>Verify Now</button>
                   )}
                 </div>
               </div>

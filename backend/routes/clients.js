@@ -28,24 +28,23 @@ router.post('/login', clientController.loginClient);
 // @route   GET api/clients/dashboard
 // @desc    Get client dashboard data
 // @access  Private
-router.get('/dashboard', auth, clientController.getDashboard);
+router.get('/dashboard', clientController.getDashboard);
 
 // @route   PUT api/clients/:id
 // @desc    Update client profile
 // @access  Private
-router.put('/:id', auth, clientController.updateClient);
+router.put('/:id', clientController.updateClient);
 
 // @route   DELETE api/clients/:id
 // @desc    Delete client
 // @access  Private
-router.delete('/:id', auth, clientController.deleteClient);
+router.delete('/:id', clientController.deleteClient);
 
 // @route   POST api/clients/upload-profile-picture
 // @desc    Upload profile picture
 // @access  Private
 router.post(
   '/upload-profile-picture',
-  auth,
   upload.single('profilePicture'),
   clientController.uploadProfilePicture
 );
@@ -53,6 +52,6 @@ router.post(
 // @route   POST api/clients/review
 // @desc    Add a review for a freelancer
 // @access  Private
-router.post('/review', auth, clientController.addReview);
+router.post('/review', clientController.addReview);
 
 module.exports = router;

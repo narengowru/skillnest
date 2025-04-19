@@ -66,16 +66,38 @@ const clientSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Order'
   }],
+  // Added jobs field to link to Job schema
+  jobs: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Job'
+  }],
   bio: {
     type: String,
     default: ''
   },
   contactInfo: {
-    phone: String,
-    website: String,
+    phone: {
+      type: String,
+      default: ''
+    },
+    website: {
+      type: String,
+      default: ''
+    },
+    // Added github and linkedin to contact info
+    github: {
+      type: String,
+      default: ''
+    },
+    linkedin: {
+      type: String,
+      default: ''
+    },
     socialMedia: {
-      linkedin: String,
-      twitter: String
+      twitter: {
+        type: String,
+        default: ''
+      }
     }
   },
   paymentMethods: [{

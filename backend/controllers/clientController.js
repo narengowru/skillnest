@@ -17,7 +17,8 @@ exports.getClientById = async (req, res) => {
   try {
     const client = await Client.findById(req.params.id)
       .select('-password')
-      .populate('orders');
+      .populate('orders')
+      .populate('jobs'); // Added population of jobs
     
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
@@ -35,7 +36,7 @@ exports.getClientById = async (req, res) => {
 
 // Register new client
 exports.registerClient = async (req, res) => {
-  const { email, password, companyName, location } = req.body;
+  const { email, password, companyName, location, contactInfo } = req.body;
 
   try {
     // Check if client already exists
@@ -49,7 +50,8 @@ exports.registerClient = async (req, res) => {
       email,
       password,
       companyName,
-      location
+      location,
+      contactInfo
     });
 
     await client.save();
@@ -119,14 +121,6 @@ exports.loginClient = async (req, res) => {
 
 // Update client profile
 exports.updateClient = async (req, res) => {
-  const { companyName, bio, location, contactInfo } = req.body;
-  const clientFields = {};
-  
-  if (companyName) clientFields.companyName = companyName;
-  if (bio) clientFields.bio = bio;
-  if (location) clientFields.location = location;
-  if (contactInfo) clientFields.contactInfo = contactInfo;
-
   try {
     let client = await Client.findById(req.params.id);
     
@@ -134,11 +128,38 @@ exports.updateClient = async (req, res) => {
       return res.status(404).json({ message: 'Client not found' });
     }
 
-    // Ensure client can only update their own profile
-    if (client._id.toString() !== req.client.id) {
-      return res.status(401).json({ message: 'Not authorized' });
+    // Create an object with fields to update
+    const clientFields = {};
+    
+    // Handle standard fields
+    const { companyName, bio, location, contactInfo, verified, profilePicture, jobs } = req.body;
+    
+    if (companyName !== undefined) clientFields.companyName = companyName;
+    if (bio !== undefined) clientFields.bio = bio;
+    if (location !== undefined) clientFields.location = location;
+    if (contactInfo !== undefined) clientFields.contactInfo = contactInfo;
+    if (verified !== undefined) clientFields.verified = verified;
+    if (profilePicture !== undefined) clientFields.profilePicture = profilePicture;
+    
+    // Handle jobs array - allow updating the entire array or pushing to it
+    if (jobs !== undefined) {
+      if (Array.isArray(jobs)) {
+        // If jobs is provided as an array, replace the entire array
+        clientFields.jobs = jobs;
+      } else {
+        // If jobs is a single ID, push it to the existing array
+        client = await Client.findByIdAndUpdate(
+          req.params.id,
+          { $push: { jobs: jobs } },
+          { new: true }
+        ).select('-password');
+        
+        // Return early since we've already updated
+        return res.json(client);
+      }
     }
 
+    // Update client with all fields at once
     client = await Client.findByIdAndUpdate(
       req.params.id,
       { $set: clientFields },
@@ -161,11 +182,6 @@ exports.deleteClient = async (req, res) => {
       return res.status(404).json({ message: 'Client not found' });
     }
 
-    // Ensure client can only delete their own account
-    if (client._id.toString() !== req.client.id) {
-      return res.status(401).json({ message: 'Not authorized' });
-    }
-
     await Client.findByIdAndRemove(req.params.id);
     res.json({ message: 'Client removed' });
   } catch (error) {
@@ -177,7 +193,7 @@ exports.deleteClient = async (req, res) => {
 // Upload profile picture
 exports.uploadProfilePicture = async (req, res) => {
   try {
-    const client = await Client.findById(req.client.id);
+    const client = await Client.findById(req.params.id);
     
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
@@ -204,7 +220,7 @@ exports.addReview = async (req, res) => {
   try {
     const { freelancerId, rating, comment } = req.body;
     
-    const client = await Client.findById(req.client.id);
+    const client = await Client.findById(req.params.id);
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
     }
@@ -225,18 +241,70 @@ exports.addReview = async (req, res) => {
   }
 };
 
-// Get client dashboard data (orders, reviews, etc.)
+// Get client dashboard data (orders, reviews, jobs, etc.)
 exports.getDashboard = async (req, res) => {
   try {
-    const client = await Client.findById(req.client.id)
+    const client = await Client.findById(req.params.id)
       .select('-password')
-      .populate('orders');
+      .populate('orders')
+      .populate('jobs'); // Added population of jobs
 
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
     }
 
     res.json(client);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add a job to client
+exports.addJob = async (req, res) => {
+  try {
+    const { jobId } = req.body;
+    
+    const client = await Client.findById(req.params.id);
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+
+    // Check if job already exists in client's jobs array
+    if (client.jobs.includes(jobId)) {
+      return res.status(400).json({ message: 'Job already added to client' });
+    }
+
+    client.jobs.push(jobId);
+    await client.save();
+
+    res.json(client.jobs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Remove a job from client
+exports.removeJob = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    
+    const client = await Client.findById(req.params.id);
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+
+    // Check if job exists in client's jobs array
+    const jobIndex = client.jobs.indexOf(jobId);
+    if (jobIndex === -1) {
+      return res.status(400).json({ message: 'Job not found in client' });
+    }
+
+    client.jobs.splice(jobIndex, 1);
+    await client.save();
+
+    res.json(client.jobs);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

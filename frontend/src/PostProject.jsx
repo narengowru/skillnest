@@ -25,6 +25,7 @@ const PostProject = () => {
       _id: '', // Added client ID field
       name: '',
       avatar: '',
+      jobs:  [],
       rating: 0,
       totalReviews: 0,
       memberSince: '',
@@ -99,7 +100,8 @@ const PostProject = () => {
             location: location,
             avatar: client.profilePicture || '',
             rating: clientAPI.getClientRating(client),
-            totalReviews: client.reviews ? client.reviews.length : 0
+            totalReviews: client.reviews ? client.reviews.length : 0,
+            jobs: client.jobs || [] // Get existing jobs array
           }
         }));
       }
@@ -155,27 +157,43 @@ const PostProject = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+  
     try {
-      // Make sure the client ID is included in the project data
       if (!project.client._id) {
         throw new Error("Client ID is required");
       }
-      
-      // Use the jobAPI to create the job
+  
       const response = await jobAPI.createJob(project);
-      console.log("Project submitted:", response);
+      console.log("Project submitted:", response.data);
+  
+      // Extract the job ID
+      const jobId = response.data._id;
+      console.log("Created Job ID:", jobId);
+  
+      // Update the client by adding the job ID to their jobs array
+      const clientId = project.client._id;
+      
+      // Fetch the most up-to-date client data before updating
+      const clientResponse = await clientAPI.getClient(clientId);
+      const currentClientData = clientResponse.data;
+      const currentJobs = currentClientData.jobs || [];
+      
+      // Add the new job ID to the client's jobs array
+      await clientAPI.updateClient(clientId, {
+        jobs: [...currentJobs, jobId]
+      });
+      console.log("Updated client with job ID:", jobId);
+  
       setIsSubmitting(false);
       setSubmitSuccess(true);
-      
-      // Reset success message after 3 seconds
+  
       setTimeout(() => {
         setSubmitSuccess(false);
+        // Optional: Redirect or reset form after success
       }, 3000);
     } catch (error) {
       console.error("Error submitting project:", error);
       setIsSubmitting(false);
-      // You might want to add error handling state and UI
     }
   };
 

@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Job = require('../models/Job');
 const Freelancer = require('../models/Freelancer');
+const Client = require('../models/Client');
 const mongoose = require('mongoose');
 
 // Helper function to check order ownership
@@ -66,6 +67,12 @@ exports.createOrder = async (req, res) => {
       return res.status(404).json({ message: 'Freelancer not found' });
     }
     
+    // Check if client exists
+    const client = await Client.findById(clientId || (req.user ? req.user.id : null));
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+    
     // Calculate service fee (e.g., 10% of the amount) if totalAmount not provided
     const serviceFee = Math.round(amount * 0.1 * 100) / 100;
     const finalTotalAmount = totalAmount || (amount + serviceFee);
@@ -125,6 +132,14 @@ exports.createOrder = async (req, res) => {
             date: new Date().toISOString().split('T')[0]
           }
         }
+      }
+    );
+    
+    // Add order reference to client's profile
+    await Client.findByIdAndUpdate(
+      clientId || (req.user ? req.user.id : null),
+      {
+        $push: { orders: order._id }
       }
     );
     
@@ -199,65 +214,42 @@ exports.getAllOrders = async (req, res) => {
 
 // Get specific order by ID
 exports.getOrderById = async (req, res) => {
+  const { id } = req.params;
+
   try {
-    const { order, error, status } = await checkOrderAccess(req.params.id, req.user.id);
-    
-    if (error) {
-      return res.status(status).json({ message: error });
+    const order = await Order.findById(id)
+    .populate('clientId')
+    .populate('freelancerId')
+    .populate('jobId')
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
     }
-    
-    // Populate freelancer and client info
-    await Order.populate(order, [
-      { path: 'freelancerId', select: 'name profilePhoto email phone' },
-      { path: 'clientId', select: 'name email' },
-      { path: 'jobId', select: 'title description' }
-    ]);
-    
     res.status(200).json(order);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching order:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-};
+}
 
 // Update order
 exports.updateOrder = async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+
   try {
-    const { order, error, status } = await checkOrderAccess(req.params.id, req.user.id);
-    
-    if (error) {
-      return res.status(status).json({ message: error });
-    }
-    
-    // Only allow updating certain fields
-    const allowedUpdates = [
-      'title', 'description', 'deliverables', 'dueDate', 'terms'
-    ];
-    
-    // Filter out non-allowed fields
-    const updates = Object.keys(req.body)
-      .filter(key => allowedUpdates.includes(key))
-      .reduce((obj, key) => {
-        obj[key] = req.body[key];
-        return obj;
-      }, {});
-    
-    // Check if order is in a state that allows updates
-    if (!['created', 'in-progress'].includes(order.status)) {
-      return res.status(400).json({ 
-        message: 'Order cannot be updated in its current state' 
-      });
-    }
-    
-    // Apply updates
-    Object.assign(order, updates);
-    await order.save();
-    
-    res.status(200).json({ 
-      message: 'Order updated successfully',
-      order 
+    const updatedOrder = await Order.findByIdAndUpdate(id, updateData, {
+      new: true, // return the updated document
+      runValidators: true, // ensures schema validations
     });
+
+    if (!updatedOrder) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    res.status(200).json(updatedOrder);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error updating order:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
