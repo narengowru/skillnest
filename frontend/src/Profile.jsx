@@ -24,6 +24,7 @@ const Profile = ({ freelancerId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hourlyRateEditMode, setHourlyRateEditMode] = useState(false);
+  const [completedJobsCount, setCompletedJobsCount] = useState(0);
 
   const showToast2 = (message, type) => {
     // This is where you would call your toast notification system
@@ -99,18 +100,33 @@ const Profile = ({ freelancerId }) => {
           
           if (freelancerOrders.length > 0) {
             setOrders(freelancerOrders);
+            // Count completed jobs
+            const completedJobs = freelancerOrders.filter(order => 
+              order.status === 'completed'
+            ).length;
+            setCompletedJobsCount(completedJobs);
           } else {
             // If API doesn't return orders, keep the static data for demo
             setOrders(freelancer.orders || []);
+            // Count completed jobs from static data
+            const completedJobs = (freelancer.orders || []).filter(order => 
+              order.status === 'completed'
+            ).length;
+            setCompletedJobsCount(completedJobs);
           }
         } catch (error) {
           console.error("Error fetching orders:", error);
           // Fallback to static data in case of error
           setOrders(freelancer.orders || []);
+          // Count completed jobs from static data
+          const completedJobs = (freelancer.orders || []).filter(order => 
+            order.status === 'completed'
+          ).length;
+          setCompletedJobsCount(completedJobs);
         }
       }
     };
-
+  
     fetchOrders();
   }, [freelancer]);
 
@@ -767,10 +783,10 @@ const Profile = ({ freelancerId }) => {
             )}
             
             <div className="profile-stats">
-              <div className="stat">
-                <span className="stat-value"  style={{ color: 'white' }}>{freelancer.jobsCompleted}</span>
-                <span className="stat-label"  style={{ color: 'white' }}>Jobs Completed</span>
-              </div>
+            <div className="stat">
+  <span className="stat-value" style={{ color: 'white' }}>{completedJobsCount}</span>
+  <span className="stat-label" style={{ color: 'white' }}>Jobs Completed</span>
+</div>
               <div className="stat">
   {hourlyRateEditMode ? (
     <div className="hourly-rate-edit">
