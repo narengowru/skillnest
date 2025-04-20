@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { orderAPI } from '../api/api';
 import { FaWhatsapp, FaEye, FaEdit } from 'react-icons/fa';
-import './ClientOrdersDashboard.css';
+import './FreelancerOrdersDashboard.css';
 
 const ORDER_STATUS = {
   CREATED: 'created',
@@ -28,7 +28,7 @@ const StatusBadge = ({ status }) => {
   return <span className={`status-badge ${getStatusClass()}`}>{status}</span>;
 };
 
-const ClientOrdersDashboard = ({ client }) => {
+const FreelancerOrdersDashboard = ({ freelancer }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editOrderId, setEditOrderId] = useState(null);
@@ -38,10 +38,10 @@ const ClientOrdersDashboard = ({ client }) => {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      if (client && client.orders && client.orders.length > 0) {
+      if (freelancer && freelancer.orders && freelancer.orders.length > 0) {
         try {
           const detailedOrders = await Promise.all(
-            client.orders.map(async (orderId) => {
+            freelancer.orders.map(async (orderId) => {
               try {
                 const response = await orderAPI.getOrder(orderId._id);
                 return response.data;
@@ -62,7 +62,7 @@ const ClientOrdersDashboard = ({ client }) => {
     };
 
     fetchOrders();
-  }, [client]);
+  }, [freelancer]);
 
   const handleUpdateStatus = async (orderId) => {
     try {
@@ -96,11 +96,11 @@ const ClientOrdersDashboard = ({ client }) => {
     }
   };
 
-  const handleWhatsAppChat = (freelancerPhone) => {
+  const handleWhatsAppChat = (clientPhone) => {
     // Format phone number if needed (remove spaces, add country code if missing)
-    const formattedPhone = freelancerPhone?.startsWith('+') 
-      ? freelancerPhone.replace(/\s/g, '') 
-      : `+${freelancerPhone?.replace(/\s/g, '')}`;
+    const formattedPhone = clientPhone?.startsWith('+') 
+      ? clientPhone.replace(/\s/g, '') 
+      : `+${clientPhone?.replace(/\s/g, '')}`;
     
     // Open WhatsApp in a new tab
     window.open(`https://wa.me/${formattedPhone}`, '_blank');
@@ -120,7 +120,7 @@ const ClientOrdersDashboard = ({ client }) => {
     return <div className="orders-loading">Loading orders...</div>;
   }
 
-  if (!client || !orders || orders.length === 0) {
+  if (!freelancer || !orders || orders.length === 0) {
     return <div className="orders-empty">No orders found.</div>;
   }
 
@@ -146,13 +146,13 @@ const ClientOrdersDashboard = ({ client }) => {
               <p><strong>Amount:</strong> {order.currency} {order.totalAmount}</p>
               <p><strong>Due Date:</strong> {formatDate(order.dueDate)}</p>
               
-              {order.freelancerId && (
+              {order.clientId && (
                 <div className="freelancer-info">
-                  <p><strong>Freelancer:</strong> {order.freelancerId.name || 'N/A'}</p>
-                  {order.freelancerId.phone && (
+                  <p><strong>Client:</strong> {order.clientId.companyName || 'N/A'}</p>
+                  {order.clientId.contactInfo.phone && (
                     <button 
                       className="whatsapp-btn"
-                      onClick={() => handleWhatsAppChat(order.freelancerId.phone)}
+                      onClick={() => handleWhatsAppChat(order.clientId.contactInfo.phone)}
                     >
                       <FaWhatsapp /> Chat on WhatsApp
                     </button>
@@ -221,4 +221,4 @@ const ClientOrdersDashboard = ({ client }) => {
   );
 };
 
-export default ClientOrdersDashboard;
+export default FreelancerOrdersDashboard;

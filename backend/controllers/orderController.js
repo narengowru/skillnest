@@ -120,18 +120,9 @@ exports.createOrder = async (req, res) => {
     
     // Add order reference to freelancer's profile
     await Freelancer.findByIdAndUpdate(
-      freelancerId,
+      freelancerId || (req.user ? req.user.id : null),
       {
-        $push: {
-          orders: {
-            id: order._id,
-            client: clientId || (req.user ? req.user.id : null),
-            project: title,
-            amount: `${currency || 'USD'} ${finalTotalAmount}`,
-            status: order.status,
-            date: new Date().toISOString().split('T')[0]
-          }
-        }
+        $push: { orders: order._id }
       }
     );
     

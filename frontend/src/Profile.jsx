@@ -4,6 +4,7 @@ import { FaLinkedin, FaGithub, FaGlobe, FaEdit, FaCamera, FaTrash, FaPlus, FaSta
 import { MessageSquare, Eye, Check, X, Award } from 'lucide-react';
 import { freelancerAPI, jobAPI } from './api/api';
 import './Profile.css';
+import FreelancerOrdersDashboard from './components/FreelancerOrdersDashboard';
 
 const Profile = ({ freelancerId }) => {
   const [profileEditMode, setProfileEditMode] = useState(false);
@@ -676,6 +677,8 @@ const Profile = ({ freelancerId }) => {
     window.location.href = '/login';
   };
 
+  console.log(freelancer);
+
   if (isLoading) {
     return <div className="loading-spinner">Loading profile data...</div>;
   }
@@ -1238,167 +1241,8 @@ const Profile = ({ freelancerId }) => {
             </div>
           </div>
         )}
-
-        {activeTab === 'orders' && (
-          <div className="orders-content">
-          <h2>My Orders</h2>
-          
-          {viewingProject && projectDetails ? (
-            <div className="project-details-modal">
-              <div className="project-details-header">
-                <h3>{projectDetails.title}</h3>
-                <button className="close-button" onClick={closeProjectDetails}>×</button>
-              </div>
-              
-              <div className="project-details-body">
-                <div className="project-image">
-                  <img src={projectDetails.imageUrl} alt={projectDetails.title} />
-                </div>
-                
-                <div className="project-info">
-                  <div className="info-row">
-                    <span className="info-label">Budget:</span>
-                    <span className="info-value">{projectDetails.budget}</span>
-                  </div>
-                  
-                  <div className="info-row">
-                    <span className="info-label">Duration:</span>
-                    <span className="info-value">{projectDetails.projectDuration}</span>
-                  </div>
-                  
-                  <div className="info-row">
-                    <span className="info-label">Experience Level:</span>
-                    <span className="info-value">{projectDetails.experienceLevel}</span>
-                  </div>
-                  
-                  <div className="info-row">
-                    <span className="info-label">Skills Required:</span>
-                    <div className="skills-list">
-                      {projectDetails.skills.map((skill, index) => (
-                        <span key={index} className="skill-tag"  style={{ color: 'white' }}>{skill}</span>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="info-description">
-                    <span className="info-label">Description:</span>
-                    <p>{projectDetails.description}</p>
-                  </div>
-                </div>
-                
-                <div className="client-info">
-                  <h4>Client Information</h4>
-                  <div className="client-header">
-                    <img src={projectDetails.client.avatar} alt={projectDetails.client.name} className="client-avatar" />
-                    <div>
-                      <span className="client-name">
-                        {projectDetails.client.name}
-                        {projectDetails.client.verificationBadge && <span className="verification-badge"><Award size={14} /></span>}
-                      </span>
-                      <div className="client-rating">
-                        <span className="stars">{'★'.repeat(Math.floor(projectDetails.client.rating))}{'☆'.repeat(5 - Math.floor(projectDetails.client.rating))}</span>
-                        <span className="rating-number">{projectDetails.client.rating}</span>
-                        <span className="total-reviews">({projectDetails.client.totalReviews} reviews)</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="client-details">
-                    <div className="info-row">
-                      <span className="info-label">Member Since:</span>
-                      <span className="info-value">{projectDetails.client.memberSince}</span>
-                    </div>
-                    
-                    <div className="info-row">
-                      <span className="info-label">Location:</span>
-                      <span className="info-value">{projectDetails.client.location}</span>
-                    </div>
-                    
-                    <button 
-                      className="whatsapp-chat-btn"
-                      onClick={() => openWhatsAppChat(projectDetails.client.whatsappNumber)}
-                    >
-                      <MessageSquare size={16} />
-                      Chat on WhatsApp
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="orders-list">
-              <div className="orders-header">
-                <span>Order ID</span>
-                <span>Client</span>
-                <span>Project</span>
-                <span>Amount</span>
-                <span>Date</span>
-                <span>Status</span>
-                <span>Actions</span>
-              </div>
-              
-              {freelancer.orders.map((order) => (
-                <div className="order-item" key={order.id}>
-                  <span>{order.id}</span>
-                  <span>{order.client}</span>
-                  <span>{order.project}</span>
-                  <span>{order.amount}</span>
-                  <span>{order.date}</span>
-                  <span className={`order-status ${order.status.toLowerCase()}`}>{order.status}</span>
-                  <div className="order-actions">
-                    <button 
-                      className="action-btn view-btn" 
-                      onClick={() => handleViewProject(order)}
-                      title="View Project Details"
-                    >
-                      <Eye size={16} />
-                    </button>
-                    
-                    {order.status === 'Pending' && (
-                      <>
-                        <button 
-                          className="action-btn accept-btn" 
-                          onClick={() => handleAcceptOrder(order.id)}
-                          title="Accept Order"
-                        >
-                          <Check size={16} />
-                        </button>
-                        
-                        <button 
-                          className="action-btn reject-btn" 
-                          onClick={() => handleRejectOrder(order.id)}
-                          title="Reject Order"
-                        >
-                          <X size={16} />
-                        </button>
-                      </>
-                    )}
-                    
-                    {order.status === 'In Progress' && (
-                      <button 
-                        className="action-btn complete-btn" 
-                        onClick={() => handleCompleteOrder(order.id)}
-                        title="Mark as Complete"
-                      >
-                        <Award size={16} />
-                      </button>
-                    )}
-                    
-                    {(order.status === 'In Progress' || order.status === 'Completed') && (
-                      <button 
-                        className="action-btn chat-btn" 
-                        onClick={() => openWhatsAppChat('+1234567890')} 
-                        title="Chat with Client"
-                      >
-                        <MessageSquare size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+         {activeTab === "orders" && (
+          <FreelancerOrdersDashboard freelancer={freelancer} />
         )}
 
 {activeTab === 'settings' && (

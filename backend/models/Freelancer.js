@@ -96,7 +96,10 @@ const freelancerSchema = new mongoose.Schema({
   },
   ratings: { type: ratingsSchema, default: () => ({}) },
   reviews: { type: [reviewSchema], default: [] },
-  orders: { type: [orderSchema], default: [] },
+  orders: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Order'
+    }],
   location: { type: String, default: '' },
   joinedDate: {
     type: String,
