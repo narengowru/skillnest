@@ -23,7 +23,7 @@ const Profile = ({ freelancerId }) => {
   const [portfolioEditMode, setPortfolioEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [hourlyRateEditMode, setHourlyRateEditMode] = useState(false);
 
   const showToast2 = (message, type) => {
     // This is where you would call your toast notification system
@@ -772,9 +772,55 @@ const Profile = ({ freelancerId }) => {
                 <span className="stat-label"  style={{ color: 'white' }}>Jobs Completed</span>
               </div>
               <div className="stat">
-                <span className="stat-value"  style={{ color: 'white' }}>{freelancer.hourlyRate}</span>
-                <span className="stat-label"  style={{ color: 'white' }}>Hourly Rate</span>
-              </div>
+  {hourlyRateEditMode ? (
+    <div className="hourly-rate-edit">
+      <input 
+        type="text" 
+        name="hourlyRate" 
+        value={freelancer.hourlyRate} 
+        onChange={handleInputChange} 
+        className="edit-hourly-rate-input"
+      />
+      <div className="hourly-rate-actions">
+        <button 
+          className="save-btn" 
+          onClick={async () => {
+            try {
+              await freelancerAPI.updateFreelancer(freelancer._id, { hourlyRate: freelancer.hourlyRate });
+              setHourlyRateEditMode(false);
+              showSuccessToast("Hourly rate updated successfully!");
+            } catch (error) {
+              console.error("Error updating hourly rate:", error);
+              showSuccessToast("Failed to update hourly rate. Please try again.");
+            }
+          }}
+        >
+          Save
+        </button>
+        <button 
+          className="cancel-btn" 
+          onClick={() => setHourlyRateEditMode(false)}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : (
+    <>
+      <span className="stat-value" style={{ color: 'white' }}>
+        {freelancer.hourlyRate}
+        <button 
+          className="edit-hourly-btn" 
+          onClick={() => setHourlyRateEditMode(true)}
+          style={{ marginLeft: '5px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+        >
+          <FaEdit style={{ fontSize: '14px', color: '#c0c0c0' }} />
+        </button>
+      </span>
+      <span className="stat-label" style={{ color: 'white' }}>Hourly Rate</span>
+    </>
+  )}
+</div>
               <div className="stat">
                 <span className="stat-value"  style={{ color: 'white' }}>{freelancer.ratings.average}/5</span>
                 <span className="stat-label"  style={{ color: 'white' }}>Rating</span>
