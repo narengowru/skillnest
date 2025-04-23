@@ -5,8 +5,10 @@ import { MessageSquare, Eye, Check, X, Award } from 'lucide-react';
 import { freelancerAPI, jobAPI } from './api/api';
 import './Profile.css';
 import FreelancerOrdersDashboard from './components/FreelancerOrdersDashboard';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = ({ freelancerId }) => {
+  const navigate = useNavigate();
   const [profileEditMode, setProfileEditMode] = useState(false);
   const [skillEditMode, setSkillEditMode] = useState(false);
   const [newSkill, setNewSkill] = useState({ name: "", level: 75 });
@@ -49,25 +51,34 @@ const Profile = ({ freelancerId }) => {
 
   // Fetch freelancer data when component mounts or freelancerId changes
   useEffect(() => {
-    const fetchFreelancerData = async () => {
-      if (!freelancerId) {
-        // If no ID provided, assume we're using the logged-in user's token for auth
-        const user = JSON.parse(localStorage.user);  // Convert string to JS object
-        const userId = user.id;                      // Now you can access the id
-        console.log(userId); 
-        if (userId) {
-          fetchFreelancer(userId);
-        } else {
-          setError("You must be logged in to view this profile");
-          setIsLoading(false);
-        }
-      } else {
-        fetchFreelancer(freelancerId);
-      }
-    };
+    const anything = localStorage.getItem('user');
+    if(!anything) navigate('/login');
+    else{
+      if(JSON.parse(anything).userType === 'client'){
+        navigate('/client-dashboard');
+      }else{
+        const fetchFreelancerData = async () => {
+          if (!freelancerId) {
+            // If no ID provided, assume we're using the logged-in user's token for auth
+            const user = JSON.parse(localStorage.user);  // Convert string to JS object
+            const userId = user.id;                      // Now you can access the id
+            console.log(userId); 
+            if (userId) {
+              fetchFreelancer(userId);
+            } else {
+              setError("You must be logged in to view this profile");
+              setIsLoading(false);
+            }
+          } else {
+            fetchFreelancer(freelancerId);
+          }
+        };
+        
 
-    fetchFreelancerData();
-  }, [freelancerId]);
+        fetchFreelancerData();
+      }
+    }
+  }, [freelancerId, navigate]);
 
   const fetchFreelancer = async (id) => {
     try {
