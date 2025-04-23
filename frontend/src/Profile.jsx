@@ -162,25 +162,27 @@ const Profile = ({ freelancerId }) => {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      try {
-        // Create FormData object to send file to server
-        const formData = new FormData();
-        formData.append('profilePhoto', file);
+      // First create a preview using FileReader
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const imageBase64 = e.target.result;
         
-        // Update the profile photo on the server
-        await freelancerAPI.updateFreelancer(freelancer._id, formData);
+        // Update the UI with the new image preview
+        setFreelancer({...freelancer, profilePhoto: imageBase64});
         
-        // Show preview before server response (optimistic UI)
-        const reader = new FileReader();
-        reader.onload = () => {
-          setFreelancer({...freelancer, profilePhoto: reader.result});
+        try {
+          // Send the base64 string to the server instead of FormData
+          await freelancerAPI.updateFreelancer(freelancer._id, { 
+            profilePhoto: imageBase64 
+          });
+          
           showSuccessToast("Profile photo updated successfully!");
-        };
-        reader.readAsDataURL(file);
-      } catch (error) {
-        console.error("Error uploading profile photo:", error);
-        showSuccessToast("Failed to update profile photo. Please try again.");
-      }
+        } catch (error) {
+          console.error("Error uploading profile photo:", error);
+          showSuccessToast("Failed to update profile photo. Please try again.");
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 

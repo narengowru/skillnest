@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { clientAPI, jobAPI } from './api/api';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { User, Star, Calendar, MapPin, Phone, Globe, Linkedin, Twitter, CreditCard, Building, FileText, CheckCircle, X, Edit, ChevronDown, ChevronUp, Clock, DollarSign, MessageCircle, Save } from 'lucide-react';
+import { User, Star, Calendar, MapPin, Phone, Globe, Linkedin, Twitter, CreditCard, Building, FileText, CheckCircle, X, Edit, ChevronDown, ChevronUp, Clock, DollarSign, MessageCircle, Save, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './ClientDashboard.css';
 import { motion } from 'framer-motion';
@@ -35,7 +35,8 @@ const ClientDashboard = () => {
         linkedin: '',
         twitter: ''
       }
-    }
+    },
+    profilePicture: ''
   });
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -87,7 +88,8 @@ const ClientDashboard = () => {
               linkedin: clientDetailsResponse.data.contactInfo?.socialMedia?.linkedin || '',
               twitter: clientDetailsResponse.data.contactInfo?.socialMedia?.twitter || ''
             }
-          }
+          },
+          profilePicture: clientDetailsResponse.data.profilePicture || ''
         });
         
         setLoading(false);
@@ -107,6 +109,30 @@ const ClientDashboard = () => {
       document.body.classList.remove('dashboard-active');
     };
   }, []);
+
+  // Handle profile picture change
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFormData({
+          ...formData,
+          profilePicture: e.target.result
+        });
+        
+        // If in editing mode, don't update client state yet
+        // Otherwise update client state immediately for preview
+        if (!editing) {
+          setClient({
+            ...client,
+            profilePicture: e.target.result
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const toggleSection = (section) => {
     setExpandedSections({
@@ -687,14 +713,22 @@ const ClientDashboard = () => {
               <div className="profile-picture-section">
                 <div className="profile-picture-container">
                   <img 
-                    src={client.profilePicture || '/default-profile.jpg'} 
+                    src={editing ? formData.profilePicture : client.profilePicture || '/default-profile.jpg'} 
                     alt={client.companyName} 
                   />
                   <div className="picture-overlay">
-                    <button className="picture-edit-button">
+                    <label htmlFor="profilePicture" className="picture-edit-button">
                       <Edit size={16} />
                       <span>Change</span>
-                    </button>
+                    </label>
+                    <input
+                      type="file"
+                      id="profilePicture"
+                      accept="image/*"
+                      onChange={handleProfilePictureChange}
+                      className="file-input"
+                      style={{ display: 'none' }}
+                    />
                   </div>
                 </div>
                 <div className="account-status">
