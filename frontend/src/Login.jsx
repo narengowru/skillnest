@@ -119,7 +119,7 @@ const Login = () => {
           
           // Redirect to appropriate dashboard after successful login
           setTimeout(() => {
-            navigate(userType === 'freelancer' ? '/freelancer-dashboard' : '/client-dashboard');
+            navigate(userType === 'freelancer' ? '/profile' : '/client-dashboard');
           }, 1500);
         }
       } else {
@@ -167,7 +167,7 @@ const Login = () => {
             
             // Redirect to freelancer dashboard after successful registration
             setTimeout(() => {
-              navigate('/freelancer-dashboard');
+              navigate('/profile');
             }, 1500);
           }
         } else {

@@ -15,7 +15,13 @@ const Freelancers = () => {
       try {
         setLoading(true);
         const response = await freelancerAPI.getAllFreelancers();
-        setFreelancers(response.data);
+        
+        // Filter to only include verified freelancers
+        const verifiedFreelancers = response.data.filter(freelancer => 
+          freelancer.isVerified === true
+        );
+        
+        setFreelancers(verifiedFreelancers);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching freelancers:", err);
@@ -68,7 +74,7 @@ const Freelancers = () => {
             ))
           ) : (
             <div style={{ gridColumn: "1 / -1", textAlign: "center" }}>
-              No freelancers found matching your search criteria.
+              No verified freelancers found matching your search criteria.
             </div>
           )}
         </div>

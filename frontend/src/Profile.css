@@ -174,7 +174,7 @@
   
   .verified-badge {
     display: flex;
-    align-items: center;
+    align-items: center; 
     gap: 0.5rem;
     color: var(--secondary-color);
     font-weight: 500;
@@ -1633,13 +1633,6 @@
     font-weight: 500;
   }
   
-  .verified-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #4caf50;
-    font-weight: 500;
-  }
   /* New styles for the Orders Tab */
 
 /* Action buttons */

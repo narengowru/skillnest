@@ -84,6 +84,10 @@ const freelancerSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
   achievements: { type: [achievementSchema], default: [] },
   education: { type: educationSchema, default: () => ({}) },
   previousWork: { type: [previousWorkSchema], default: [] },
