@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { orderAPI } from '../api/api';
-import { FaWhatsapp, FaEye, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle } from 'react-icons/fa';
 import './FreelancerOrdersDashboard.css';
 
 const ORDER_STATUS = {
@@ -24,11 +24,111 @@ const StatusBadge = ({ status }) => {
   return <span className={`status-badge ${getStatusClass()}`}>{status}</span>;
 };
 
+const OrderDetailsModal = ({ order, onClose }) => {
+  if (!order) return null;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>{order.title}</h2>
+          <button className="close-btn" onClick={onClose}>
+            <FaTimesCircle />
+          </button>
+        </div>
+        
+        <div className="modal-body">
+          <div className="modal-section">
+            <h3>Order Information</h3>
+            <div className="detail-row">
+              <span className="detail-label">Order ID:</span>
+              <span className="detail-value">{order.orderId}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Status:</span>
+              <StatusBadge status={order.status} />
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Created:</span>
+              <span className="detail-value">{formatDate(order.createdAt)}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Due Date:</span>
+              <span className="detail-value">{formatDate(order.dueDate)}</span>
+            </div>
+          </div>
+
+          <div className="modal-section">
+            <h3>Payment Details</h3>
+            <div className="detail-row">
+              <span className="detail-label">Amount:</span>
+              <span className="detail-value">{order.currency} {order.totalAmount}</span>
+            </div>
+            {order.paymentStatus && (
+              <div className="detail-row">
+                <span className="detail-label">Payment Status:</span>
+                <span className="detail-value">{order.paymentStatus}</span>
+              </div>
+            )}
+          </div>
+
+          {order.clientId && (
+            <div className="modal-section">
+              <h3>Client Information</h3>
+              <div className="detail-row">
+                <span className="detail-label">Company:</span>
+                <span className="detail-value">{order.clientId.companyName || 'N/A'}</span>
+              </div>
+              {order.clientId.contactInfo && (
+                <>
+                  <div className="detail-row">
+                    <span className="detail-label">Email:</span>
+                    <span className="detail-value">{order.clientId.email || 'N/A'}</span>
+                  </div>
+                  {/* <div className="detail-row">
+                    <span className="detail-label">Phone:</span>
+                    <span className="detail-value">{order.clientId.contactInfo.phone || 'N/A'}</span>
+                  </div> */}
+                </>
+              )}
+            </div>
+          )}
+
+          {order.description && (
+            <div className="modal-section">
+              <h3>Description</h3>
+              <p className="order-description">{order.description}</p>
+            </div>
+          )}
+
+          {order.requirements && (
+            <div className="modal-section">
+              <h3>Requirements</h3>
+              <p className="order-requirements">{order.requirements}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const FreelancerOrdersDashboard = ({ freelancer }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -143,6 +243,14 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
     window.open(`https://wa.me/${formattedPhone}`, '_blank');
   };
 
+  const handleViewDetails = (order) => {
+    setSelectedOrder(order);
+  };
+
+  const closeModal = () => {
+    setSelectedOrder(null);
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -160,8 +268,6 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
   if (!freelancer || !orders || orders.length === 0) {
     return <div className="orders-empty">No orders found.</div>;
   }
-
-  console.log('Orders', orders);
 
   return (
     <div className="client-orders-dashboard">
@@ -225,13 +331,20 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
                 </button>
               )}
               
-              <button className="view-btn">
+              <button 
+                className="view-btn"
+                onClick={() => handleViewDetails(order)}
+              >
                 <FaEye /> View Details
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {selectedOrder && (
+        <OrderDetailsModal order={selectedOrder} onClose={closeModal} />
+      )}
     </div>
   );
 };
