@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Clock, Briefcase, Award, Mail, MapPin, Calendar, ArrowRight, Heart, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import './ViewProfile.css';
+import { useNavigate } from 'react-router-dom';
 import { freelancerAPI, clientAPI, orderAPI } from './api/api'; // Added orderAPI and clientAPI
 
 const ViewProfile = () => {
   const [freelancer, setFreelancer] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
@@ -79,6 +81,7 @@ const ViewProfile = () => {
 
     // Check if client is logged in
     if (!clientData || !clientData.email || !clientData.isLoggedIn) {
+      navigate('/login');
       setShowToast(true);
       setBookingStatus({
         isBooking: false,

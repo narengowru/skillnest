@@ -3,10 +3,13 @@ import './Login.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { freelancerAPI, clientAPI } from './api/api'; // Import both APIs
 import { useNavigate } from 'react-router-dom';
+import { UserContext } from './components/UserContext';
+import { useContext } from 'react';
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [userType, setUserType] = useState('freelancer'); // 'freelancer' or 'client'
+  const { setUser } = useContext(UserContext);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -116,9 +119,9 @@ const Login = () => {
           }
           
           showToastMessage(`Login successful! Welcome back, ${userType === 'freelancer' ? 'freelancer' : 'client'}!`);
-          
           // Redirect to appropriate dashboard after successful login
           setTimeout(() => {
+            setUser(JSON.parse(localStorage.getItem('user')));
             navigate(userType === 'freelancer' ? '/profile' : '/client-dashboard');
           }, 1500);
         }
@@ -164,9 +167,9 @@ const Login = () => {
             }
             
             showToastMessage('Registration successful! Welcome to our Freelancer community!');
-            
             // Redirect to freelancer dashboard after successful registration
             setTimeout(() => {
+              setUser(JSON.parse(localStorage.getItem('user')));
               navigate('/profile');
             }, 1500);
           }
@@ -202,6 +205,7 @@ const Login = () => {
             
             // Redirect to client dashboard after successful registration
             setTimeout(() => {
+              setUser(JSON.parse(localStorage.getItem('user')));
               navigate('/client-dashboard');
             }, 1500);
           }

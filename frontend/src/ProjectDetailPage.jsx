@@ -36,7 +36,7 @@ const ProjectDetailPage = () => {
   const handleApply = async () => {
     try {
       // Check if user is logged in
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('user');
       if (!token) {
         // Redirect to login if not logged in
         navigate('/login', { state: { redirectTo: `/details/${id}` } });
