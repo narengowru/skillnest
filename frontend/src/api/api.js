@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // Create axios instance with base URL from environment variables
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api'
+  baseURL: `${process.env.REACT_APP_API_URL}/api` || 'http://localhost:5000/api'
 });
 
 console.log('BACKEND URL: ', process.env.REACT_APP_API_URL);
