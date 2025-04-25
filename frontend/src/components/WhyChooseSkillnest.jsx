@@ -7,10 +7,7 @@ const WhyChooseSkillnest = () => {
       <div className="why-choose-content">
         <h2>Why Choose SkillNest?</h2>
         <p>
-          Working for yourself has several advantages, whether you do it by founding your own
-          company or by accepting numerous assignments as a freelancer. Flexibility, freedom of
-          choice in projects and clients, and financial potential are all benefits of working as a
-          freelancer. Many people in a variety of professions like to be their own boss, and freelancing is the simplest way to do so.
+        SkillNest is a freelancing platform tailored for students and recent graduates, providing a bridge to real-world projects and opportunities. It connects student talent with businesses for short-term freelance work, offering features like skill-based profiles, project bidding, and portfolio showcasing. With student-focused tools and beginner-friendly job opportunities, SkillNest helps students build their skills, gain confidence, and kickstart their freelancing careers.
         </p>
       </div>
       <img 

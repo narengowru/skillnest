@@ -15,12 +15,12 @@ const FreelancersSpecialty = () => {
       description: 'No job is too big or too small. We\'ve got freelancers for job of any size or budget with extra-ordinary skill. No job is complex. We can get it done!',
       color: '#4ECDC4'
     },
-    {
-      id: 3,
-      title: 'Pay Securely',
-      description: 'One pay for work when it has been completed and you\'re 100% satisfied with the quality using our milestone payment system.',
-      color: '#FFD93D'
-    },
+    // {
+    //   id: 3,
+    //   title: 'Pay Securely',
+    //   description: 'One pay for work when it has been completed and you\'re 100% satisfied with the quality using our milestone payment system.',
+    //   color: '#FFD93D'
+    // },
     {
       id: 4,
       title: 'We\'re here to help',

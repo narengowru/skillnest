@@ -373,10 +373,10 @@ const ClientOrdersDashboard = ({ client }) => {
               {order.freelancerId && (order.status === ORDER_STATUS.IN_PROGRESS || order.status === ORDER_STATUS.COMPLETED) && (
                 <div className="freelancer-info">
                   <p><strong>Freelancer:</strong> {order.freelancerId.name || order.freelancerId.email || 'N/A'}</p>
-                  {order.freelancerId.contactInfo && order.freelancerId.contactInfo.phone && (
+                  {order.freelancerId.phone && (
                     <button 
                       className="whatsapp-btn"
-                      onClick={() => handleWhatsAppChat(order.freelancerId.contactInfo.phone)}
+                      onClick={() => handleWhatsAppChat(order.freelancerId.phone)}
                     >
                       <FaWhatsapp /> Chat on WhatsApp
                     </button>

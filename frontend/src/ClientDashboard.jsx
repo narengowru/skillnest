@@ -266,10 +266,19 @@ const ClientDashboard = () => {
         memberDuration: 0
       };
     }
-    
+    const ORDER_STATUS = {
+      CREATED: 'created',
+      IN_PROGRESS: 'in-progress',
+      UNDER_REVIEW: 'under-review',
+      COMPLETED: 'completed',
+      CANCELED: 'canceled',
+      DISPUTED: 'disputed'
+    };
     const activeOrders = client.orders.filter(order => 
-      ['in_progress', 'pending'].includes(order.status)
-    ).length;
+      order.status === ORDER_STATUS.IN_PROGRESS
+  ).length;
+
+    console.log('Active orders: ', activeOrders);
     
     const totalSpent = client.orders
       .filter(order => order.status === 'completed')
