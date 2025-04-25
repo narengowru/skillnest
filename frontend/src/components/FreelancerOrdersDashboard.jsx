@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { orderAPI } from '../api/api';
-import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle } from 'react-icons/fa';
+import { orderAPI, clientAPI } from '../api/api';
+import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar } from 'react-icons/fa';
 import './FreelancerOrdersDashboard.css';
 
 const ORDER_STATUS = {
@@ -22,6 +22,95 @@ const StatusBadge = ({ status }) => {
   };
 
   return <span className={`status-badge ${getStatusClass()}`}>{status}</span>;
+};
+
+const ReviewModal = ({ order, onClose, onSubmit }) => {
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!comment.trim()) {
+      setError('Please add a comment to your review');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      await onSubmit({
+        freelancerId: order.freelancerId?._id,
+        clientId: order.clientId?._id,
+        rating,
+        comment,
+        orderId: order._id
+      });
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to submit review');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content review-modal">
+        <div className="modal-header">
+          <h2>Review Client: {order.clientId?.companyName}</h2>
+          <button className="close-btn" onClick={onClose}>
+            <FaTimesCircle />
+          </button>
+        </div>
+        
+        <div className="modal-body">
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Rating</label>
+              <div className="star-rating">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FaStar
+                    key={star}
+                    className={`star-icon ${star <= (hoveredRating || rating) ? 'active' : ''}`}
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoveredRating(star)}
+                    onMouseLeave={() => setHoveredRating(0)}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="review-comment">Your Review</label>
+              <textarea
+                id="review-comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Share your experience working with this client..."
+                rows={5}
+              />
+            </div>
+            
+            {error && <div className="form-error">{error}</div>}
+            
+            <div className="modal-actions">
+              <button type="button" className="cancel-btn" onClick={onClose} disabled={loading}>
+                Cancel
+              </button>
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const OrderDetailsModal = ({ order, onClose }) => {
@@ -129,6 +218,8 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [reviewOrder, setReviewOrder] = useState(null);
+  const [reviewedOrders, setReviewedOrders] = useState([]);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -147,6 +238,10 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
           );
           
           setOrders(detailedOrders.filter(order => order !== null));
+          
+          // Load reviewed orders from localStorage
+          const storedReviewedOrders = JSON.parse(localStorage.getItem('reviewedOrders') || '[]');
+          setReviewedOrders(storedReviewedOrders);
         } catch (err) {
           setError('Failed to fetch orders. Please try again later.');
           console.error('Error fetching orders:', err);
@@ -251,6 +346,37 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
     setSelectedOrder(null);
   };
 
+  const openReviewModal = (order) => {
+    setReviewOrder(order);
+  };
+
+  const closeReviewModal = () => {
+    setReviewOrder(null);
+  };
+
+  const handleSubmitReview = async (reviewData) => {
+    try {
+      // Send review to API
+      console.log('Reviews: ', reviewData);
+      await clientAPI.addReview(reviewData);
+    
+      // Add order ID to reviewedOrders to disable the review button
+      const updatedReviewedOrders = [...reviewedOrders, reviewData.orderId];
+      setReviewedOrders(updatedReviewedOrders);
+      
+      // Store in localStorage
+      localStorage.setItem('reviewedOrders', JSON.stringify(updatedReviewedOrders));
+      
+      setSuccess('Review submitted successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      return Promise.reject(new Error('Failed to submit review'));
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -259,6 +385,10 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const isOrderReviewed = (orderId) => {
+    return reviewedOrders.includes(orderId);
   };
 
   if (loading) {
@@ -292,7 +422,7 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
               {order.clientId && order.status === ORDER_STATUS.IN_PROGRESS && (
                 <div className="freelancer-info">
                   <p><strong>Client:</strong> {order.clientId.companyName || 'N/A'}</p>
-                  {order.clientId.contactInfo.phone && (
+                  {order.clientId.contactInfo && order.clientId.contactInfo.phone && (
                     <button 
                       className="whatsapp-btn"
                       onClick={() => handleWhatsAppChat(order.clientId.contactInfo.phone)}
@@ -331,6 +461,16 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
                 </button>
               )}
               
+              {order.status === ORDER_STATUS.COMPLETED && order.clientId && (
+                <button 
+                  className={`review-btn ${isOrderReviewed(order._id) ? 'reviewed' : ''}`}
+                  onClick={() => openReviewModal(order)}
+                  disabled={isOrderReviewed(order._id)}
+                >
+                  <FaStar /> {isOrderReviewed(order._id) ? 'Client Reviewed' : 'Review Client'}
+                </button>
+              )}
+              
               <button 
                 className="view-btn"
                 onClick={() => handleViewDetails(order)}
@@ -344,6 +484,14 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
 
       {selectedOrder && (
         <OrderDetailsModal order={selectedOrder} onClose={closeModal} />
+      )}
+
+      {reviewOrder && (
+        <ReviewModal 
+          order={reviewOrder} 
+          onClose={closeReviewModal} 
+          onSubmit={handleSubmitReview}
+        />
       )}
     </div>
   );

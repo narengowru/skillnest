@@ -218,9 +218,9 @@ exports.uploadProfilePicture = async (req, res) => {
 // Add a review for a freelancer
 exports.addReview = async (req, res) => {
   try {
-    const { freelancerId, rating, comment } = req.body;
+    const { freelancerId, rating, comment, clientId} = req.body;
     
-    const client = await Client.findById(req.params.id);
+    const client = await Client.findById(clientId);
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
     }
