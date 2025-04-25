@@ -7,6 +7,8 @@ const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api'
 });
 
+console.log('BACKEND URL: ', process.env.REACT_APP_API_URL);
+
 // Add request interceptor for auth token
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
