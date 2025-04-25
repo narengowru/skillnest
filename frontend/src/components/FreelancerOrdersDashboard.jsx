@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { orderAPI } from '../api/api';
-import { FaWhatsapp, FaEye, FaEdit } from 'react-icons/fa';
+import { FaWhatsapp, FaEye, FaCheck, FaTimes } from 'react-icons/fa';
 import './FreelancerOrdersDashboard.css';
 
 const ORDER_STATUS = {
   CREATED: 'created',
   IN_PROGRESS: 'in-progress',
-  UNDER_REVIEW: 'under-review',
   COMPLETED: 'completed',
-  CANCELED: 'canceled',
-  DISPUTED: 'disputed'
+  CANCELED: 'canceled'
 };
 
 const StatusBadge = ({ status }) => {
@@ -17,10 +15,8 @@ const StatusBadge = ({ status }) => {
     switch (status) {
       case ORDER_STATUS.CREATED: return 'status-created';
       case ORDER_STATUS.IN_PROGRESS: return 'status-in-progress';
-      case ORDER_STATUS.UNDER_REVIEW: return 'status-review';
       case ORDER_STATUS.COMPLETED: return 'status-completed';
       case ORDER_STATUS.CANCELED: return 'status-canceled';
-      case ORDER_STATUS.DISPUTED: return 'status-disputed';
       default: return '';
     }
   };
@@ -31,8 +27,6 @@ const StatusBadge = ({ status }) => {
 const FreelancerOrdersDashboard = ({ freelancer }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editOrderId, setEditOrderId] = useState(null);
-  const [newStatus, setNewStatus] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -64,35 +58,78 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
     fetchOrders();
   }, [freelancer]);
 
-  const handleUpdateStatus = async (orderId) => {
+  const handleAcceptOrder = async (orderId) => {
     try {
       setError('');
       setSuccess('');
       
-      if (!newStatus) {
-        setError('Please select a status');
-        return;
-      }
-      
-      console.log('Updated ', orderId);
-      await orderAPI.updateOrder(orderId, { status: newStatus });
+      console.log('Accepting order', orderId);
+      await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.IN_PROGRESS });
       
       // Update the order in the local state
       setOrders(prevOrders => 
         prevOrders.map(order => 
-          order._id === orderId ? { ...order, status: newStatus } : order
+          order._id === orderId ? { ...order, status: ORDER_STATUS.IN_PROGRESS } : order
         )
       );
       
-      setEditOrderId(null);
-      setNewStatus('');
-      setSuccess('Order status updated successfully!');
+      setSuccess('Order accepted successfully!');
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update order status');
-      console.error('Error updating order:', err);
+      setError(err.response?.data?.message || 'Failed to accept order');
+      console.error('Error accepting order:', err);
+    }
+  };
+
+  const handleRejectOrder = async (orderId) => {
+    try {
+      setError('');
+      setSuccess('');
+      
+      console.log('Rejecting order', orderId);
+      await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.CANCELED });
+      
+      // Update the order in the local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === orderId ? { ...order, status: ORDER_STATUS.CANCELED } : order
+        )
+      );
+      
+      setSuccess('Order rejected successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to reject order');
+      console.error('Error rejecting order:', err);
+    }
+  };
+
+  const handleCompleteOrder = async (orderId) => {
+    try {
+      setError('');
+      setSuccess('');
+      
+      console.log('Completing order', orderId);
+      await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.COMPLETED });
+      
+      // Update the order in the local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === orderId ? { ...order, status: ORDER_STATUS.COMPLETED } : order
+        )
+      );
+      
+      setSuccess('Order completed successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to complete order');
+      console.error('Error completing order:', err);
     }
   };
 
@@ -146,7 +183,7 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
               <p><strong>Amount:</strong> {order.currency} {order.totalAmount}</p>
               <p><strong>Due Date:</strong> {formatDate(order.dueDate)}</p>
               
-              {order.clientId && (
+              {order.clientId && order.status === ORDER_STATUS.IN_PROGRESS && (
                 <div className="freelancer-info">
                   <p><strong>Client:</strong> {order.clientId.companyName || 'N/A'}</p>
                   {order.clientId.contactInfo.phone && (
@@ -161,58 +198,36 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
               )}
             </div>
             
-            <div className="order-progress">
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${orderAPI.calculateProgress(order)}%` }}
-                ></div>
-              </div>
-              <span>{orderAPI.calculateProgress(order)}% Complete</span>
-            </div>
-            
             <div className="order-actions">
-              {editOrderId === order._id ? (
-                <div className="status-edit">
-                  <select 
-                    value={newStatus} 
-                    onChange={(e) => setNewStatus(e.target.value)}
-                    className="status-select"
-                  >
-                    <option value="">Select Status</option>
-                    {Object.values(ORDER_STATUS).map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
-                  <button 
-                    className="save-btn"
-                    onClick={() => handleUpdateStatus(order._id)}
-                  >
-                    Save
-                  </button>
-                  <button 
-                    className="cancel-btn"
-                    onClick={() => {
-                      setEditOrderId(null);
-                      setNewStatus('');
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
+              {order.status === ORDER_STATUS.CREATED && (
                 <>
                   <button 
-                    className="edit-btn"
-                    onClick={() => setEditOrderId(order._id)}
+                    className="accept-btn"
+                    onClick={() => handleAcceptOrder(order._id)}
                   >
-                    <FaEdit /> Update Status
+                    <FaCheck /> Accept
                   </button>
-                  <button className="view-btn">
-                    <FaEye /> View Details
+                  <button 
+                    className="reject-btn"
+                    onClick={() => handleRejectOrder(order._id)}
+                  >
+                    <FaTimes /> Reject
                   </button>
                 </>
               )}
+              
+              {order.status === ORDER_STATUS.IN_PROGRESS && (
+                <button 
+                  className="complete-btn"
+                  onClick={() => handleCompleteOrder(order._id)}
+                >
+                  <FaCheck /> Mark as Completed
+                </button>
+              )}
+              
+              <button className="view-btn">
+                <FaEye /> View Details
+              </button>
             </div>
           </div>
         ))}

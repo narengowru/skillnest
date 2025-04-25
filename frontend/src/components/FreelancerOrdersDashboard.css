@@ -257,3 +257,181 @@
       flex-direction: column;
     }
   }
+  /* Add these styles to your FreelancerOrdersDashboard.css file */
+
+.order-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* Basic button styles */
+.order-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.order-actions button svg {
+  margin-right: 6px;
+}
+
+/* Accept button */
+.accept-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.accept-btn:hover {
+  background-color: #3e8e41;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Reject button */
+.reject-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.reject-btn:hover {
+  background-color: #d32f2f;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Complete button */
+.complete-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+.complete-btn:hover {
+  background-color: #0b7dda;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* View details button */
+.view-btn {
+  background-color: #757575;
+  color: white;
+}
+
+.view-btn:hover {
+  background-color: #616161;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* WhatsApp button */
+.whatsapp-btn {
+  background-color: #25D366;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+}
+
+.whatsapp-btn:hover {
+  background-color: #128C7E;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-created {
+  background-color: #FFF9C4;
+  color: #F57F17;
+}
+
+.status-in-progress {
+  background-color: #BBDEFB;
+  color: #0D47A1;
+}
+
+.status-completed {
+  background-color: #C8E6C9;
+  color: #1B5E20;
+}
+
+.status-canceled {
+  background-color: #FFCDD2;
+  color: #B71C1C;
+}
+
+/* Alert messages */
+.alert {
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+.alert-error {
+  background-color: #FFEBEE;
+  color: #C62828;
+  border-left: 4px solid #F44336;
+}
+
+.alert-success {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+  border-left: 4px solid #4CAF50;
+}
+
+/* Order card */
+.order-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.order-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.order-details p {
+  margin: 8px 0;
+}
+
+.freelancer-info {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px dashed #e0e0e0;
+}
