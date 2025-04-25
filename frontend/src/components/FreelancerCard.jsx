@@ -94,7 +94,7 @@ export default function FreelancerCard({
         className="book-now"
         onClick={(e) => {
           e.stopPropagation();
-          alert('Booking functionality coming soon!');
+          handleRedirect();
         }}
       >
         BOOK NOW

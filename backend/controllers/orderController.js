@@ -75,7 +75,7 @@ exports.createOrder = async (req, res) => {
     }
     
     // Calculate service fee (e.g., 10% of the amount) if totalAmount not provided
-    const serviceFee = Math.round(amount * 0.1 * 100) / 100;
+    const serviceFee = 0;
     const finalTotalAmount = totalAmount || (amount + serviceFee);
     
     // Process messages if provided

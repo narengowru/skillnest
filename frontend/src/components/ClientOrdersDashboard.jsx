@@ -254,6 +254,31 @@ const ClientOrdersDashboard = ({ client }) => {
     fetchOrders();
   }, [client]);
 
+  const handleAcceptOrder = async (orderId) => {
+    try {
+      setError('');
+      setSuccess('');
+      
+      console.log('Accepting order', orderId);
+      await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.IN_PROGRESS });
+      
+      // Update the order in the local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === orderId ? { ...order, status: ORDER_STATUS.IN_PROGRESS } : order
+        )
+      );
+      
+      setSuccess('Order accepted successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to accept order');
+      console.error('Error accepting order:', err);
+    }
+  };
+
   const handleCancelOrder = async (orderId) => {
     try {
       setError('');
@@ -387,12 +412,20 @@ const ClientOrdersDashboard = ({ client }) => {
             
             <div className="order-actions">
               {order.status === ORDER_STATUS.CREATED && (
-                <button 
-                  className="reject-btn"
-                  onClick={() => handleCancelOrder(order._id)}
-                >
-                  <FaTimes /> Cancel Order
-                </button>
+                <>
+                  <button 
+                    className="accept-btn"
+                    onClick={() => handleAcceptOrder(order._id)}
+                  >
+                    <FaCheck /> Accept
+                  </button>
+                  <button 
+                    className="reject-btn"
+                    onClick={() => handleCancelOrder(order._id)}
+                  >
+                    <FaTimes /> Cancel Order
+                  </button>
+                </>
               )}
               
               {order.status === ORDER_STATUS.COMPLETED && order.freelancerId && (

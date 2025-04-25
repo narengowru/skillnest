@@ -38,7 +38,7 @@ const Reviews = () => {
 
   const renderStars = () => {
     return Array(5).fill(0).map((_, index) => (
-      <span key={index} className="star">★</span>
+      <span key={index} className="star" style = {{color: '#FFD700'}}>★</span>
     ));
   };
 

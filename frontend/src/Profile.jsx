@@ -897,12 +897,12 @@ const Profile = ({ freelancerId }) => {
         >
           Overview
         </button>
-        <button 
+        {/* <button 
           className={activeTab === 'portfolio' ? 'active' : ''} 
           onClick={() => setActiveTab('portfolio')}
         >
           Portfolio
-        </button>
+        </button> */}
         <button 
           className={activeTab === 'reviews' ? 'active' : ''} 
           onClick={() => setActiveTab('reviews')}
@@ -1365,7 +1365,7 @@ const Profile = ({ freelancerId }) => {
       </div>
     </div>
     
-    <div className="settings-section">
+    {/* <div className="settings-section">
       <h3>Security</h3>
       <div className="settings-form">
         <div className="form-group">
@@ -1382,7 +1382,7 @@ const Profile = ({ freelancerId }) => {
         </div>
         <button className="update-password-btn" onClick={handlePasswordUpdate}>Update Password</button>
       </div>
-    </div>
+    </div> */}
     
     <div className="settings-section">
       <h3>Social Profiles</h3>

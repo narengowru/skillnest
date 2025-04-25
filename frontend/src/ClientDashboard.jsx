@@ -403,10 +403,10 @@ const ClientDashboard = () => {
             setTimeout(() => setEditing(true), 500);
           }}><Edit size={16} /> Edit Profile</button>
           <button className="action-button" onClick={handlePostJob}><FileText size={16} /> Post New Job</button>
-          <button className="action-button notification-button" onClick={handleChatClick}>
+          {/* <button className="action-button notification-button" onClick={handleChatClick}>
             <MessageCircle size={16} />
             <span className="notification-badge">3</span>
-          </button>
+          </button> */}
         </div>
       </motion.header>
 
@@ -740,7 +740,7 @@ const ClientDashboard = () => {
                     />
                   </div>
                 </div>
-                <div className="account-status">
+                {/* <div className="account-status">
                   <h3>Account Status</h3>
                   <div className={`status-indicator ${client.verified ? 'verified' : 'unverified'}`}>
                     {client.verified ? (
@@ -758,7 +758,7 @@ const ClientDashboard = () => {
                   {!client.verified && (
                     <button className="verify-button" onClick={handleVerify}>Verify Now</button>
                   )}
-                </div>
+                </div> */}
               </div>
             </div>
           )}

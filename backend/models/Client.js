@@ -56,7 +56,7 @@ const clientSchema = new mongoose.Schema({
   },
   verified: {
     type: Boolean,
-    default: false
+    default: true
   },
   profilePicture: {
     type: String,

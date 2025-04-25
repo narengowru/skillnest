@@ -6,6 +6,84 @@ import { useNavigate } from 'react-router-dom';
 import { UserContext } from './components/UserContext';
 import { useContext } from 'react';
 
+// Add these styles to your Login.css file or inject them here
+const additionalStyles = `
+  /* Email validation styles */
+  .error-message {
+    color: #e53935;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(229, 57, 53, 0.1);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .error-message::before {
+    content: "⚠️";
+    margin-right: 0.5rem;
+  }
+
+  .help-text {
+    color: #546e7a;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    display: block;
+    line-height: 1.4;
+    padding-left: 0.2rem;
+    transition: all 0.3s ease;
+  }
+
+  .highlight-domain {
+    color: #2196f3;
+    font-weight: 500;
+  }
+
+  /* Input validation styles */
+  input.valid-input {
+    border-color: #4caf50 !important;
+    background-color: rgba(76, 175, 80, 0.05);
+  }
+
+  input.invalid-input {
+    border-color: #e53935 !important;
+    background-color: rgba(229, 57, 53, 0.05);
+  }
+
+  .domain-badge {
+    display: inline-block;
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+
+  .domain-badges {
+    margin-top: 0.5rem;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Enhanced toast style */
+  .toast-message {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Animated focus effect */
+  .form-group input:focus {
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+    transition: all 0.3s ease;
+  }
+`;
+
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [userType, setUserType] = useState('freelancer'); // 'freelancer' or 'client'
@@ -21,11 +99,44 @@ const Login = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailValid, setEmailValid] = useState(false);
+  
+  // Student email domains
+  const studentDomains = ['.edu', '.edu.in', '.ac.in', '.ac.uk', '.edu.au', '.edu.ca'];
   
   const navigate = useNavigate();
 
+  // Function to validate student email domains
+  const isValidStudentEmail = (email) => {
+    if (!email) return false;
+    return studentDomains.some(domain => email.toLowerCase().endsWith(domain));
+  };
+
+  // Check email validity whenever it changes
+  useEffect(() => {
+    if (!isLogin && userType === 'freelancer' && formData.email) {
+      const isValid = isValidStudentEmail(formData.email);
+      setEmailValid(isValid);
+      
+      if (!isValid && formData.email.includes('@')) {
+        setEmailError('Please use a valid student email domain');
+      } else {
+        setEmailError('');
+      }
+    } else {
+      setEmailValid(formData.email.length > 0);
+    }
+  }, [formData.email, userType, isLogin]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Reset email validation when email is changed
+    if (name === 'email') {
+      setEmailError('');
+    }
+    
     setFormData({
       ...formData,
       [name]: value,
@@ -34,7 +145,7 @@ const Login = () => {
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
-    // Reset form data when toggling
+    // Reset form data and errors when toggling
     setFormData({
       name: '',
       email: '',
@@ -42,11 +153,13 @@ const Login = () => {
       password: '',
       companyName: '',
     });
+    setEmailError('');
+    setEmailValid(false);
   };
 
   const toggleUserType = (type) => {
     setUserType(type);
-    // Reset form data when changing user type
+    // Reset form data and errors when changing user type
     setFormData({
       name: '',
       email: '',
@@ -54,6 +167,8 @@ const Login = () => {
       password: '',
       companyName: '',
     });
+    setEmailError('');
+    setEmailValid(false);
   };
 
   const showToastMessage = (message, type = 'success') => {
@@ -65,8 +180,24 @@ const Login = () => {
     }, 3000);
   };
 
+  const validateForm = () => {
+    // Validate email for freelancer signup
+    if (!isLogin && userType === 'freelancer' && !isValidStudentEmail(formData.email)) {
+      setEmailError('Please use a valid academic email (.edu, .edu.in, .ac.in, etc.)');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      showToastMessage('Please fix the errors in the form', 'error');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -193,7 +324,6 @@ const Login = () => {
             localStorage.setItem('token', response.data.token);
             
             // Store user data with fallback for when client object is not returned
-            // THIS IS THE CRITICAL FIX - don't assume client object exists in the response
             localStorage.setItem('user', JSON.stringify({
               email: formData.email,
               companyName: formData.companyName, 
@@ -224,6 +354,17 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  // Inject additional styles
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = additionalStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   return (
     <div className="login-container">
@@ -314,9 +455,32 @@ const Login = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Enter your email address"
+                placeholder={userType === 'freelancer' && !isLogin ? "Enter your student email" : "Enter your email address"}
                 required
+                className={
+                  formData.email 
+                    ? (!isLogin && userType === 'freelancer' 
+                        ? (emailValid ? 'valid-input' : (emailError ? 'invalid-input' : '')) 
+                        : '') 
+                    : ''
+                }
               />
+              {emailError && <div className="error-message">{emailError}</div>}
+              
+              {!isLogin && userType === 'freelancer' && (
+                <div>
+                  <small className="help-text">
+                    As a freelancer, you must use a student email to Sign Up
+                  </small>
+                  {/* <div className="domain-badges">
+                    {studentDomains.map((domain, index) => (
+                      <span key={index} className="domain-badge">
+                        {domain}
+                      </span>
+                    ))}
+                  </div> */}
+                </div>
+              )}
             </div>
             
             {!isLogin && (
