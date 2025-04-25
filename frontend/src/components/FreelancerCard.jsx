@@ -54,9 +54,9 @@ export default function FreelancerCard({
       <div className="card-title">{role || 'Freelancer'}</div>
 
       <div className="card-time-price">
-        <span className="time">
+        {/* <span className="time">
           <i className="clock-icon">⏰</i> {hours || 0} hrs
-        </span>
+        </span> */}
         <span className="price">{displayPrice()}</span>
       </div>
 

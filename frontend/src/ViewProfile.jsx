@@ -110,6 +110,7 @@ const ViewProfile = () => {
       const orderData = {
         jobId: freelancer._id, // Using freelancer ID as job ID for simplicity
         clientId: clientId,
+        whoPlaced: "client",
         freelancerId: freelancer._id,
         title: `Project with ${freelancer.name || 'Freelancer'}`,
         description: `Collaboration with ${freelancer.name || 'Freelancer'} based on skills and profile match.`,
@@ -341,20 +342,22 @@ const ViewProfile = () => {
               <Briefcase size={18} />
               <div>
                 <span className="info-label">Completed Jobs</span>
-                <span className="info-value">{freelancer.jobsCompleted || 0}</span>
+                <span className="info-value">
+  {freelancer.orders.filter(order => order.status === 'completed').length || 0}
+</span>
               </div>
             </div>
             {freelancer.availability && (
               <div className="quick-info-item">
-                <Clock size={18} />
+                {/* <Clock size={18} /> */}
                 <div>
-                  <span className="info-label">Availability</span>
-                  <span className="info-value">
+                  {/* <span className="info-label">Availability</span> */}
+                  {/* <span className="info-value">
                     {(freelancer.availability.hoursPerWeek || 0) + ' hrs/week'}
-                  </span>
-                  <span className="info-subtext">
+                  </span> */}
+                  {/* <span className="info-subtext">
                     {freelancer.availability.schedule || 'Flexible schedule'}
-                  </span>
+                  </span> */}
                 </div>
               </div>
             )}
@@ -650,7 +653,7 @@ const ViewProfile = () => {
               </div>
             )}
             
-            <div className="stats-section">
+            {/* <div className="stats-section">
               <h3>Performance Stats</h3>
               <div className="stats-grid">
                 <div className="stat-card">
@@ -670,7 +673,7 @@ const ViewProfile = () => {
                   <div className="stat-label">Average Rating</div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

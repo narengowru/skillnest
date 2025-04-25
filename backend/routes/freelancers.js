@@ -12,6 +12,6 @@ router.get('/:id', freelancerController.getFreelancerById);
 // Protected routes
 router.put('/:id', auth, freelancerController.updateFreelancer);
 router.delete('/:id', auth, freelancerController.deleteFreelancer);
-router.post('/:id/reviews', auth, freelancerController.addReview);
+router.post('/:id/reviews', freelancerController.addReview);
 
 module.exports = router;
