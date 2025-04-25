@@ -31,15 +31,18 @@ const Header = () => {
 
       {/* Navigation Links */}
       <div className="nav-links">
-        <Link to="/">Home</Link>
-        {(!isLoggedIn || isClient === null) && (
-          <Link to="/jobs">Find Jobs</Link>
-        )}
-        {(!isLoggedIn || isClient !== null) && (
-          <Link to="/freelancers">Find Freelancers</Link>
-        )}
-        <Link to="/profile">Profile</Link>
-      </div>
+  <Link to="/">Home</Link>
+
+  {(!isLoggedIn || isClient === "freelancer") && (
+    <Link to="/jobs">Find Jobs</Link>
+  )}
+
+  {(!isLoggedIn || isClient === "client") && (
+    <Link to="/freelancers">Find Freelancers</Link>
+  )}
+
+  <Link to="/profile">Profile</Link>
+</div>
 
       {/* Login / Logout Button */}
       {isLoggedIn ? (
