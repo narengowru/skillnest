@@ -6,7 +6,15 @@ const FindFreeLancer = ({ onSearch }) => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    onSearch(searchTerm); // Pass the search term to filter freelancers
+    onSearch(searchTerm);
+  
+    // Smooth scroll down by 300px
+    setTimeout(() => {
+      window.scrollBy({
+        top: 650, // scrolls down 300px
+        behavior: "smooth"
+      });
+    }, 100);
   };
 
   return (

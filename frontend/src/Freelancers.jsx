@@ -46,7 +46,7 @@ const Freelancers = () => {
       {loading ? (
         <div style={{ margin: "50px auto" }}>Loading freelancers...</div>
       ) : error ? (
-        <div style={{ margin: "50px auto", color: "red" }}>{error}</div>
+        <div id  ="search-results" style={{ margin: "50px auto", color: "red" }}>{error}</div>
       ) : (
         <div
           style={{

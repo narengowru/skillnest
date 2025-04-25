@@ -44,6 +44,12 @@ const Jobs = () => {
   // Function to handle search
   const handleSearch = (term) => {
     setSearchTerm(term.toLowerCase());
+    setTimeout(() => {
+      const element = document.getElementById("search-results");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100); // slight delay ensures any render changes finish first
   };
 
   // Function to filter job data based on updated schema with category field
@@ -79,7 +85,7 @@ const Jobs = () => {
         <FindJobs onSearch={handleSearch} />
       </div>
 
-      <div style={{ display: "flex", gap: "20px" }}>
+      <div id="search-results" style={{ display: "flex", gap: "20px" }}>
         <div style={{ width: "350px" }}>
           <Filter
             selectedCategories={selectedCategories}

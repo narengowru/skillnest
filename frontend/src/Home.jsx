@@ -21,7 +21,11 @@ const Home = () => {
       <Reviews />
       <FreelancersSpecialty />
 
-      <div 
+      {(() => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user?.userType === 'client') {
+    return (
+<div 
       onClick={handleClick}
       style={{
         display: 'flex',
@@ -105,6 +109,10 @@ const Home = () => {
         }}
       />
     </div>
+);
+  }
+  return null;
+})()}
     </div>
   );
 };
