@@ -435,7 +435,7 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
             </div>
             
             <div className="order-actions">
-              {order.status === ORDER_STATUS.CREATED && (
+              {(order.status === ORDER_STATUS.CREATED && order.whoPlaced !== 'freelancer') && (
                 <>
                   <button 
                     className="accept-btn"

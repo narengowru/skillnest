@@ -57,6 +57,10 @@ const revisionSchema = new mongoose.Schema({
 
 // Main Order Schema
 const orderSchema = new mongoose.Schema({
+  whoPlaced: {
+    type: String,
+    required: true
+  },
   orderId: {
     type: String,
     required: true,

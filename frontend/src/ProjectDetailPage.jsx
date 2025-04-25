@@ -87,7 +87,9 @@ const ProjectDetailPage = () => {
           content: "I'm interested in working on your project",
           sender: user.id,
           senderModel: 'Freelancer'
-        }]
+        }],
+        //New requested by
+        whoPlaced: "freelancer"
       };
       
       // Log the complete order data for debugging

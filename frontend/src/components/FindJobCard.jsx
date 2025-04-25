@@ -3,16 +3,27 @@ import './FindJobCard.css';
 import { useNavigate } from 'react-router-dom';
 
 const formatDate = (dateString) => {
-  const dateParts = dateString.split('-'); // Assuming DD-MM-YY
-  const formattedDate = new Date(`20${dateParts[2]}`, dateParts[1] - 1, dateParts[0]);
-  return formattedDate.toDateString(); // Example: "Mon Jan 29 2024"
+  try {
+    // Parse ISO date string (e.g., "2025-04-23T16:52:29.932Z")
+    const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+    
+    // Return formatted date string
+    return date.toDateString(); // Example: "Wed Apr 23 2025"
+  } catch (error) {
+    return 'Invalid date';
+  }
 };
 
 const FindJobCard = ({ 
   id,
   image, 
   category, 
-  postedDate,  // Expected in DD-MM-YY format
+  postedDate,  // ISO format date string: "2025-04-23T16:52:29.932Z"
   description
 }) => {
   const navigate = useNavigate();

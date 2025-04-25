@@ -44,6 +44,7 @@ exports.createOrder = async (req, res) => {
       clientId,
       freelancerId,
       title,
+      whoPlaced,
       description,
       category,
       amount,
@@ -94,6 +95,7 @@ exports.createOrder = async (req, res) => {
     const order = new Order({
       orderId,
       jobId,
+      whoPlaced,
       clientId: clientId || (req.user ? req.user.id : null), // Use clientId from body or fall back to req.user.id
       freelancerId,
       title,
