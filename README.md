@@ -43,6 +43,24 @@ SkillNest is a web platform that connects **freelancers** with **clients**. Whet
 
 ---
 
+### 🔐 Environment Variables
+
+Make sure to **create a `.env` file** in both the `backend` and `frontend` directories before starting the application.
+
+#### 📁 Backend (`/backend/.env`)
+```env
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/skillnest?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.3.2
+JWT_SECRET=your_jwt_secret_key_here
+```
+🔒 Replace MONGODB_URI with your actual MongoDB connection string if using Atlas.
+🔒 Replace JWT_SECRET with a strong secret key.
+
+#### 📁 Frontend (`/frontend/.env`)
+```env
+REACT_APP_API_URL=http://localhost:5000
+```
+
 ### 🔧 Installation
 
 ```bash
