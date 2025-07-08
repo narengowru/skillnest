@@ -1,0 +1,43 @@
+/* Custom scrollbar for chat window */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* Modal overlay z-index fix */
+.chat-modal-overlay {
+  z-index: 60;
+}
+
+/* Typing indicator animation */
+@keyframes chat-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.chat-typing-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #6b7280;
+  border-radius: 50%;
+  margin-right: 2px;
+  animation: chat-bounce 0.6s infinite;
+}
+.chat-typing-dot:nth-child(2) { animation-delay: 0.1s; }
+.chat-typing-dot:nth-child(3) { animation-delay: 0.2s; }
+
+/* Responsive chat window for mobile */
+@media (max-width: 500px) {
+  .chat-window {
+    width: 100vw !important;
+    height: 100vh !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    border-radius: 0 !important;
+  }
+}

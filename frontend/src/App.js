@@ -13,6 +13,7 @@ import Profile from "./Profile";
 import ToastContainer from "./components/ToastContainer";
 import Login from "./Login";
 import ClientDashboard from "./ClientDashboard";
+import ChatComponent from "./components/ChatComponent";
 
 const App = () => (
   <UserProvider>
@@ -28,6 +29,7 @@ const App = () => (
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/client-dashboard" element={<ClientDashboard />} />
+        <Route path="/chat" element={<ChatComponent />} />
       </Routes>
       <Footer />
       <ToastContainer />
