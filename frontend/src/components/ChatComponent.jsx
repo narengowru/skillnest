@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X, Users, Search, Phone, Video, MoreVertical, Paperclip, Smile, ArrowLeft, Circle, Check, CheckCheck, Plus, UserPlus } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { freelancerAPI, clientAPI } from '../api/api';
+import './ChatComponent.css';
 
 const ChatComponent = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -314,16 +315,16 @@ const ChatComponent = () => {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="chat-container">
       {/* Chat Toggle Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-105 relative"
+          className="chat-toggle-button"
         >
           <MessageCircle size={24} />
           {unreadCount > 0 && (
-            <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+            <div className="unread-badge">
               {unreadCount > 99 ? '99+' : unreadCount}
             </div>
           )}
@@ -332,39 +333,39 @@ const ChatComponent = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="bg-white rounded-lg shadow-2xl w-80 h-96 flex flex-col overflow-hidden border">
+        <div className="chat-window">
           {/* Header */}
-          <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="chat-header">
+            <div className="header-left">
               {currentView === 'chat' && (
                 <button
                   onClick={() => setCurrentView('conversations')}
-                  className="hover:bg-blue-700 p-1 rounded"
+                  className="back-button"
                 >
                   <ArrowLeft size={20} />
                 </button>
               )}
-              <h3 className="font-semibold">
+              <h3 className="header-title">
                 {currentView === 'conversations' ? 'Messages' : getOtherUser(activeConversation)?.name}
               </h3>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="header-right">
               {currentView === 'chat' && (
                 <>
-                  <button className="hover:bg-blue-700 p-1 rounded">
+                  <button className="header-action-btn">
                     <Phone size={18} />
                   </button>
-                  <button className="hover:bg-blue-700 p-1 rounded">
+                  <button className="header-action-btn">
                     <Video size={18} />
                   </button>
-                  <button className="hover:bg-blue-700 p-1 rounded">
+                  <button className="header-action-btn">
                     <MoreVertical size={18} />
                   </button>
                 </>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="hover:bg-blue-700 p-1 rounded"
+                className="close-button"
               >
                 <X size={20} />
               </button>
@@ -372,20 +373,20 @@ const ChatComponent = () => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-hidden">
+          <div className="chat-content">
             {currentView === 'conversations' ? (
-              <div className="h-full flex flex-col">
+              <div className="conversations-container">
                 {/* Search */}
-                <div className="p-3 border-b">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="relative flex-1 mr-3">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <div className="search-section">
+                  <div className="search-controls">
+                    <div className="search-input-container">
+                      <Search className="search-icon" size={16} />
                       <input
                         type="text"
                         placeholder="Search conversations..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="search-input"
                       />
                     </div>
                     <button
@@ -393,7 +394,7 @@ const ChatComponent = () => {
                         setShowNewConversation(true);
                         loadAvailableUsers();
                       }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-2 transition-colors"
+                      className="new-conversation-btn"
                       title="Start new conversation"
                     >
                       <Plus size={20} />
@@ -402,12 +403,12 @@ const ChatComponent = () => {
                 </div>
 
                 {/* Conversations List */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="conversations-list">
                   {filteredConversations.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">
-                      <Users size={48} className="mx-auto mb-2 text-gray-300" />
+                    <div className="empty-conversations">
+                      <Users size={48} className="empty-icon" />
                       <p>No conversations yet</p>
-                      <p className="text-sm">Start a new conversation!</p>
+                      <p className="empty-subtitle">Start a new conversation!</p>
                     </div>
                   ) : (
                     filteredConversations.map((conv) => {
@@ -418,33 +419,33 @@ const ChatComponent = () => {
                         <div
                           key={conv._id}
                           onClick={() => openConversation(conv)}
-                          className="p-3 hover:bg-gray-50 cursor-pointer border-b flex items-center space-x-3"
+                          className="conversation-item"
                         >
-                          <div className="relative">
+                          <div className="user-avatar-container">
                             <img
                               src={otherUser.profilePicture || '/default-avatar.png'}
                               alt={otherUser.name}
-                              className="w-12 h-12 rounded-full object-cover"
+                              className="user-avatar"
                             />
                             {onlineUsers.has(otherUser._id) && (
-                              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                              <div className="online-indicator"></div>
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center">
-                              <p className="font-medium text-sm truncate">{otherUser.name}</p>
+                          <div className="conversation-info">
+                            <div className="conversation-header">
+                              <p className="user-name">{otherUser.name}</p>
                               {conv.lastMessage && (
-                                <span className="text-xs text-gray-500">
+                                <span className="message-time">
                                   {formatTime(conv.lastMessage.createdAt)}
                                 </span>
                               )}
                             </div>
-                            <div className="flex justify-between items-center mt-1">
-                              <p className="text-xs text-gray-600 truncate">
+                            <div className="conversation-footer">
+                              <p className="last-message">
                                 {conv.lastMessage?.content || 'No messages yet'}
                               </p>
                               {conv.unreadCount > 0 && (
-                                <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                                <span className="conversation-unread-badge">
                                   {conv.unreadCount}
                                 </span>
                               )}
@@ -457,18 +458,18 @@ const ChatComponent = () => {
                 </div>
               </div>
             ) : (
-              <div className="h-full flex flex-col">
+              <div className="chat-view">
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="messages-container">
                   {isLoading ? (
-                    <div className="flex justify-center items-center h-full">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="loading-container">
+                      <div className="loading-spinner"></div>
                     </div>
                   ) : messages.length === 0 ? (
-                    <div className="text-center text-gray-500">
-                      <MessageCircle size={48} className="mx-auto mb-2 text-gray-300" />
+                    <div className="empty-messages">
+                      <MessageCircle size={48} className="empty-icon" />
                       <p>No messages yet</p>
-                      <p className="text-sm">Start the conversation!</p>
+                      <p className="empty-subtitle">Start the conversation!</p>
                     </div>
                   ) : (
                     messages.map((message) => {
@@ -476,24 +477,18 @@ const ChatComponent = () => {
                       return (
                         <div
                           key={message._id}
-                          className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                          className={`message-row ${isOwn ? 'own-message' : 'other-message'}`}
                         >
-                          <div
-                            className={`max-w-xs px-4 py-2 rounded-lg ${
-                              isOwn
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-800'
-                            }`}
-                          >
-                            <p className="text-sm">{message.content}</p>
-                            <div className={`flex items-center justify-end mt-1 space-x-1 ${isOwn ? 'text-blue-200' : 'text-gray-500'}`}>
-                              <span className="text-xs">{formatTime(message.createdAt)}</span>
+                          <div className={`message-bubble ${isOwn ? 'own-bubble' : 'other-bubble'}`}>
+                            <p className="message-content">{message.content}</p>
+                            <div className="message-meta">
+                              <span className="message-time-small">{formatTime(message.createdAt)}</span>
                               {isOwn && (
-                                <div className="text-xs">
+                                <div className="message-status">
                                   {message.isRead ? (
-                                    <CheckCheck size={12} className="text-blue-200" />
+                                    <CheckCheck size={12} className="read-indicator" />
                                   ) : (
-                                    <Check size={12} className="text-blue-200" />
+                                    <Check size={12} className="sent-indicator" />
                                   )}
                                 </div>
                               )}
@@ -506,14 +501,14 @@ const ChatComponent = () => {
                   
                   {/* Typing indicator */}
                   {typingUsers.length > 0 && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-200 rounded-lg px-4 py-2 flex items-center space-x-2">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    <div className="typing-indicator-container">
+                      <div className="typing-indicator">
+                        <div className="typing-dots">
+                          <div className="typing-dot"></div>
+                          <div className="typing-dot typing-dot-2"></div>
+                          <div className="typing-dot typing-dot-3"></div>
                         </div>
-                        <span className="text-xs text-gray-500">typing...</span>
+                        <span className="typing-text">typing...</span>
                       </div>
                     </div>
                   )}
@@ -522,12 +517,12 @@ const ChatComponent = () => {
                 </div>
 
                 {/* Message Input */}
-                <div className="p-4 border-t bg-gray-50">
-                  <div className="flex items-center space-x-2">
-                    <button className="text-gray-500 hover:text-gray-700">
+                <div className="message-input-container">
+                  <div className="message-input-wrapper">
+                    <button className="input-action-btn">
                       <Paperclip size={20} />
                     </button>
-                    <div className="flex-1 relative">
+                    <div className="message-input-field">
                       <input
                         ref={messageInputRef}
                         type="text"
@@ -535,16 +530,16 @@ const ChatComponent = () => {
                         onChange={handleTyping}
                         onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                         placeholder="Type a message..."
-                        className="w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="message-input"
                       />
-                      <button className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                      <button className="emoji-button">
                         <Smile size={20} />
                       </button>
                     </div>
                     <button
                       onClick={sendMessage}
                       disabled={!newMessage.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-full p-2 transition-colors"
+                      className="send-button"
                     >
                       <Send size={18} />
                     </button>
@@ -558,30 +553,30 @@ const ChatComponent = () => {
 
       {/* New Conversation Modal */}
       {showNewConversation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
-          <div className="bg-white rounded-lg w-96 max-h-96 flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="font-semibold">Start New Conversation</h3>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3 className="modal-title">Start New Conversation</h3>
               <button
                 onClick={() => setShowNewConversation(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="modal-close-btn"
               >
                 <X size={20} />
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="modal-body">
               {loadingUsers ? (
-                <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="modal-loading">
+                  <div className="loading-spinner"></div>
                 </div>
               ) : availableUsers.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
-                  <UserPlus size={48} className="mx-auto mb-2 text-gray-300" />
+                <div className="modal-empty">
+                  <UserPlus size={48} className="empty-icon" />
                   <p>No users available</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="users-list">
                   {availableUsers.map((user) => (
                     <div
                       key={user._id}
@@ -589,22 +584,22 @@ const ChatComponent = () => {
                         startNewConversation(user._id);
                         setShowNewConversation(false);
                       }}
-                      className="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer rounded-lg"
+                      className="user-item"
                     >
                       <img
                         src={user.profilePhoto || user.profilePicture || '/default-avatar.png'}
                         alt={user.name || user.companyName}
-                        className="w-10 h-10 rounded-full object-cover"
+                        className="user-item-avatar"
                       />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">
+                      <div className="user-item-info">
+                        <p className="user-item-name">
                           {user.name || user.companyName}
                         </p>
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="user-item-email">
                           {user.email}
                         </p>
                         {user.skills && user.skills.length > 0 && (
-                          <p className="text-xs text-blue-600 truncate">
+                          <p className="user-item-skills">
                             {user.skills.slice(0, 2).map(skill => skill.name || skill).join(', ')}
                           </p>
                         )}
