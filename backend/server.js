@@ -1,9 +1,28 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const socketIo = require('socket.io');
+const http = require('http');
 require('dotenv').config();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = socketIo(server, {
+  cors: {
+    origin: [
+      'https://skillnest-orpin.vercel.app',
+      'http://localhost:3000',
+      // Add other domains as needed
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 
 // Middleware
 const allowedOrigins = [
@@ -30,11 +49,19 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected successfully'))
   .catch(err => console.error('MongoDB connection error:', err));
 
+// Attach chatHandlers to each new connection
+io.on('connection', socket => require('./socket/chatHandlers')(io, socket));
+
+// Make io accessible to routes
+app.set('io', io);
+
 // Routes
 app.use('/api/freelancers', require('./routes/freelancers'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/clients', require('./routes/clients'));
+app.use('/api/chat', require('./routes/chatRoutes')); // Fixed route path
+// Note: chatHandlers should be imported and used with Socket.IO, not as middleware
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));
@@ -50,6 +77,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-app.listen(PORT, () => {
+// Use server.listen instead of app.listen to support Socket.IO
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
