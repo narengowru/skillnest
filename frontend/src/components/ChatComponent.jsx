@@ -22,6 +22,8 @@ const ChatComponent = () => {
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [availableUsers, setAvailableUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [companyNames, setCompanyNames] = useState({});
+  const [allowedClientIds, setAllowedClientIds] = useState([]);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -40,6 +42,32 @@ const ChatComponent = () => {
       }
     }
   }, []);
+
+  // Add this useEffect to load conversations when currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      loadConversations();
+    }
+  }, [currentUser]);
+
+  // Fetch allowed client IDs for freelancers
+  useEffect(() => {
+    const fetchAllowedClients = async () => {
+      if (currentUser && currentUser.userType === 'freelancer') {
+        try {
+          const res = await freelancerAPI.getFreelancer(currentUser.id);
+          // Extract unique clientIds from freelancer.orders
+          const clientIds = (res.data.orders || [])
+            .map(order => order.clientId)
+            .filter(Boolean);
+          setAllowedClientIds([...new Set(clientIds.map(id => id.toString()))]);
+        } catch (e) {
+          setAllowedClientIds([]);
+        }
+      }
+    };
+    fetchAllowedClients();
+  }, [currentUser]);
 
   // Initialize socket connection
   const initializeSocket = (user) => {
@@ -62,16 +90,44 @@ const ChatComponent = () => {
     });
 
     newSocket.on('new-message', (message) => {
+      console.log('Received new message:', message);
+      
       if (activeConversation && message.chatRoomId === activeConversation._id) {
-        setMessages(prev => [...prev, message]);
+        setMessages(prev => [
+          ...prev.filter(msg => !msg._id?.toString().startsWith('temp-')),
+          message
+        ]);
         markMessagesAsRead(activeConversation._id);
-      } else {
-        // Update conversation list with new message
-        setConversations(prev => prev.map(conv => 
-          conv._id === message.chatRoomId 
-            ? { ...conv, lastMessage: message, unreadCount: conv.unreadCount + 1 }
-            : conv
-        ));
+      }
+      
+      // Always update conversations list
+      setConversations(prev => {
+        const existingConvIndex = prev.findIndex(conv => conv._id === message.chatRoomId);
+        let updatedConversations;
+        
+        if (existingConvIndex !== -1) {
+          // Update existing conversation
+          updatedConversations = prev.map(conv =>
+            conv._id === message.chatRoomId
+              ? { 
+                  ...conv, 
+                  lastMessage: message, 
+                  unreadCount: activeConversation?._id === message.chatRoomId ? 0 : (conv.unreadCount || 0) + 1
+                }
+              : conv
+          );
+        } else {
+          // This shouldn't happen often, but just in case
+          console.log('Conversation not found, reloading conversations');
+          loadConversations();
+          return prev;
+        }
+        
+        return sortConversations(updatedConversations);
+      });
+      
+      // Update total unread count
+      if (!activeConversation || message.chatRoomId !== activeConversation._id) {
         setUnreadCount(prev => prev + 1);
       }
     });
@@ -91,13 +147,12 @@ const ChatComponent = () => {
     newSocket.on('messages-read', (data) => {
       if (activeConversation && data.chatRoomId === activeConversation._id) {
         setMessages(prev => prev.map(msg => 
-          msg.senderId === currentUser.id ? { ...msg, isRead: true } : msg
+          msg.senderId._id === currentUser.id ? { ...msg, isRead: true } : msg
         ));
       }
     });
 
     newSocket.on('message-notification', (notification) => {
-      // Show notification for messages from other conversations
       console.log('New message notification:', notification);
     });
 
@@ -121,8 +176,9 @@ const ChatComponent = () => {
       const data = await response.json();
       
       if (data.success) {
-        setConversations(data.data.chatRooms);
-        const totalUnread = data.data.chatRooms.reduce((sum, room) => sum + room.unreadCount, 0);
+        const sorted = sortConversations(data.data.chatRooms);
+        setConversations(sorted);
+        const totalUnread = sorted.reduce((sum, room) => sum + (room.unreadCount || 0), 0);
         setUnreadCount(totalUnread);
       }
     } catch (error) {
@@ -138,7 +194,7 @@ const ChatComponent = () => {
       const data = await response.json();
       
       if (data.success) {
-        setMessages(data.data.messages);
+        setMessages(data.data.messages || []);
         markMessagesAsRead(chatRoomId);
       }
     } catch (error) {
@@ -164,6 +220,12 @@ const ChatComponent = () => {
       setConversations(prev => prev.map(conv => 
         conv._id === chatRoomId ? { ...conv, unreadCount: 0 } : conv
       ));
+      
+      // Update total unread count
+      setUnreadCount(prev => {
+        const conversation = conversations.find(conv => conv._id === chatRoomId);
+        return Math.max(0, prev - (conversation?.unreadCount || 0));
+      });
     } catch (error) {
       console.error('Error marking messages as read:', error);
     }
@@ -173,14 +235,45 @@ const ChatComponent = () => {
   const sendMessage = () => {
     if (!newMessage.trim() || !activeConversation || !socket) return;
 
+    const messageContent = newMessage.trim();
+    
+    // Create a temporary message object for optimistic UI
+    const tempMessage = {
+      _id: `temp-${Date.now()}`,
+      senderId: { _id: currentUser.id },
+      content: messageContent,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      chatRoomId: activeConversation._id
+    };
+
+    // Add message to current chat
+    setMessages(prev => [...prev, tempMessage]);
+
+    // Update conversations list optimistically
+    setConversations(prev => {
+      const updatedConversations = prev.map(conv =>
+        conv._id === activeConversation._id
+          ? { ...conv, lastMessage: tempMessage, unreadCount: 0 }
+          : conv
+      );
+      return sortConversations(updatedConversations);
+    });
+
+    // Send message via socket
     socket.emit('send-message', {
       chatRoomId: activeConversation._id,
-      content: newMessage.trim(),
+      content: messageContent,
       messageType: 'text'
     });
 
     setNewMessage('');
     stopTyping();
+    
+    // Focus back on input
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 0);
   };
 
   // Handle typing
@@ -206,7 +299,7 @@ const ChatComponent = () => {
     clearTimeout(typingTimeoutRef.current);
   };
 
-  // Start new conversation
+  // Start new conversation - FIXED VERSION
   const startNewConversation = async (userId) => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/room`, {
@@ -220,15 +313,45 @@ const ChatComponent = () => {
 
       const data = await response.json();
       if (data.success) {
-        setActiveConversation(data.data.chatRoom);
+        const newChatRoom = data.data.chatRoom;
+        
+        // Set active conversation
+        setActiveConversation(newChatRoom);
         setCurrentView('chat');
         
+        // Join the room via socket
         if (socket) {
-          socket.emit('join-room', { chatRoomId: data.data.chatRoom._id });
+          socket.emit('join-room', { chatRoomId: newChatRoom._id });
         }
         
-        loadMessages(data.data.chatRoom._id);
-        loadConversations();
+        // Load messages for this room
+        await loadMessages(newChatRoom._id);
+        
+        // Ensure the conversation is in the list
+        setConversations(prev => {
+          const existingIndex = prev.findIndex(conv => conv._id === newChatRoom._id);
+          if (existingIndex === -1) {
+            // Add new conversation to the list
+            const newConversation = {
+              ...newChatRoom,
+              lastMessage: null,
+              unreadCount: 0
+            };
+            return sortConversations([newConversation, ...prev]);
+          }
+          return prev;
+        });
+        
+        // Close the modal
+        setShowNewConversation(false);
+        
+        // Focus on message input
+        setTimeout(() => {
+          messageInputRef.current?.focus();
+        }, 100);
+        
+      } else {
+        console.error('Failed to create chat room:', data.message);
       }
     } catch (error) {
       console.error('Error starting conversation:', error);
@@ -262,12 +385,44 @@ const ChatComponent = () => {
       return conversation.freelancerId;
     }
   };
-
   // Filter conversations
+  // Fetch companyName for other users (clients) and cache them
+  useEffect(() => {
+    const fetchCompanyNames = async () => {
+      const clientIds = conversations
+        .map(conv => {
+          const otherUser = getOtherUser(conv);
+          return otherUser && otherUser._id;
+        })
+        .filter(Boolean);
+      const uniqueClientIds = [...new Set(clientIds)];
+      for (const clientId of uniqueClientIds) {
+        if (!companyNames[clientId]) {
+          try {
+            const res = await clientAPI.getClient(clientId);
+            setCompanyNames(prev => ({ ...prev, [clientId]: res.data.companyName }));
+          } catch (e) {
+            // ignore error
+          }
+        }
+      }
+    };
+    fetchCompanyNames();
+    // eslint-disable-next-line
+  }, [conversations]);
+
   const filteredConversations = conversations.filter(conv => {
     const otherUser = getOtherUser(conv);
-    return otherUser?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
+    const clientId = otherUser?._id;
+    const companyName = clientId ? companyNames[clientId] || '' : '';
+    // If freelancer, only show conversations with allowed clients
+    if (currentUser?.userType === 'freelancer' && clientId) {
+      if (!allowedClientIds.includes(clientId.toString())) return false;
+    }
+    return companyName.toLowerCase().includes(searchQuery.toLowerCase());
   });
+
+  // const filteredConversations = conversations;
 
   // Format time
   const formatTime = (timestamp) => {
@@ -293,8 +448,6 @@ const ChatComponent = () => {
     }
   };
 
-  if (!currentUser) return null;
-
   // Load available users for new conversation
   const loadAvailableUsers = async () => {
     if (!currentUser) return;
@@ -306,13 +459,55 @@ const ChatComponent = () => {
         ? await api.getAllClients() 
         : await api.getAllFreelancers();
       
-      setAvailableUsers(response.data || []);
+      // Filter out users who already have conversations
+      const existingUserIds = conversations.map(conv => {
+        const otherUser = getOtherUser(conv);
+        return otherUser?._id;
+      }).filter(Boolean);
+      
+      let availableUsersFiltered = (response.data || []).filter(user => 
+        !existingUserIds.includes(user._id)
+      );
+      // If freelancer, only allow clients from allowedClientIds
+      if (currentUser.userType === 'freelancer') {
+        availableUsersFiltered = availableUsersFiltered.filter(user => 
+          allowedClientIds.includes(user._id.toString())
+        );
+      }
+      setAvailableUsers(availableUsersFiltered);
     } catch (error) {
       console.error('Error loading users:', error);
     } finally {
       setLoadingUsers(false);
     }
   };
+
+  // Helper to sort conversations by last message time
+  const sortConversations = (convs) => {
+    return [...convs].sort((a, b) => {
+      const aTime = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
+      const bTime = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+  };
+
+  // Helper to get company name for a user
+  const getCompanyName = (otherUser) => {
+    if (!otherUser?._id) return '';
+    return companyNames[otherUser._id] || otherUser.companyName || otherUser.name || 'Unknown';
+  };
+
+  // Handle back button from chat to conversations
+  const handleBackToConversations = () => {
+    setCurrentView('conversations');
+    setActiveConversation(null);
+    setMessages([]);
+    setTypingUsers([]);
+    // Reload conversations to get latest state
+    loadConversations();
+  };
+
+  if (!currentUser) return null;
 
   return (
     <div className="chat-container">
@@ -339,28 +534,33 @@ const ChatComponent = () => {
             <div className="header-left">
               {currentView === 'chat' && (
                 <button
-                  onClick={() => setCurrentView('conversations')}
+                  onClick={handleBackToConversations}
                   className="back-button"
                 >
                   <ArrowLeft size={20} />
                 </button>
               )}
-              <h3 className="header-title">
-                {currentView === 'conversations' ? 'Messages' : getOtherUser(activeConversation)?.name}
-              </h3>
+              {currentView === 'chat' && getOtherUser(activeConversation) && (
+                <>
+                  <img
+                    src={getOtherUser(activeConversation)?.profilePicture || '/default-avatar.png'}
+                    alt={getCompanyName(getOtherUser(activeConversation))}
+                    className="user-avatar user-avatar-header"
+                    style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', marginRight: 8 }}
+                  />
+                  <span className="header-title" style={{ fontWeight: 600 }}>
+                    {getCompanyName(getOtherUser(activeConversation))}
+                  </span>
+                </>
+              )}
+              {currentView === 'conversations' && (
+                <h3 className="header-title">Messages</h3>
+              )}
             </div>
             <div className="header-right">
               {currentView === 'chat' && (
                 <>
-                  <button className="header-action-btn">
-                    <Phone size={18} />
-                  </button>
-                  <button className="header-action-btn">
-                    <Video size={18} />
-                  </button>
-                  <button className="header-action-btn">
-                    <MoreVertical size={18} />
-                  </button>
+                
                 </>
               )}
               <button
@@ -424,7 +624,7 @@ const ChatComponent = () => {
                           <div className="user-avatar-container">
                             <img
                               src={otherUser.profilePicture || '/default-avatar.png'}
-                              alt={otherUser.name}
+                              alt={getCompanyName(otherUser)}
                               className="user-avatar"
                             />
                             {onlineUsers.has(otherUser._id) && (
@@ -433,7 +633,7 @@ const ChatComponent = () => {
                           </div>
                           <div className="conversation-info">
                             <div className="conversation-header">
-                              <p className="user-name">{otherUser.name}</p>
+                              <p className="user-name">{getCompanyName(otherUser)}</p>
                               {conv.lastMessage && (
                                 <span className="message-time">
                                   {formatTime(conv.lastMessage.createdAt)}
@@ -519,9 +719,7 @@ const ChatComponent = () => {
                 {/* Message Input */}
                 <div className="message-input-container">
                   <div className="message-input-wrapper">
-                    <button className="input-action-btn">
-                      <Paperclip size={20} />
-                    </button>
+                    
                     <div className="message-input-field">
                       <input
                         ref={messageInputRef}
@@ -532,9 +730,7 @@ const ChatComponent = () => {
                         placeholder="Type a message..."
                         className="message-input"
                       />
-                      <button className="emoji-button">
-                        <Smile size={20} />
-                      </button>
+                      
                     </div>
                     <button
                       onClick={sendMessage}
@@ -573,17 +769,15 @@ const ChatComponent = () => {
               ) : availableUsers.length === 0 ? (
                 <div className="modal-empty">
                   <UserPlus size={48} className="empty-icon" />
-                  <p>No users available</p>
+                  <p>No new users available</p>
+                  <p className="empty-subtitle">All available users already have conversations</p>
                 </div>
               ) : (
                 <div className="users-list">
                   {availableUsers.map((user) => (
                     <div
                       key={user._id}
-                      onClick={() => {
-                        startNewConversation(user._id);
-                        setShowNewConversation(false);
-                      }}
+                      onClick={() => startNewConversation(user._id)}
                       className="user-item"
                     >
                       <img
