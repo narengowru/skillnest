@@ -22,33 +22,58 @@ const ChatComponent = () => {
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [availableUsers, setAvailableUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [companyNames, setCompanyNames] = useState({});
+  const [userCache, setUserCache] = useState({});
   const [allowedClientIds, setAllowedClientIds] = useState([]);
+  const [allowedFreelancerIds, setAllowedFreelancerIds] = useState([]);
+  const [clientId, setClientId] = useState(null);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageInputRef = useRef(null);
 
-  // Initialize user and socket connection
+  // Initialize user and socket connection (only once on mount)
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
+    const fetchAndSetUser = async () => {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        let user = JSON.parse(userData);
+        if (user.userType === 'client' && user.email && !user.id) {
+          try {
+            const res = await clientAPI.getAllClients();
+            const client = (res.data || []).find(c => c.email === user.email);
+            if (client && client._id) {
+              user = { ...user, id: client._id };
+            }
+          } catch (e) {
+            // ignore error
+          }
+        }
         setCurrentUser(user);
         initializeSocket(user);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
       }
-    }
+    };
+    fetchAndSetUser();
   }, []);
 
-  // Add this useEffect to load conversations when currentUser changes
+  // Only set clientId if not already set
   useEffect(() => {
-    if (currentUser) {
-      loadConversations();
+    if (
+      currentUser &&
+      currentUser.userType === 'client' &&
+      currentUser.id &&
+      clientId !== currentUser.id
+    ) {
+      setClientId(currentUser.id);
     }
-  }, [currentUser]);
+  }, [currentUser, clientId]);
+
+  // Only load conversations when all data is ready
+  useEffect(() => {
+    if (!currentUser) return;
+    if (currentUser.userType === 'client' && !clientId) return;
+    loadConversations();
+    // eslint-disable-next-line
+  }, [currentUser, clientId]);
 
   // Fetch allowed client IDs for freelancers
   useEffect(() => {
@@ -68,6 +93,26 @@ const ChatComponent = () => {
     };
     fetchAllowedClients();
   }, [currentUser]);
+
+  // Fetch allowed freelancer IDs for clients
+  useEffect(() => {
+    const fetchAllowedFreelancers = async () => {
+      if (currentUser && currentUser.userType === 'client' && clientId) {
+        try {
+          console.log('clientId', clientId);
+          const res = await clientAPI.getClient(clientId);
+          // Extract unique freelancerIds from client.orders
+          const freelancerIds = (res.data.orders || [])
+            .map(order => order.freelancerId)
+            .filter(Boolean);
+          setAllowedFreelancerIds([...new Set(freelancerIds.map(id => id.toString()))]);
+        } catch (e) {
+          setAllowedFreelancerIds([]);
+        }
+      }
+    };
+    fetchAllowedFreelancers();
+  }, [currentUser, clientId]);
 
   // Initialize socket connection
   const initializeSocket = (user) => {
@@ -170,9 +215,11 @@ const ChatComponent = () => {
   // Load conversations
   const loadConversations = async () => {
     if (!currentUser) return;
-
+    let userId = currentUser.id;
+    if (currentUser.userType === 'client' && clientId) userId = clientId;
+    if (currentUser.userType === 'client' && !clientId) return;
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/rooms?userId=${currentUser.id}&userType=${currentUser.userType === 'freelancer' ? 'Freelancer' : 'Client'}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/rooms?userId=${userId}&userType=${currentUser.userType === 'freelancer' ? 'Freelancer' : 'Client'}`);
       const data = await response.json();
       
       if (data.success) {
@@ -301,12 +348,17 @@ const ChatComponent = () => {
 
   // Start new conversation - FIXED VERSION
   const startNewConversation = async (userId) => {
+    // Prevent starting a conversation until clientId is available for clients
+    if (currentUser.userType === 'client' && !clientId) {
+      console.error('Client ID not loaded yet');
+      return;
+    }
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/room`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clientId: currentUser.userType === 'client' ? currentUser.id : userId,
+          clientId: currentUser.userType === 'client' ? clientId : userId,
           freelancerId: currentUser.userType === 'freelancer' ? currentUser.id : userId
         })
       });
@@ -386,38 +438,50 @@ const ChatComponent = () => {
     }
   };
   // Filter conversations
-  // Fetch companyName for other users (clients) and cache them
+  // Fetch companyName for other users (clients/freelancers) and cache them
   useEffect(() => {
-    const fetchCompanyNames = async () => {
-      const clientIds = conversations
+    const fetchUsers = async () => {
+      const idsToFetch = conversations
         .map(conv => {
           const otherUser = getOtherUser(conv);
           return otherUser && otherUser._id;
         })
         .filter(Boolean);
-      const uniqueClientIds = [...new Set(clientIds)];
-      for (const clientId of uniqueClientIds) {
-        if (!companyNames[clientId]) {
+
+      const uniqueIds = [...new Set(idsToFetch)];
+      for (const id of uniqueIds) {
+        if (!userCache[id]) {
           try {
-            const res = await clientAPI.getClient(clientId);
-            setCompanyNames(prev => ({ ...prev, [clientId]: res.data.companyName }));
+            let res, userObj;
+            if (currentUser.userType === 'freelancer') {
+              res = await clientAPI.getClient(id);
+              userObj = res.data;
+            } else {
+              res = await freelancerAPI.getFreelancer(id);
+              userObj = res.data;
+            }
+            setUserCache(prev => ({ ...prev, [id]: userObj }));
           } catch (e) {
             // ignore error
           }
         }
       }
     };
-    fetchCompanyNames();
+    fetchUsers();
     // eslint-disable-next-line
   }, [conversations]);
 
   const filteredConversations = conversations.filter(conv => {
     const otherUser = getOtherUser(conv);
     const clientId = otherUser?._id;
-    const companyName = clientId ? companyNames[clientId] || '' : '';
+    const companyName = clientId ? userCache[clientId]?.companyName || userCache[clientId]?.name || '' : '';
     // If freelancer, only show conversations with allowed clients
     if (currentUser?.userType === 'freelancer' && clientId) {
       if (!allowedClientIds.includes(clientId.toString())) return false;
+    }
+    // If client, only show conversations with allowed freelancers
+    if (currentUser?.userType === 'client' && otherUser?._id) {
+      if (!allowedFreelancerIds.includes(otherUser._id.toString())) return false;
     }
     return companyName.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -474,6 +538,12 @@ const ChatComponent = () => {
           allowedClientIds.includes(user._id.toString())
         );
       }
+      // If client, only allow freelancers from allowedFreelancerIds
+      if (currentUser.userType === 'client') {
+        availableUsersFiltered = availableUsersFiltered.filter(user => 
+          allowedFreelancerIds.includes(user._id.toString())
+        );
+      }
       setAvailableUsers(availableUsersFiltered);
     } catch (error) {
       console.error('Error loading users:', error);
@@ -494,7 +564,15 @@ const ChatComponent = () => {
   // Helper to get company name for a user
   const getCompanyName = (otherUser) => {
     if (!otherUser?._id) return '';
-    return companyNames[otherUser._id] || otherUser.companyName || otherUser.name || 'Unknown';
+    const cached = userCache[otherUser._id];
+    return cached?.companyName || cached?.name || otherUser.companyName || otherUser.name || 'Unknown';
+  };
+
+  // Add helper for profile photo:
+  const getProfilePhoto = (otherUser) => {
+    if (!otherUser?._id) return '/default-avatar.png';
+    const cached = userCache[otherUser._id];
+    return cached?.profilePhoto || cached?.profilePicture || otherUser.profilePhoto || otherUser.profilePicture || '/default-avatar.png';
   };
 
   // Handle back button from chat to conversations
@@ -543,7 +621,7 @@ const ChatComponent = () => {
               {currentView === 'chat' && getOtherUser(activeConversation) && (
                 <>
                   <img
-                    src={getOtherUser(activeConversation)?.profilePicture || '/default-avatar.png'}
+                    src={getProfilePhoto(getOtherUser(activeConversation))}
                     alt={getCompanyName(getOtherUser(activeConversation))}
                     className="user-avatar user-avatar-header"
                     style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', marginRight: 8 }}
@@ -623,7 +701,7 @@ const ChatComponent = () => {
                         >
                           <div className="user-avatar-container">
                             <img
-                              src={otherUser.profilePicture || '/default-avatar.png'}
+                              src={getProfilePhoto(otherUser)}
                               alt={getCompanyName(otherUser)}
                               className="user-avatar"
                             />

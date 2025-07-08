@@ -9,7 +9,7 @@ const Freelancer = require('../models/Freelancer');
 exports.getOrCreateChatRoom = async (req, res) => {
   try {
     const { clientId, freelancerId, jobId = null, orderId = null } = req.body;
-
+    console.log('clientId', clientId);
     // Validate that both users exist
     const [client, freelancer] = await Promise.all([
       Client.findById(clientId),
