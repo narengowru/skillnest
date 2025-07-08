@@ -29,8 +29,8 @@ const App = () => (
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/client-dashboard" element={<ClientDashboard />} />
-        <Route path="/chat" element={<ChatComponent />} />
       </Routes>
+      <ChatComponent />
       <Footer />
       <ToastContainer />
     </Router>

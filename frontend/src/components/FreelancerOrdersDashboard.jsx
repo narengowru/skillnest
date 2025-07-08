@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { orderAPI, clientAPI } from '../api/api';
 import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar } from 'react-icons/fa';
+import { MessageCircle } from 'lucide-react';
 import './FreelancerOrdersDashboard.css';
 
 const ORDER_STATUS = {
@@ -338,6 +339,10 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
     window.open(`https://wa.me/${formattedPhone}`, '_blank');
   };
 
+  const handleOpenChat = (client) => {
+    window.dispatchEvent(new CustomEvent('open-chat-with-user', { detail: { userId: client._id } }));
+  };
+
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
   };
@@ -422,14 +427,12 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
               {order.clientId && order.status === ORDER_STATUS.IN_PROGRESS && (
                 <div className="freelancer-info">
                   <p><strong>Client:</strong> {order.clientId.companyName || 'N/A'}</p>
-                  {order.clientId.contactInfo && order.clientId.contactInfo.phone && (
-                    <button 
-                      className="whatsapp-btn"
-                      onClick={() => handleWhatsAppChat(order.clientId.contactInfo.phone)}
-                    >
-                      <FaWhatsapp /> Chat on WhatsApp
-                    </button>
-                  )}
+                  <button 
+                    className="chat-btn"
+                    onClick={() => handleOpenChat(order.clientId)}
+                  >
+                    <MessageCircle /> Chat
+                  </button>
                 </div>
               )}
             </div>

@@ -5,6 +5,7 @@ import { freelancerAPI, clientAPI } from '../api/api';
 import './ChatComponent.css';
 
 const ChatComponent = () => {
+  // All hooks at the top
   const [isOpen, setIsOpen] = useState(false);
   const [currentView, setCurrentView] = useState('conversations'); // 'conversations' or 'chat'
   const [currentUser, setCurrentUser] = useState(null);
@@ -585,7 +586,34 @@ const ChatComponent = () => {
     loadConversations();
   };
 
-  if (!currentUser) return null;
+  // After all hooks, check for user
+  if (!localStorage.getItem('user')) return null;
+
+  // Add this effect to listen for open-chat-with-user events
+  useEffect(() => {
+    const handler = (e) => {
+      const { userId } = e.detail || {};
+      if (!userId || !currentUser) return;
+      setIsOpen(true);
+      // Try to find an existing conversation with this user
+      let foundConv = null;
+      for (const conv of conversations) {
+        const otherUser = getOtherUser(conv);
+        if (otherUser && otherUser._id === userId) {
+          foundConv = conv;
+          break;
+        }
+      }
+      if (foundConv) {
+        openConversation(foundConv);
+      } else {
+        // Start a new conversation if not found
+        startNewConversation(userId);
+      }
+    };
+    window.addEventListener('open-chat-with-user', handler);
+    return () => window.removeEventListener('open-chat-with-user', handler);
+  }, [conversations, currentUser, clientId, socket]);
 
   return (
     <div className="chat-container">
