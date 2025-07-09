@@ -587,7 +587,7 @@ const ChatComponent = () => {
   };
 
   // After all hooks, check for user
-  if (!localStorage.getItem('user')) return null;
+  const userExists = !!localStorage.getItem('user');
 
   // Add this effect to listen for open-chat-with-user events
   useEffect(() => {
@@ -614,6 +614,8 @@ const ChatComponent = () => {
     window.addEventListener('open-chat-with-user', handler);
     return () => window.removeEventListener('open-chat-with-user', handler);
   }, [conversations, currentUser, clientId, socket]);
+
+  if (!userExists) return null;
 
   return (
     <div className="chat-container">
