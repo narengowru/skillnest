@@ -60,6 +60,11 @@
     color: #0d47a1;
   }
   
+  .status-payment-pending {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+  
   .status-in-progress {
     background-color: #e8f5e9;
     color: #2e7d32;
@@ -142,7 +147,7 @@
     margin-top: 20px;
   }
   
-  .edit-btn, .view-btn, .save-btn, .cancel-btn {
+  .edit-btn, .view-btn, .save-btn, .cancel-btn, .accept-btn, .reject-btn, .payment-btn, .review-btn {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -188,6 +193,51 @@
   
   .cancel-btn:hover {
     background-color: #d32f2f;
+  }
+  
+  .accept-btn {
+    background-color: #4caf50;
+    color: white;
+  }
+  
+  .accept-btn:hover {
+    background-color: #388e3c;
+  }
+  
+  .reject-btn {
+    background-color: #f44336;
+    color: white;
+  }
+  
+  .reject-btn:hover {
+    background-color: #d32f2f;
+  }
+  
+  .payment-btn {
+    background-color: #ff9800;
+    color: white;
+  }
+  
+  .payment-btn:hover {
+    background-color: #f57c00;
+  }
+  
+  .review-btn {
+    background-color: #9c27b0;
+    color: white;
+  }
+  
+  .review-btn:hover {
+    background-color: #7b1fa2;
+  }
+  
+  .review-btn.reviewed {
+    background-color: #9e9e9e;
+    cursor: not-allowed;
+  }
+  
+  .review-btn.reviewed:hover {
+    background-color: #9e9e9e;
   }
   
   .status-edit {

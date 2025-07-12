@@ -6,6 +6,7 @@ import './FreelancerOrdersDashboard.css';
 
 const ORDER_STATUS = {
   CREATED: 'created',
+  PAYMENT_PENDING: 'payment-pending',
   IN_PROGRESS: 'in-progress',
   COMPLETED: 'completed',
   CANCELED: 'canceled'
@@ -15,6 +16,7 @@ const StatusBadge = ({ status }) => {
   const getStatusClass = () => {
     switch (status) {
       case ORDER_STATUS.CREATED: return 'status-created';
+      case ORDER_STATUS.PAYMENT_PENDING: return 'status-payment-pending';
       case ORDER_STATUS.IN_PROGRESS: return 'status-in-progress';
       case ORDER_STATUS.COMPLETED: return 'status-completed';
       case ORDER_STATUS.CANCELED: return 'status-canceled';
@@ -260,16 +262,16 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
       setSuccess('');
       
       console.log('Accepting order', orderId);
-      await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.IN_PROGRESS });
+      await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.PAYMENT_PENDING });
       
       // Update the order in the local state
       setOrders(prevOrders => 
         prevOrders.map(order => 
-          order._id === orderId ? { ...order, status: ORDER_STATUS.IN_PROGRESS } : order
+          order._id === orderId ? { ...order, status: ORDER_STATUS.PAYMENT_PENDING } : order
         )
       );
       
-      setSuccess('Order accepted successfully!');
+      setSuccess('Order accepted! Waiting for client payment to start the project.');
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
@@ -424,7 +426,7 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
               <p><strong>Amount:</strong> {order.currency} {order.totalAmount}</p>
               <p><strong>Due Date:</strong> {formatDate(order.dueDate)}</p>
               
-              {order.clientId && order.status === ORDER_STATUS.IN_PROGRESS && (
+              {order.clientId && (order.status === ORDER_STATUS.IN_PROGRESS || order.status === ORDER_STATUS.PAYMENT_PENDING) && (
                 <div className="freelancer-info">
                   <p><strong>Client:</strong> {order.clientId.companyName || 'N/A'}</p>
                   <button 
@@ -453,6 +455,12 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
                     <FaTimes /> Reject
                   </button>
                 </>
+              )}
+              
+              {order.status === ORDER_STATUS.PAYMENT_PENDING && (
+                <div className="payment-pending-notice">
+                  <p>Waiting for client payment to start the project</p>
+                </div>
               )}
               
               {order.status === ORDER_STATUS.IN_PROGRESS && (

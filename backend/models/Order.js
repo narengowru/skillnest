@@ -11,6 +11,7 @@ const PAYMENT_STATUS = {
 // Define order status enum options
 const ORDER_STATUS = {
   CREATED: 'created',
+  PAYMENT_PENDING: 'payment-pending',
   IN_PROGRESS: 'in-progress',
   UNDER_REVIEW: 'under-review',
   COMPLETED: 'completed',

@@ -1,11 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { orderAPI, freelancerAPI } from '../api/api';
-import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar } from 'react-icons/fa';
+import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar, FaCreditCard } from 'react-icons/fa';
 import { MessageCircle } from 'lucide-react';
 import './ClientOrdersDashboard.css';
 
+// Load Razorpay script
+const loadRazorpayScript = () => {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve(window.Razorpay);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(window.Razorpay);
+    script.onerror = () => reject(new Error('Failed to load Razorpay'));
+    document.body.appendChild(script);
+  });
+};
+
 const ORDER_STATUS = {
   CREATED: 'created',
+  PAYMENT_PENDING: 'payment-pending',
   IN_PROGRESS: 'in-progress',
   COMPLETED: 'completed',
   CANCELED: 'canceled'
@@ -15,6 +31,7 @@ const StatusBadge = ({ status }) => {
   const getStatusClass = () => {
     switch (status) {
       case ORDER_STATUS.CREATED: return 'status-created';
+      case ORDER_STATUS.PAYMENT_PENDING: return 'status-payment-pending';
       case ORDER_STATUS.IN_PROGRESS: return 'status-in-progress';
       case ORDER_STATUS.COMPLETED: return 'status-completed';
       case ORDER_STATUS.CANCELED: return 'status-canceled';
@@ -261,22 +278,120 @@ const ClientOrdersDashboard = ({ client }) => {
       setSuccess('');
       
       console.log('Accepting order', orderId);
-      await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.IN_PROGRESS });
+      await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.PAYMENT_PENDING });
       
       // Update the order in the local state
       setOrders(prevOrders => 
         prevOrders.map(order => 
-          order._id === orderId ? { ...order, status: ORDER_STATUS.IN_PROGRESS } : order
+          order._id === orderId ? { ...order, status: ORDER_STATUS.PAYMENT_PENDING } : order
         )
       );
       
-      setSuccess('Order accepted successfully!');
+      setSuccess('Order accepted! Please complete the payment to start the project.');
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to accept order');
       console.error('Error accepting order:', err);
+    }
+  };
+
+  const handlePayment = async (order) => {
+    try {
+      setError('');
+      setSuccess('');
+      
+      // Load Razorpay script
+      const Razorpay = await loadRazorpayScript();
+      
+      // Create order on backend
+      const orderResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/razorpay/create-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: order.totalAmount,
+          currency: 'INR',
+          receipt: `order_${order.orderId}`
+        })
+      });
+      
+      const orderData = await orderResponse.json();
+      
+      if (!orderData.success) {
+        throw new Error(orderData.message || 'Failed to create payment order');
+      }
+      
+      // Initialize Razorpay payment
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: 'SkillNest',
+        description: `Payment for ${order.title}`,
+        order_id: orderData.order.id,
+        handler: async function (response) {
+          try {
+            // Verify payment on backend
+            const verifyResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/razorpay/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            
+            const verifyData = await verifyResponse.json();
+            
+            if (verifyData.success) {
+              // Update order status to in-progress
+              await orderAPI.updateOrder(order._id, { 
+                status: ORDER_STATUS.IN_PROGRESS,
+                paymentStatus: 'paid'
+              });
+              
+              // Update local state
+              setOrders(prevOrders => 
+                prevOrders.map(o => 
+                  o._id === order._id ? { 
+                    ...o, 
+                    status: ORDER_STATUS.IN_PROGRESS,
+                    paymentStatus: 'paid'
+                  } : o
+                )
+              );
+              
+              setSuccess('Payment successful! Project is now in progress.');
+              setTimeout(() => setSuccess(''), 3000);
+            } else {
+              throw new Error(verifyData.message || 'Payment verification failed');
+            }
+          } catch (err) {
+            setError('Payment verification failed. Please contact support.');
+            console.error('Payment verification error:', err);
+          }
+        },
+        prefill: {
+          name: client.name || client.companyName || '',
+          email: client.email || '',
+        },
+        theme: {
+          color: '#3399cc'
+        }
+      };
+      
+      const rzp = new Razorpay(options);
+      rzp.open();
+      
+    } catch (err) {
+      setError(err.message || 'Failed to initiate payment');
+      console.error('Payment error:', err);
     }
   };
 
@@ -421,6 +536,23 @@ const ClientOrdersDashboard = ({ client }) => {
                     onClick={() => handleAcceptOrder(order._id)}
                   >
                     <FaCheck /> Accept
+                  </button>
+                  <button 
+                    className="reject-btn"
+                    onClick={() => handleCancelOrder(order._id)}
+                  >
+                    <FaTimes /> Cancel Order
+                  </button>
+                </>
+              )}
+              
+              {order.status === ORDER_STATUS.PAYMENT_PENDING && (
+                <>
+                  <button 
+                    className="payment-btn"
+                    onClick={() => handlePayment(order)}
+                  >
+                    <FaCreditCard /> Pay Now
                   </button>
                   <button 
                     className="reject-btn"

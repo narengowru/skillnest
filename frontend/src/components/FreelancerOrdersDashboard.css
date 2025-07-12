@@ -60,6 +60,11 @@
     color: #0d47a1;
   }
   
+  .status-payment-pending {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+  
   .status-in-progress {
     background-color: #e8f5e9;
     color: #2e7d32;
@@ -140,6 +145,22 @@
     display: flex;
     gap: 10px;
     margin-top: 20px;
+  }
+  
+  .payment-pending-notice {
+    background-color: #fff3e0;
+    border: 1px solid #ffb74d;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+    text-align: center;
+  }
+  
+  .payment-pending-notice p {
+    margin: 0;
+    color: #e65100;
+    font-weight: 500;
+    font-size: 14px;
   }
   
   .edit-btn, .view-btn, .save-btn, .cancel-btn {
