@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 5000;
 
 // Create HTTP server
 const server = http.createServer(app);
-
+app.use(express.urlencoded({ extended: true }));
 // Initialize Socket.IO
 const io = socketIo(server, {
   cors: {
@@ -61,6 +61,7 @@ app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/clients', require('./routes/clients'));
 app.use('/api/chat', require('./routes/chatRoutes')); // Fixed route path
+app.use('/api/razorpay', require('./routes/razorpayRoutes'));
 // Note: chatHandlers should be imported and used with Socket.IO, not as middleware
 
 // Serve uploaded files
