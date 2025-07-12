@@ -1,11 +1,21 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
-// Initialize Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+// Initialize Razorpay instance with environment variables
+const getRazorpayInstance = () => {
+  console.log('Environment variables check:');
+  console.log('RAZORPAY_KEY_ID:', process.env.RAZORPAY_KEY_ID ? 'Found' : 'Not found');
+  console.log('RAZORPAY_KEY_SECRET:', process.env.RAZORPAY_KEY_SECRET ? 'Found' : 'Not found');
+  
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    throw new Error('Razorpay credentials not found in environment variables');
+  }
+  
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+};
 
 // Create Order
 const createOrder = async (req, res) => {
@@ -29,6 +39,7 @@ const createOrder = async (req, res) => {
     };
 
     // Create order with Razorpay
+    const razorpay = getRazorpayInstance();
     const order = await razorpay.orders.create(orderOptions);
 
     res.status(201).json({
@@ -126,6 +137,7 @@ const getPaymentDetails = async (req, res) => {
     }
 
     // Fetch payment details from Razorpay
+    const razorpay = getRazorpayInstance();
     const payment = await razorpay.payments.fetch(paymentId);
 
     res.status(200).json({
@@ -166,6 +178,7 @@ const getOrderDetails = async (req, res) => {
     }
 
     // Fetch order details from Razorpay
+    const razorpay = getRazorpayInstance();
     const order = await razorpay.orders.fetch(orderId);
 
     res.status(200).json({
