@@ -68,6 +68,13 @@ const socialSchema = new mongoose.Schema({
   portfolio: { type: String, default: '' }
 }, { _id: false });
 
+const bankSchema = new mongoose.Schema({
+  accountNumber: { type: String, default: '' },
+  ifscCode: { type: String, default: '' },
+  bankName: { type: String, default: '' },
+  accountHolderName: { type: String, default: '' }
+}, { _id: false });
+
 const freelancerSchema = new mongoose.Schema({
   name: { type: String, default: '' },
   tagline: { type: String, default: '' },
@@ -110,7 +117,8 @@ const freelancerSchema = new mongoose.Schema({
     default: () => new Date().toISOString().split('T')[0]
   },
   languages: { type: [String], default: [] },
-  socialProfiles: { type: socialSchema, default: () => ({}) }
+  socialProfiles: { type: socialSchema, default: () => ({}) },
+  bank: { type: bankSchema, default: () => ({}) }
 }, {
   timestamps: true
 });

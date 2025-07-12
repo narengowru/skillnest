@@ -27,6 +27,7 @@ const Profile = ({ freelancerId }) => {
   const [error, setError] = useState(null);
   const [hourlyRateEditMode, setHourlyRateEditMode] = useState(false);
   const [completedJobsCount, setCompletedJobsCount] = useState(0);
+  const [bankEditMode, setBankEditMode] = useState(false);
 
   const showToast2 = (message, type) => {
     // This is where you would call your toast notification system
@@ -226,6 +227,17 @@ const Profile = ({ freelancerId }) => {
     } catch (error) {
       console.error("Error updating education details:", error);
       showSuccessToast("Failed to update education details. Please try again.");
+    }
+  };
+
+  const saveBankChanges = async () => {
+    try {
+      await freelancerAPI.updateFreelancer(freelancer._id, { bank: freelancer.bank });
+      setBankEditMode(false);
+      showSuccessToast("Bank details updated successfully!");
+    } catch (error) {
+      console.error("Error updating bank details:", error);
+      showSuccessToast("Failed to update bank details. Please try again.");
     }
   };
 
@@ -594,6 +606,17 @@ const Profile = ({ freelancerId }) => {
     }));
   };
 
+  const handleBankInputChange = (e) => {
+    const { name, value } = e.target;
+    setFreelancer(prev => ({
+      ...prev,
+      bank: {
+        ...prev.bank,
+        [name]: value
+      }
+    }));
+  };
+
   // Handle password form changes
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
@@ -920,6 +943,12 @@ const Profile = ({ freelancerId }) => {
           onClick={() => setActiveTab('orders')}
         >
           Orders
+        </button>
+        <button 
+          className={activeTab === 'bank' ? 'active' : ''} 
+          onClick={() => setActiveTab('bank')}
+        >
+          Bank Details
         </button>
         <button 
           className={activeTab === 'settings' ? 'active' : ''} 
@@ -1337,6 +1366,105 @@ const Profile = ({ freelancerId }) => {
         )}
          {activeTab === "orders" && (
           <FreelancerOrdersDashboard freelancer={freelancer} />
+        )}
+
+        {activeTab === 'bank' && (
+          <div className="bank-content">
+            <div className="section-header">
+              <h2>Bank Account Details</h2>
+              <button 
+                className="toggle-edit-btn"
+                onClick={() => setBankEditMode(!bankEditMode)}
+              >
+                {bankEditMode ? 'Done' : <FaEdit />}
+              </button>
+            </div>
+            
+            <div className="bank-card">
+              {bankEditMode ? (
+                <div className="bank-edit-form">
+                  <div className="form-group">
+                    <label>Account Holder Name</label>
+                    <input 
+                      type="text" 
+                      name="accountHolderName" 
+                      value={freelancer.bank?.accountHolderName || ''} 
+                      onChange={handleBankInputChange} 
+                      placeholder="Enter account holder name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Bank Name</label>
+                    <input 
+                      type="text" 
+                      name="bankName" 
+                      value={freelancer.bank?.bankName || ''} 
+                      onChange={handleBankInputChange} 
+                      placeholder="Enter bank name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Account Number</label>
+                    <input 
+                      type="text" 
+                      name="accountNumber" 
+                      value={freelancer.bank?.accountNumber || ''} 
+                      onChange={handleBankInputChange} 
+                      placeholder="Enter account number"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>IFSC Code</label>
+                    <input 
+                      type="text" 
+                      name="ifscCode" 
+                      value={freelancer.bank?.ifscCode || ''} 
+                      onChange={handleBankInputChange} 
+                      placeholder="Enter IFSC code"
+                    />
+                  </div>
+                  <div className="bank-action-btns">
+                    <button className="save-bank-btn" onClick={saveBankChanges}>Save Changes</button>
+                    <button className="cancel-bank-btn" onClick={() => setBankEditMode(false)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="bank-header">
+                    <h3>Bank Information</h3>
+                  </div>
+                  <div className="bank-details">
+                    <div className="bank-detail-row">
+                      <span className="detail-label">Account Holder:</span>
+                      <span className="detail-value">{freelancer.bank?.accountHolderName || 'Not provided'}</span>
+                    </div>
+                    <div className="bank-detail-row">
+                      <span className="detail-label">Bank Name:</span>
+                      <span className="detail-value">{freelancer.bank?.bankName || 'Not provided'}</span>
+                    </div>
+                    <div className="bank-detail-row">
+                      <span className="detail-label">Account Number:</span>
+                      <span className="detail-value">
+                        {freelancer.bank?.accountNumber ? 
+                          `${freelancer.bank.accountNumber.slice(0, 4)}****${freelancer.bank.accountNumber.slice(-4)}` : 
+                          'Not provided'
+                        }
+                      </span>
+                    </div>
+                    <div className="bank-detail-row">
+                      <span className="detail-label">IFSC Code:</span>
+                      <span className="detail-value">{freelancer.bank?.ifscCode || 'Not provided'}</span>
+                    </div>
+                  </div>
+                  {!freelancer.bank?.accountNumber && (
+                    <div className="bank-notice">
+                      <p>⚠️ Bank details are required for receiving payments. Please add your bank information.</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         )}
 
 {activeTab === 'settings' && (
