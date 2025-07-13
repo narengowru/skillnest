@@ -313,7 +313,7 @@ const ClientOrdersDashboard = ({ client }) => {
         },
         body: JSON.stringify({
           amount: order.totalAmount,
-          currency: 'INR',
+          currency: 'USD',
           receipt: `order_${new Date().toISOString().replace(/[:.]/g, '-')}`
         })
       });
