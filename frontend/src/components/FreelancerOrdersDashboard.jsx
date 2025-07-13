@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { orderAPI, clientAPI } from '../api/api';
 import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar } from 'react-icons/fa';
 import { MessageCircle } from 'lucide-react';
-import './FreelancerOrdersDashboard.css';
+import '../css/FreelancerOrdersDashboard.css';
 
 const ORDER_STATUS = {
   CREATED: 'created',

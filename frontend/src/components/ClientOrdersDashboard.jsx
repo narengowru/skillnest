@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { orderAPI, freelancerAPI } from '../api/api';
 import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar, FaCreditCard } from 'react-icons/fa';
 import { MessageCircle } from 'lucide-react';
-import './ClientOrdersDashboard.css';
+import '../css/ClientOrdersDashboard.css'; 
 
 // Load Razorpay script
 const loadRazorpayScript = () => {

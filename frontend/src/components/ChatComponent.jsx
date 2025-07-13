@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X, Users, Search, Phone, Video, MoreVertical, Paperclip, Smile, ArrowLeft, Circle, Check, CheckCheck, Plus, UserPlus } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { freelancerAPI, clientAPI } from '../api/api';
-import './ChatComponent.css';
+import '../css/ChatComponent.css';
 
 const ChatComponent = () => {
   // All hooks at the top

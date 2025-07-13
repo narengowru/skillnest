@@ -1,5 +1,5 @@
 import React from "react";
-import "./WhyChooseSkillnest.css";
+import "../css/WhyChooseSkillnest.css";
 
 const WhyChooseSkillnest = () => {
   return (

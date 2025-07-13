@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './Login.css';
+import './css/Login.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { freelancerAPI, clientAPI } from './api/api'; // Import both APIs
 import { useNavigate } from 'react-router-dom';

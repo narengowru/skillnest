@@ -6,7 +6,7 @@ import {
   MapPin, Plus, Save, AlignLeft, Gift
 } from 'lucide-react';
 import { jobAPI } from '../api/api';
-import './ProjectsSection.css';
+import '../css/ProjectsSection.css';
 
 const ProjectsSection = ({ client, handlePostJob }) => {
   const [expandedSections, setExpandedSections] = useState({ projects: true });

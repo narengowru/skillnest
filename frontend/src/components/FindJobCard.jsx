@@ -1,5 +1,5 @@
 import React from 'react';
-import './FindJobCard.css';
+import '../css/FindJobCard.css';
 import { useNavigate } from 'react-router-dom';
 
 const formatDate = (dateString) => {

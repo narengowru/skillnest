@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Clock, Briefcase, Award, Mail, MapPin, Calendar, ArrowRight, Heart, Check, ChevronRight, ChevronLeft } from 'lucide-react';
-import './ViewProfile.css';
+import './css/ViewProfile.css';
 import { useNavigate } from 'react-router-dom';
 import { freelancerAPI, clientAPI, orderAPI } from './api/api'; // Added orderAPI and clientAPI
 

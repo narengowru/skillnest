@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import './FreelancerCard.css';
+import '../css/FreelancerCard.css';
 
 export default function FreelancerCard({
   id,

@@ -3,7 +3,7 @@ import { clientAPI, jobAPI } from './api/api';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { User, Star, Calendar, MapPin, Phone, Globe, Linkedin, Twitter, CreditCard, Building, FileText, CheckCircle, X, Edit, ChevronDown, ChevronUp, Clock, DollarSign, MessageCircle, Save, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './ClientDashboard.css';
+import './css/ClientDashboard.css';
 import { motion } from 'framer-motion';
 import ProjectsSection from './components/ProjectsSection';
 import ClientOrdersDashboard from './components/ClientOrdersDashboard';

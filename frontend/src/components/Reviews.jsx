@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Reviews.css';
+import '../css/Reviews.css';
 
 const Reviews = () => {
   const [currentReview, setCurrentReview] = useState(0);

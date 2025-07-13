@@ -1,5 +1,5 @@
 import React from 'react';
-import './FreelancersSpecialty.css';
+import '../css/FreelancersSpecialty.css';
 
 const FreelancersSpecialty = () => {
   const specialtyItems = [

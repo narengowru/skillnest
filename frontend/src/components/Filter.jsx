@@ -1,5 +1,5 @@
 import React from "react";
-import "./Filter.css";
+import "../css/Filter.css";
 
 const Filter = ({
   selectedCategories, setSelectedCategories,

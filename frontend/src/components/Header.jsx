@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "./UserContext"; // Adjust the path if needed
-import "./Header.css";
+import "../css/Header.css";
 
 const Header = () => {
   const { user, setUser } = useContext(UserContext);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Plus, X, Upload, Check } from 'lucide-react';
-import './PostProject.css';
+import './css/PostProject.css';
 import { jobAPI } from './api/api';
 import { clientAPI } from './api/api';
 

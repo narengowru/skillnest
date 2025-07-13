@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './ProjectDetailPage.css';
+import './css/ProjectDetailPage.css';
 import { jobAPI } from './api/api';
 import { orderAPI } from './api/api';
 

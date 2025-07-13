@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaLinkedin, FaGithub, FaGlobe, FaEdit, FaCamera, FaTrash, FaPlus, FaStar, FaCheckCircle, FaSignOutAlt, FaIdCard, FaMedal, FaTimes } from 'react-icons/fa';
 import { MessageSquare, Eye, Check, X, Award } from 'lucide-react';
 import { freelancerAPI, jobAPI } from './api/api';
-import './Profile.css';
+import './css/Profile.css';
 import FreelancerOrdersDashboard from './components/FreelancerOrdersDashboard';
 import { useNavigate } from 'react-router-dom';
 

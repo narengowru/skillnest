@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './FindFreeLancer.css';
+import '../css/FindFreeLancer.css';
 
 const FindFreeLancer = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
