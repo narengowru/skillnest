@@ -100,6 +100,24 @@
   color: #14171a;
 }
 
+.connection-status {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.connection-status.connecting {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.connection-status.disconnected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -107,7 +125,8 @@
 }
 
 .header-action-btn,
-.close-button {
+.close-button,
+.refresh-button {
   background: none;
   border: none;
   cursor: pointer;
@@ -121,8 +140,17 @@
 }
 
 .header-action-btn:hover,
-.close-button:hover {
+.close-button:hover,
+.refresh-button:hover {
   background: #f7f9fa;
+}
+
+.refresh-button {
+  animation: none;
+}
+
+.refresh-button:active {
+  animation: spin 0.5s linear;
 }
 
 /* Content */

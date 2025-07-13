@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Send, X, Users, Search, Phone, Video, MoreVertical, Paperclip, Smile, ArrowLeft, Circle, Check, CheckCheck, Plus, UserPlus } from 'lucide-react';
+import { MessageCircle, Send, X, Users, Search, Phone, Video, MoreVertical, Paperclip, Smile, ArrowLeft, Circle, Check, CheckCheck, Plus, UserPlus, RefreshCw } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { freelancerAPI, clientAPI } from '../api/api';
 import '../css/ChatComponent.css';
@@ -27,6 +27,9 @@ const ChatComponent = () => {
   const [allowedClientIds, setAllowedClientIds] = useState([]);
   const [allowedFreelancerIds, setAllowedFreelancerIds] = useState([]);
   const [clientId, setClientId] = useState(null);
+  const [lastPollTime, setLastPollTime] = useState(Date.now());
+  const [pollingInterval, setPollingInterval] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connected', 'disconnected', 'connecting'
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -54,6 +57,31 @@ const ChatComponent = () => {
       }
     };
     fetchAndSetUser();
+  }, []);
+
+  // Cleanup socket on unmount
+  useEffect(() => {
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [socket]);
+
+  // Reinitialize socket when currentUser changes
+  useEffect(() => {
+    if (currentUser && !socket) {
+      initializeSocket(currentUser);
+    }
+  }, [currentUser, socket]);
+
+  // Clean up typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Only set clientId if not already set
@@ -117,17 +145,51 @@ const ChatComponent = () => {
 
   // Initialize socket connection
   const initializeSocket = (user) => {
+    // Disconnect existing socket if any
+    if (socket) {
+      socket.disconnect();
+    }
+
     const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000', {
       withCredentials: true,
-      transports: ['websocket']
+      transports: ['websocket', 'polling'], // Fallback to polling if websocket fails
+      timeout: 20000,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket connected');
+      console.log('Socket connected successfully');
+      setConnectionStatus('connected');
       newSocket.emit('join-chat', {
         userId: user.id,
         userType: user.userType === 'freelancer' ? 'Freelancer' : 'Client'
       });
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      setConnectionStatus('disconnected');
+    });
+
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log('Socket reconnected after', attemptNumber, 'attempts');
+      setConnectionStatus('connected');
+      newSocket.emit('join-chat', {
+        userId: user.id,
+        userType: user.userType === 'freelancer' ? 'Freelancer' : 'Client'
+      });
+    });
+
+    newSocket.on('reconnect_error', (error) => {
+      console.error('Socket reconnection error:', error);
+      setConnectionStatus('disconnected');
+    });
+
+    newSocket.on('reconnect_failed', () => {
+      console.error('Socket reconnection failed');
+      setConnectionStatus('disconnected');
     });
 
     newSocket.on('chat-joined', (data) => {
@@ -138,22 +200,38 @@ const ChatComponent = () => {
     newSocket.on('new-message', (message) => {
       console.log('Received new message:', message);
       
+      // Update messages if this is the active conversation
       if (activeConversation && message.chatRoomId === activeConversation._id) {
-        setMessages(prev => [
-          ...prev.filter(msg => !msg._id?.toString().startsWith('temp-')),
-          message
-        ]);
+        setMessages(prev => {
+          // Enhanced duplicate detection - check by ID and content
+          const messageExists = prev.some(msg => 
+            msg._id === message._id || 
+            (msg.content === message.content && 
+             msg.senderId._id === message.senderId._id &&
+             Math.abs(new Date(msg.createdAt) - new Date(message.createdAt)) < 5000) // Within 5 seconds
+          );
+          
+          if (messageExists) {
+            console.log('Duplicate message detected, skipping');
+            return prev;
+          }
+          
+          // Remove any temporary messages and add the real message
+          const filteredMessages = prev.filter(msg => !msg._id?.toString().startsWith('temp-'));
+          return [...filteredMessages, message];
+        });
+        
+        // Mark as read immediately for active conversation
         markMessagesAsRead(activeConversation._id);
       }
       
-      // Always update conversations list
+      // Update conversations list without full reload
       setConversations(prev => {
         const existingConvIndex = prev.findIndex(conv => conv._id === message.chatRoomId);
-        let updatedConversations;
         
         if (existingConvIndex !== -1) {
           // Update existing conversation
-          updatedConversations = prev.map(conv =>
+          const updatedConversations = prev.map(conv =>
             conv._id === message.chatRoomId
               ? { 
                   ...conv, 
@@ -162,20 +240,21 @@ const ChatComponent = () => {
                 }
               : conv
           );
+          
+          // Update total unread count
+          const isActiveConversation = activeConversation?._id === message.chatRoomId;
+          if (!isActiveConversation) {
+            setUnreadCount(prev => prev + 1);
+          }
+          
+          return sortConversations(updatedConversations);
         } else {
-          // This shouldn't happen often, but just in case
-          console.log('Conversation not found, reloading conversations');
-          loadConversations();
+          // Conversation not found - silently ignore instead of reloading
+          // This prevents disrupting the current chat view
+          console.log('Message from unknown conversation, ignoring to prevent view disruption');
           return prev;
         }
-        
-        return sortConversations(updatedConversations);
       });
-      
-      // Update total unread count
-      if (!activeConversation || message.chatRoomId !== activeConversation._id) {
-        setUnreadCount(prev => prev + 1);
-      }
     });
 
     newSocket.on('user-typing', (data) => {
@@ -236,6 +315,9 @@ const ChatComponent = () => {
 
   // Load messages for a conversation
   const loadMessages = async (chatRoomId) => {
+    // Prevent loading if already loading or if no chatRoomId
+    if (isLoading || !chatRoomId) return;
+    
     setIsLoading(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/messages/${chatRoomId}`);
@@ -243,6 +325,7 @@ const ChatComponent = () => {
       
       if (data.success) {
         setMessages(data.data.messages || []);
+        // Mark messages as read after loading them
         markMessagesAsRead(chatRoomId);
       }
     } catch (error) {
@@ -255,6 +338,12 @@ const ChatComponent = () => {
   // Mark messages as read
   const markMessagesAsRead = async (chatRoomId) => {
     try {
+      // Check if messages are already marked as read to avoid unnecessary API calls
+      const conversation = conversations.find(conv => conv._id === chatRoomId);
+      if (conversation && conversation.unreadCount === 0) {
+        return; // Already marked as read
+      }
+
       await fetch(`${process.env.REACT_APP_API_URL}/api/chat/messages/read/${chatRoomId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -264,15 +353,17 @@ const ChatComponent = () => {
         })
       });
 
-      // Update local state
-      setConversations(prev => prev.map(conv => 
-        conv._id === chatRoomId ? { ...conv, unreadCount: 0 } : conv
-      ));
-      
-      // Update total unread count
-      setUnreadCount(prev => {
-        const conversation = conversations.find(conv => conv._id === chatRoomId);
-        return Math.max(0, prev - (conversation?.unreadCount || 0));
+      // Update local state using functional updates to avoid race conditions
+      setConversations(prev => {
+        const updatedConversations = prev.map(conv => 
+          conv._id === chatRoomId ? { ...conv, unreadCount: 0 } : conv
+        );
+        
+        // Calculate new total unread count
+        const newTotalUnread = updatedConversations.reduce((sum, room) => sum + (room.unreadCount || 0), 0);
+        setUnreadCount(newTotalUnread);
+        
+        return updatedConversations;
       });
     } catch (error) {
       console.error('Error marking messages as read:', error);
@@ -287,7 +378,7 @@ const ChatComponent = () => {
     
     // Create a temporary message object for optimistic UI
     const tempMessage = {
-      _id: `temp-${Date.now()}`,
+      _id: `temp-${Date.now()}-${Math.random()}`, // More unique ID to prevent conflicts
       senderId: { _id: currentUser.id },
       content: messageContent,
       createdAt: new Date().toISOString(),
@@ -324,7 +415,7 @@ const ChatComponent = () => {
     }, 0);
   };
 
-  // Handle typing
+  // Handle typing with debouncing
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
     
@@ -333,10 +424,11 @@ const ChatComponent = () => {
       socket.emit('typing-start', { chatRoomId: activeConversation._id });
     }
 
+    // Clear existing timeout and set new one
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       stopTyping();
-    }, 3000);
+    }, 2000); // Reduced from 3000ms to 2000ms for better responsiveness
   };
 
   const stopTyping = () => {
@@ -413,11 +505,21 @@ const ChatComponent = () => {
 
   // Open conversation
   const openConversation = (conversation) => {
+    // Prevent unnecessary state updates if already viewing this conversation
+    if (activeConversation && activeConversation._id === conversation._id) {
+      return;
+    }
+
     setActiveConversation(conversation);
     setCurrentView('chat');
     
     if (socket) {
       socket.emit('join-room', { chatRoomId: conversation._id });
+    }
+    
+    // Mark messages as read when opening conversation
+    if (conversation.unreadCount > 0) {
+      markMessagesAsRead(conversation._id);
     }
     
     loadMessages(conversation._id);
@@ -426,7 +528,7 @@ const ChatComponent = () => {
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, activeConversation]);
 
   // Get other user from conversation
   const getOtherUser = (conversation) => {
@@ -555,6 +657,8 @@ const ChatComponent = () => {
 
   // Helper to sort conversations by last message time
   const sortConversations = (convs) => {
+    if (!convs || convs.length === 0) return [];
+    
     return [...convs].sort((a, b) => {
       const aTime = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
       const bTime = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
@@ -582,8 +686,9 @@ const ChatComponent = () => {
     setActiveConversation(null);
     setMessages([]);
     setTypingUsers([]);
+    setNewMessage('');
     // Reload conversations to get latest state
-    loadConversations();
+    setTimeout(() => loadConversations(), 100);
   };
 
   // After all hooks, check for user
@@ -614,6 +719,64 @@ const ChatComponent = () => {
     window.addEventListener('open-chat-with-user', handler);
     return () => window.removeEventListener('open-chat-with-user', handler);
   }, [conversations, currentUser, clientId, socket]);
+
+  // Poll for new messages and conversations
+  const pollForUpdates = async () => {
+    if (!currentUser || !isOpen) return;
+    
+    try {
+      // Only poll conversations if we're in conversations view or if socket is disconnected
+      if (currentView === 'conversations' || connectionStatus !== 'connected') {
+        await loadConversations();
+      }
+      
+      // Poll for new messages in active conversation
+      if (activeConversation && connectionStatus !== 'connected') {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/messages/${activeConversation._id}?since=${lastPollTime}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.messages) {
+          const newMessages = data.data.messages.filter(msg => 
+            new Date(msg.createdAt).getTime() > lastPollTime
+          );
+          
+          if (newMessages.length > 0) {
+            setMessages(prev => {
+              const existingIds = new Set(prev.map(msg => msg._id));
+              const uniqueNewMessages = newMessages.filter(msg => !existingIds.has(msg._id));
+              return [...prev, ...uniqueNewMessages];
+            });
+            
+            // Mark as read
+            markMessagesAsRead(activeConversation._id);
+          }
+        }
+      }
+      
+      setLastPollTime(Date.now());
+    } catch (error) {
+      console.error('Error polling for updates:', error);
+      // If polling fails, try to reconnect socket
+      if (socket && connectionStatus === 'disconnected') {
+        socket.connect();
+      }
+    }
+  };
+
+  // Set up polling interval
+  useEffect(() => {
+    if (currentUser && isOpen) {
+      // Only poll if socket is disconnected or as a backup
+      const shouldPoll = connectionStatus !== 'connected';
+      const interval = setInterval(pollForUpdates, shouldPoll ? 2000 : 10000); // Poll every 2s if disconnected, 10s as backup
+      setPollingInterval(interval);
+      
+      return () => {
+        clearInterval(interval);
+        setPollingInterval(null);
+      };
+    }
+  }, [currentUser, isOpen, connectionStatus]);
 
   if (!userExists) return null;
 
@@ -664,12 +827,39 @@ const ChatComponent = () => {
               {currentView === 'conversations' && (
                 <h3 className="header-title">Messages</h3>
               )}
+              {connectionStatus !== 'connected' && (
+                <div className={`connection-status ${connectionStatus}`}>
+                  {connectionStatus === 'connecting' ? 'Connecting...' : 'Offline'}
+                </div>
+              )}
             </div>
             <div className="header-right">
               {currentView === 'chat' && (
                 <>
-                
+                  <button
+                    onClick={() => {
+                      if (activeConversation) {
+                        loadMessages(activeConversation._id);
+                      }
+                    }}
+                    className="refresh-button"
+                    title="Refresh messages"
+                  >
+                    <RefreshCw size={18} />
+                  </button>
                 </>
+              )}
+              {currentView === 'conversations' && (
+                <button
+                  onClick={() => {
+                    loadConversations();
+                    setLastPollTime(Date.now());
+                  }}
+                  className="refresh-button"
+                  title="Refresh conversations"
+                >
+                  <RefreshCw size={18} />
+                </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
