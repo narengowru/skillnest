@@ -19,11 +19,11 @@ exports.getClientById = async (req, res) => {
       .select('-password')
       .populate('orders')
       .populate('jobs'); // Added population of jobs
-    
+
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
     }
-    
+
     res.json(client);
   } catch (error) {
     console.error(error);
@@ -70,7 +70,16 @@ exports.registerClient = async (req, res) => {
       { expiresIn: '1d' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        res.json({
+          token,
+          client: {
+            id: client._id,
+            email: client.email,
+            companyName: client.companyName,
+            verified: client.verified,
+            memberSince: client.memberSince
+          }
+        });
       }
     );
   } catch (error) {
@@ -110,7 +119,16 @@ exports.loginClient = async (req, res) => {
       { expiresIn: '1d' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        res.json({
+          token,
+          client: {
+            id: client._id,
+            email: client.email,
+            companyName: client.companyName,
+            verified: client.verified,
+            memberSince: client.memberSince
+          }
+        });
       }
     );
   } catch (error) {
@@ -123,24 +141,24 @@ exports.loginClient = async (req, res) => {
 exports.updateClient = async (req, res) => {
   try {
     let client = await Client.findById(req.params.id);
-    
+
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
     }
 
     // Create an object with fields to update
     const clientFields = {};
-    
+
     // Handle standard fields
     const { companyName, bio, location, contactInfo, verified, profilePicture, jobs } = req.body;
-    
+
     if (companyName !== undefined) clientFields.companyName = companyName;
     if (bio !== undefined) clientFields.bio = bio;
     if (location !== undefined) clientFields.location = location;
     if (contactInfo !== undefined) clientFields.contactInfo = contactInfo;
     if (verified !== undefined) clientFields.verified = verified;
     if (profilePicture !== undefined) clientFields.profilePicture = profilePicture;
-    
+
     // Handle jobs array - allow updating the entire array or pushing to it
     if (jobs !== undefined) {
       if (Array.isArray(jobs)) {
@@ -153,7 +171,7 @@ exports.updateClient = async (req, res) => {
           { $push: { jobs: jobs } },
           { new: true }
         ).select('-password');
-        
+
         // Return early since we've already updated
         return res.json(client);
       }
@@ -177,7 +195,7 @@ exports.updateClient = async (req, res) => {
 exports.deleteClient = async (req, res) => {
   try {
     const client = await Client.findById(req.params.id);
-    
+
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
     }
@@ -194,7 +212,7 @@ exports.deleteClient = async (req, res) => {
 exports.uploadProfilePicture = async (req, res) => {
   try {
     const client = await Client.findById(req.params.id);
-    
+
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
     }
@@ -218,8 +236,8 @@ exports.uploadProfilePicture = async (req, res) => {
 // Add a review for a freelancer
 exports.addReview = async (req, res) => {
   try {
-    const { freelancerId, rating, comment, clientId} = req.body;
-    
+    const { freelancerId, rating, comment, clientId } = req.body;
+
     const client = await Client.findById(clientId);
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
@@ -264,7 +282,7 @@ exports.getDashboard = async (req, res) => {
 exports.addJob = async (req, res) => {
   try {
     const { jobId } = req.body;
-    
+
     const client = await Client.findById(req.params.id);
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
@@ -289,7 +307,7 @@ exports.addJob = async (req, res) => {
 exports.removeJob = async (req, res) => {
   try {
     const { jobId } = req.params;
-    
+
     const client = await Client.findById(req.params.id);
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import FindJobs from "./components/FindJobs";
 import FindJobCard from "./components/FindJobCard";
 import Filter from "./components/Filter";
-import { jobAPI, freelancerAPI } from "./api/api"; // Import both APIs
+import { jobAPI, freelancerAPI, recommendationAPI } from "./api/api"; // Import recommendation API
 import { UserContext } from "./components/UserContext"; // Import UserContext
 
 const Jobs = () => {
@@ -15,6 +15,8 @@ const Jobs = () => {
   const [jobDuration, setJobDuration] = useState("All Durations");
   const [searchTerm, setSearchTerm] = useState("");
   const [freelancerProfile, setFreelancerProfile] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   // Fetch freelancer profile data if user is a freelancer
   useEffect(() => {
@@ -33,15 +35,49 @@ const Jobs = () => {
     fetchFreelancerProfile();
   }, [user]);
 
+  // Fetch personalized recommendations for freelancers
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (user && user.userType === 'freelancer' && user.id) {
+        try {
+          setLoadingRecommendations(true);
+          const response = await recommendationAPI.getJobRecommendations(user.id, {
+            limit: 10,
+            excludeApplied: true,
+            minScore: 0
+          });
+
+          console.log("Recommendations response:", response);
+
+          // Fix: Access recommendations from response.data.data.recommendations
+          if (response && response.data && response.data.data && response.data.data.recommendations) {
+            setRecommendations(response.data.data.recommendations);
+            console.log("✅ SET RECOMMENDATIONS:", response.data.data.recommendations);
+            console.log("✅ RECOMMENDATIONS LENGTH:", response.data.data.recommendations.length);
+          } else {
+            console.log("❌ No recommendations found");
+          }
+        } catch (err) {
+          console.error("Error fetching recommendations:", err);
+          // Continue without recommendations
+        } finally {
+          setLoadingRecommendations(false);
+        }
+      }
+    };
+
+    fetchRecommendations();
+  }, [user]);
+
   // Fetch jobs from backend
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
         const response = await jobAPI.getAllJobs();
-        
+
         console.log("Full API Response:", response);
-        
+
         if (response && response.data) {
           setJobs(response.data);
           setError(null);
@@ -72,54 +108,29 @@ const Jobs = () => {
     }, 100); // slight delay ensures any render changes finish first
   };
 
-  // Function to check if a job matches freelancer's skills
-  const isJobSuggested = (job) => {
-    if (!freelancerProfile || !freelancerProfile.skills || !job.skills) {
-      return false;
-    }
-
-    const freelancerSkills = freelancerProfile.skills.map(skill => 
-      skill.name.toLowerCase()
-    );
-    const jobSkills = job.skills.map(skill => 
-      skill.toLowerCase()
-    );
-
-    // Check if any of the freelancer's skills match the job's required skills
-    return freelancerSkills.some(freelancerSkill => 
-      jobSkills.some(jobSkill => 
-        jobSkill.includes(freelancerSkill) || freelancerSkill.includes(jobSkill)
-      )
-    );
-  };
-
   // Function to filter job data based on updated schema with category field
   const filteredJobs = jobs
     .filter(job =>
-      selectedCategories.length === 0 || 
+      selectedCategories.length === 0 ||
       (job.category && selectedCategories.includes(job.category))
     )
     .filter(job =>
-      jobDuration === "All Durations" || 
+      jobDuration === "All Durations" ||
       (job.projectDuration && job.projectDuration.includes(jobDuration))
     )
     .filter(job =>
-      searchTerm === "" || 
-      (job.description && job.description.toLowerCase().includes(searchTerm)) || 
+      searchTerm === "" ||
+      (job.description && job.description.toLowerCase().includes(searchTerm)) ||
       (job.title && job.title.toLowerCase().includes(searchTerm))
     )
     .sort((a, b) => {
       if (postedTimeline === "Newest First") {
         return new Date(b.datePosted || b.createdAt) - new Date(a.datePosted || a.createdAt);
       } else if (postedTimeline === "Oldest First") {
-        return new Date(a.datePosted || a.createdAt) - new Date(b.datePosted || b.createdAt);
+        return new Date(a.datePosted || a.createdAt) - new Date(b.datePosted || a.createdAt);
       }
       return 0;
     });
-
-  // Separate suggested jobs from all jobs
-  const suggestedJobs = filteredJobs.filter(job => isJobSuggested(job));
-  const otherJobs = filteredJobs.filter(job => !isJobSuggested(job));
 
   if (loading) return <div>Loading jobs...</div>;
   if (error) return <div>{error}</div>;
@@ -143,27 +154,35 @@ const Jobs = () => {
         </div>
 
         <div style={{ flex: 1 }}>
-          {/* Suggested Jobs Section */}
-          {user && user.userType === 'freelancer' && freelancerProfile && (
+          {/* Recommended Jobs Section - Using ML Algorithm */}
+          {user && user.userType === 'freelancer' && (
             <>
-              {suggestedJobs.length > 0 ? (
+              {loadingRecommendations ? (
+                <div style={{
+                  padding: "20px",
+                  textAlign: "center",
+                  color: "#7f8c8d"
+                }}>
+                  Loading personalized recommendations...
+                </div>
+              ) : recommendations.length > 0 ? (
                 <div style={{ marginBottom: "40px" }}>
-                  <h2 style={{ 
-                    marginBottom: "20px", 
-                    color: "#2c3e50", 
+                  <h2 style={{
+                    marginBottom: "20px",
+                    color: "#2c3e50",
                     fontSize: "24px",
                     fontWeight: "600",
                     borderBottom: "2px solid #3498db",
                     paddingBottom: "10px"
                   }}>
-                    🎯 Suggested for You
-                    <span style={{ 
-                      fontSize: "14px", 
-                      color: "#7f8c8d", 
+                    🎯 Recommended for You
+                    <span style={{
+                      fontSize: "14px",
+                      color: "#7f8c8d",
                       fontWeight: "400",
                       marginLeft: "10px"
                     }}>
-                      Based on your skills: {freelancerProfile.skills?.map(skill => skill.name).join(", ")}
+                      Powered by AI • Based on your profile and application history
                     </span>
                   </h2>
                   <div style={{
@@ -172,20 +191,57 @@ const Jobs = () => {
                     gap: "20px",
                     alignItems: "start"
                   }}>
-                    {suggestedJobs.map((job) => (
-                      <FindJobCard
-                        key={job._id}
-                        id={job._id}
-                        image={job.imageUrl}
-                        category={job.category}
-                        title={job.title}
-                        postedDate={job.datePosted || job.createdAt}
-                        description={job.description}
-                      />
+                    {recommendations.map((rec) => (
+                      <div key={rec.job._id} style={{ position: "relative" }}>
+                        {/* Match Score Badge */}
+                        <div style={{
+                          position: "absolute",
+                          top: "10px",
+                          right: "10px",
+                          background: rec.matchScore >= 70 ? "#27ae60" : rec.matchScore >= 50 ? "#f39c12" : "#3498db",
+                          color: "white",
+                          padding: "5px 12px",
+                          borderRadius: "20px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          zIndex: 10,
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                        }}>
+                          {rec.matchScore}% Match
+                        </div>
+
+                        <FindJobCard
+                          id={rec.job._id}
+                          image={rec.job.imageUrl}
+                          category={rec.job.category}
+                          title={rec.job.title}
+                          postedDate={rec.job.datePosted || rec.job.createdAt}
+                          description={rec.job.description}
+                        />
+
+                        {/* Match Reasons - Temporarily Commented Out */}
+                        {/* {rec.matchReasons && rec.matchReasons.length > 0 && (
+                          <div style={{
+                            marginTop: "-10px",
+                            padding: "10px",
+                            background: "#f8f9fa",
+                            borderRadius: "0 0 8px 8px",
+                            fontSize: "12px",
+                            color: "#555"
+                          }}>
+                            <strong>Why recommended:</strong>
+                            <ul style={{ margin: "5px 0 0 0", paddingLeft: "20px" }}>
+                              {rec.matchReasons.map((reason, idx) => (
+                                <li key={idx}>{reason}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )} */}
+                      </div>
                     ))}
                   </div>
                 </div>
-              ) : freelancerProfile.skills && freelancerProfile.skills.length > 0 ? (
+              ) : freelancerProfile && freelancerProfile.skills && freelancerProfile.skills.length > 0 ? (
                 <div style={{
                   backgroundColor: "#fff3cd",
                   border: "1px solid #ffeaa7",
@@ -194,7 +250,7 @@ const Jobs = () => {
                   marginBottom: "20px",
                   color: "#856404"
                 }}>
-                  <strong>📝 No matches found:</strong> We couldn't find jobs that match your current skills. Try updating your skills in your profile or browse all available jobs below.
+                  <strong>📝 Building your recommendations:</strong> We're analyzing jobs that match your skills. Check back soon or browse all available jobs below.
                 </div>
               ) : (
                 <div style={{
@@ -205,7 +261,7 @@ const Jobs = () => {
                   marginBottom: "20px",
                   color: "#0c5460"
                 }}>
-                  <strong>🎯 Add your skills:</strong> To see personalized job suggestions, please add your skills to your profile. You can do this by visiting your profile page.
+                  <strong>🎯 Get personalized recommendations:</strong> Add your skills to your profile to see AI-powered job suggestions tailored just for you!
                 </div>
               )}
             </>
@@ -213,19 +269,19 @@ const Jobs = () => {
 
           {/* All Jobs Section */}
           <div>
-            <h2 style={{ 
-              marginBottom: "20px", 
-              color: "#2c3e50", 
+            <h2 style={{
+              marginBottom: "20px",
+              color: "#2c3e50",
               fontSize: "24px",
               fontWeight: "600",
               borderBottom: "2px solid #e74c3c",
               paddingBottom: "10px"
             }}>
               📋 All Available Jobs
-              {user && user.userType === 'freelancer' && suggestedJobs.length > 0 && (
-                <span style={{ 
-                  fontSize: "14px", 
-                  color: "#7f8c8d", 
+              {user && user.userType === 'freelancer' && recommendations.length > 0 && (
+                <span style={{
+                  fontSize: "14px",
+                  color: "#7f8c8d",
                   fontWeight: "400",
                   marginLeft: "10px"
                 }}>
@@ -233,7 +289,7 @@ const Jobs = () => {
                 </span>
               )}
             </h2>
-            
+
             {/* Info message for non-freelancers */}
             {(!user || user.userType !== 'freelancer') && (
               <div style={{

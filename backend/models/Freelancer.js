@@ -80,16 +80,16 @@ const freelancerSchema = new mongoose.Schema({
   tagline: { type: String, default: '' },
   profilePhoto: { type: String, default: '' },
   bio: { type: String, default: '' },
-  email: { 
-    type: String, 
+  email: {
+    type: String,
     required: true,
     unique: true,
     trim: true
   },
   phone: { type: String, default: '' },
-  password: { 
-    type: String, 
-    required: true 
+  password: {
+    type: String,
+    required: true
   },
   isVerified: {
     type: Boolean,
@@ -108,9 +108,28 @@ const freelancerSchema = new mongoose.Schema({
   ratings: { type: ratingsSchema, default: () => ({}) },
   reviews: { type: [reviewSchema], default: [] },
   orders: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Order'
+  }],
+  // Track job applications for recommendation system
+  applications: [{
+    jobId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Order'
-    }],
+      ref: 'Job',
+      required: true
+    },
+    appliedAt: {
+      type: Date,
+      default: Date.now
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected', 'withdrawn'],
+      default: 'pending'
+    },
+    coverLetter: String,
+    proposedRate: String
+  }],
   location: { type: String, default: '' },
   joinedDate: {
     type: String,
@@ -118,13 +137,28 @@ const freelancerSchema = new mongoose.Schema({
   },
   languages: { type: [String], default: [] },
   socialProfiles: { type: socialSchema, default: () => ({}) },
-  bank: { type: bankSchema, default: () => ({}) }
+  bank: { type: bankSchema, default: () => ({}) },
+  // Recommendation preferences
+  preferences: {
+    minBudget: { type: Number, default: 0 },
+    maxBudget: { type: Number, default: 999999 },
+    preferredCategories: { type: [String], default: [] },
+    preferredDuration: { type: String, default: '' },
+    willingToRelocate: { type: Boolean, default: false }
+  },
+  // Statistics for recommendation algorithm
+  statistics: {
+    avgResponseTime: { type: Number, default: 0 }, // in hours
+    onTimeDeliveryRate: { type: Number, default: 1.0 }, // 0-1
+    applicationAcceptanceRate: { type: Number, default: 0 }, // 0-1
+    lastActiveDate: { type: Date, default: Date.now }
+  }
 }, {
   timestamps: true
 });
 
 // Pre-save middleware to hash password
-freelancerSchema.pre('save', async function(next) {
+freelancerSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
     this.password = await bcrypt.hash(this.password, 10);
   }
@@ -132,7 +166,7 @@ freelancerSchema.pre('save', async function(next) {
 });
 
 // Method to compare passwords
-freelancerSchema.methods.comparePassword = async function(candidatePassword) {
+freelancerSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 

@@ -32,7 +32,7 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -45,7 +45,7 @@ app.use(cors({
 app.use(express.json());
 
 // MongoDB Connection
-console.log("mongodb uri",process.env.PORT);
+console.log("mongodb uri", process.env.PORT);
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected successfully'))
   .catch(err => console.error('MongoDB connection error:', err));
@@ -63,6 +63,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/clients', require('./routes/clients'));
 app.use('/api/chat', require('./routes/chatRoutes')); // Fixed route path
 app.use('/api/razorpay', require('./routes/razorpayRoutes'));
+app.use('/api/recommendations', require('./routes/recommendations')); // Recommendation system
 // Note: chatHandlers should be imported and used with Socket.IO, not as middleware
 
 // Serve uploaded files

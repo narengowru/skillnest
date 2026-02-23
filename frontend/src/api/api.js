@@ -48,7 +48,7 @@ export const jobAPI = {
   updateJob: (id, jobData) => API.put(`/jobs/${id}`, jobData),
   deleteJob: (id) => API.delete(`/jobs/${id}`),
   applyToJob: (id, applicationData) => API.post(`/jobs/${id}/apply`, applicationData),
-  updateApplicationStatus: (jobId, applicationId, statusData) => 
+  updateApplicationStatus: (jobId, applicationId, statusData) =>
     API.put(`/jobs/${jobId}/applications/${applicationId}`, statusData)
 };
 
@@ -59,30 +59,30 @@ export const orderAPI = {
   getAllOrders: (filters) => API.get('/orders', { params: filters }),
   getOrder: (id) => API.get(`/orders/${id}`),
   updateOrder: (id, orderData) => API.put(`/orders/${id}`, orderData),
-  
+
   // Order status management
   cancelOrder: (id, cancelData) => API.put(`/orders/${id}/cancel`, cancelData),
   completeOrder: (id) => API.put(`/orders/${id}/complete`),
-  
+
   // Milestone management
   addMilestone: (id, milestoneData) => API.post(`/orders/${id}/milestones`, milestoneData),
   updateMilestone: (orderId, milestoneId, milestoneData) => API.put(`/orders/${orderId}/milestones/${milestoneId}`, milestoneData),
-  
+
   // Revision management
   requestRevision: (id, revisionData) => API.post(`/orders/${id}/revisions`, revisionData),
   completeRevision: (orderId, revisionId, revisionData) => API.put(`/orders/${orderId}/revisions/${revisionId}`, revisionData),
-  
+
   // Communication
   addMessage: (id, messageData) => API.post(`/orders/${id}/messages`, messageData),
   markMessagesAsRead: (id) => API.put(`/orders/${id}/messages/read`),
-  
+
   // Dispute management
   createDispute: (id, disputeData) => API.post(`/orders/${id}/disputes`, disputeData),
   resolveDispute: (orderId, disputeId, resolutionData) => API.put(`/orders/${orderId}/disputes/${disputeId}`, resolutionData),
-  
+
   // Review management
   addReview: (id, reviewData) => API.post(`/orders/${id}/reviews`, reviewData),
-  
+
   // Attachments
   uploadAttachment: (id, attachmentData) => {
     const formData = new FormData();
@@ -95,7 +95,7 @@ export const orderAPI = {
       }
     });
   },
-  
+
   // Helper methods
   calculateProgress: (order) => {
     if (!order.milestones || order.milestones.length === 0) return 0;
@@ -104,13 +104,13 @@ export const orderAPI = {
     ).length;
     return Math.round((completedMilestones / order.milestones.length) * 100);
   },
-  
+
   isOverdue: (order) => {
     if (!order.dueDate) return false;
     if (['completed', 'canceled', 'disputed'].includes(order.status)) return false;
     return new Date(order.dueDate) < new Date();
   },
-  
+
   getProjectDuration: (order) => {
     if (!order.dueDate) return null;
     const startDate = order.startDate || order.createdAt;
@@ -124,13 +124,13 @@ export const clientAPI = {
   // Authentication
   register: (clientData) => API.post('/clients/register', clientData),
   login: (credentials) => API.post('/clients/login', credentials),
-  
+
   // Client management
   getAllClients: () => API.get('/clients'),
   getClient: (id) => API.get(`/clients/${id}`),
   updateClient: (id, clientData) => API.put(`/clients/${id}`, clientData),
   deleteClient: (id) => API.delete(`/clients/${id}`),
-  
+
   // Dashboard and profile
   getDashboard: () => API.get('/clients/dashboard'),
   uploadProfilePicture: (imageFile) => {
@@ -142,37 +142,68 @@ export const clientAPI = {
       }
     });
   },
-  
+
   // Reviews
   addReview: (reviewData) => API.post('/clients/review', reviewData),
-  
+
   // Helper methods
   getClientRating: (client) => {
     if (!client || !client.reviews || client.reviews.length === 0) return 0;
     const totalRating = client.reviews.reduce((sum, review) => sum + review.rating, 0);
     return (totalRating / client.reviews.length).toFixed(1);
   },
-  
+
   getActiveOrders: (client) => {
     if (!client || !client.orders) return [];
-    return client.orders.filter(order => 
+    return client.orders.filter(order =>
       !['completed', 'canceled', 'disputed'].includes(order.status)
     );
   },
-  
+
   getVerificationStatus: (client) => {
     if (!client) return 'Unverified';
     return client.verified ? 'Verified' : 'Unverified';
   },
-  
+
   getClientSince: (client) => {
     if (!client || !client.memberSince) return '';
     const date = new Date(client.memberSince);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
       month: 'long'
     });
   }
+};
+
+// Recommendation endpoints
+export const recommendationAPI = {
+  // Get job recommendations for a freelancer
+  getJobRecommendations: (freelancerId, params = {}) =>
+    API.get(`/recommendations/jobs/${freelancerId}`, { params }),
+
+  // Get freelancer recommendations for a client
+  getFreelancerRecommendations: (clientId, params = {}) =>
+    API.get(`/recommendations/freelancers/${clientId}`, { params }),
+
+  // Record user interaction
+  recordInteraction: (interactionData) =>
+    API.post('/recommendations/interactions', interactionData),
+
+  // Record job view
+  recordJobView: (freelancerId, jobId, metadata = {}) =>
+    API.post('/recommendations/job-view', { freelancerId, jobId, metadata }),
+
+  // Get interaction history
+  getHistory: (userId, limit = 100) =>
+    API.get(`/recommendations/history/${userId}`, { params: { limit } }),
+
+  // Get similar users
+  getSimilarUsers: (userId, limit = 10) =>
+    API.get(`/recommendations/similar-users/${userId}`, { params: { limit } }),
+
+  // Clear cache (admin/testing)
+  clearCache: () =>
+    API.post('/recommendations/clear-cache')
 };
 
 export default API;
