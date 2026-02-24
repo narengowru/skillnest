@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { orderAPI, clientAPI } from '../api/api';
-import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar } from 'react-icons/fa';
+import { FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar } from 'react-icons/fa';
 import { MessageCircle } from 'lucide-react';
 import '../css/FreelancerOrdersDashboard.css';
 
@@ -36,15 +36,15 @@ const ReviewModal = ({ order, onClose, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!comment.trim()) {
       setError('Please add a comment to your review');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       await onSubmit({
         freelancerId: order.freelancerId?._id,
@@ -70,7 +70,7 @@ const ReviewModal = ({ order, onClose, onSubmit }) => {
             <FaTimesCircle />
           </button>
         </div>
-        
+
         <div className="modal-body">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -87,7 +87,7 @@ const ReviewModal = ({ order, onClose, onSubmit }) => {
                 ))}
               </div>
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="review-comment">Your Review</label>
               <textarea
@@ -98,9 +98,9 @@ const ReviewModal = ({ order, onClose, onSubmit }) => {
                 rows={5}
               />
             </div>
-            
+
             {error && <div className="form-error">{error}</div>}
-            
+
             <div className="modal-actions">
               <button type="button" className="cancel-btn" onClick={onClose} disabled={loading}>
                 Cancel
@@ -138,7 +138,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
             <FaTimesCircle />
           </button>
         </div>
-        
+
         <div className="modal-body">
           <div className="modal-section">
             <h3>Order Information</h3>
@@ -239,9 +239,9 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
               }
             })
           );
-          
+
           setOrders(detailedOrders.filter(order => order !== null));
-          
+
           // Load reviewed orders from localStorage
           const storedReviewedOrders = JSON.parse(localStorage.getItem('reviewedOrders') || '[]');
           setReviewedOrders(storedReviewedOrders);
@@ -260,19 +260,19 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
     try {
       setError('');
       setSuccess('');
-      
+
       console.log('Accepting order', orderId);
       await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.PAYMENT_PENDING });
-      
+
       // Update the order in the local state
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
           order._id === orderId ? { ...order, status: ORDER_STATUS.PAYMENT_PENDING } : order
         )
       );
-      
+
       setSuccess('Order accepted! Waiting for client payment to start the project.');
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -285,19 +285,19 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
     try {
       setError('');
       setSuccess('');
-      
+
       console.log('Rejecting order', orderId);
       await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.CANCELED });
-      
+
       // Update the order in the local state
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
           order._id === orderId ? { ...order, status: ORDER_STATUS.CANCELED } : order
         )
       );
-      
+
       setSuccess('Order rejected successfully!');
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -310,19 +310,19 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
     try {
       setError('');
       setSuccess('');
-      
+
       console.log('Completing order', orderId);
       await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.COMPLETED });
-      
+
       // Update the order in the local state
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
           order._id === orderId ? { ...order, status: ORDER_STATUS.COMPLETED } : order
         )
       );
-      
+
       setSuccess('Order completed successfully!');
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -331,12 +331,13 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleWhatsAppChat = (clientPhone) => {
     // Format phone number if needed (remove spaces, add country code if missing)
-    const formattedPhone = clientPhone?.startsWith('+') 
-      ? clientPhone.replace(/\s/g, '') 
+    const formattedPhone = clientPhone?.startsWith('+')
+      ? clientPhone.replace(/\s/g, '')
       : `+${clientPhone?.replace(/\s/g, '')}`;
-    
+
     // Open WhatsApp in a new tab
     window.open(`https://wa.me/${formattedPhone}`, '_blank');
   };
@@ -366,17 +367,17 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
       // Send review to API
       console.log('Reviews: ', reviewData);
       await clientAPI.addReview(reviewData);
-    
+
       // Add order ID to reviewedOrders to disable the review button
       const updatedReviewedOrders = [...reviewedOrders, reviewData.orderId];
       setReviewedOrders(updatedReviewedOrders);
-      
+
       // Store in localStorage
       localStorage.setItem('reviewedOrders', JSON.stringify(updatedReviewedOrders));
-      
+
       setSuccess('Review submitted successfully!');
       setTimeout(() => setSuccess(''), 3000);
-      
+
       return Promise.resolve();
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -409,10 +410,10 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
   return (
     <div className="client-orders-dashboard">
       <h2>My Orders</h2>
-      
+
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
-      
+
       <div className="orders-grid">
         {orders.map((order) => (
           <div className="order-card" key={order._id}>
@@ -420,16 +421,16 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
               <h3>{order.title}</h3>
               <StatusBadge status={order.status} />
             </div>
-            
+
             <div className="order-details">
               <p><strong>Order ID:</strong> {order.orderId}</p>
               <p><strong>Amount:</strong> {order.currency} {order.totalAmount}</p>
               <p><strong>Due Date:</strong> {formatDate(order.dueDate)}</p>
-              
+
               {order.clientId && (order.status === ORDER_STATUS.IN_PROGRESS || order.status === ORDER_STATUS.PAYMENT_PENDING) && (
                 <div className="freelancer-info">
                   <p><strong>Client:</strong> {order.clientId.companyName || 'N/A'}</p>
-                  <button 
+                  <button
                     className="chat-btn"
                     onClick={() => handleOpenChat(order.clientId)}
                   >
@@ -438,17 +439,17 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
                 </div>
               )}
             </div>
-            
+
             <div className="order-actions">
               {(order.status === ORDER_STATUS.CREATED && order.whoPlaced !== 'freelancer') && (
                 <>
-                  <button 
+                  <button
                     className="accept-btn"
                     onClick={() => handleAcceptOrder(order._id)}
                   >
                     <FaCheck /> Accept
                   </button>
-                  <button 
+                  <button
                     className="reject-btn"
                     onClick={() => handleRejectOrder(order._id)}
                   >
@@ -456,24 +457,24 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
                   </button>
                 </>
               )}
-              
+
               {order.status === ORDER_STATUS.PAYMENT_PENDING && (
                 <div className="payment-pending-notice">
                   <p>Waiting for client payment to start the project</p>
                 </div>
               )}
-              
+
               {order.status === ORDER_STATUS.IN_PROGRESS && (
-                <button 
+                <button
                   className="complete-btn"
                   onClick={() => handleCompleteOrder(order._id)}
                 >
                   <FaCheck /> Mark as Completed
                 </button>
               )}
-              
+
               {order.status === ORDER_STATUS.COMPLETED && order.clientId && (
-                <button 
+                <button
                   className={`review-btn ${isOrderReviewed(order._id) ? 'reviewed' : ''}`}
                   onClick={() => openReviewModal(order)}
                   disabled={isOrderReviewed(order._id)}
@@ -481,8 +482,8 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
                   <FaStar /> {isOrderReviewed(order._id) ? 'Client Reviewed' : 'Review Client'}
                 </button>
               )}
-              
-              <button 
+
+              <button
                 className="view-btn"
                 onClick={() => handleViewDetails(order)}
               >
@@ -498,9 +499,9 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
       )}
 
       {reviewOrder && (
-        <ReviewModal 
-          order={reviewOrder} 
-          onClose={closeReviewModal} 
+        <ReviewModal
+          order={reviewOrder}
+          onClose={closeReviewModal}
           onSubmit={handleSubmitReview}
         />
       )}

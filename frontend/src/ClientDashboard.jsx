@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { clientAPI, jobAPI } from './api/api';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { User, Star, Calendar, MapPin, Phone, Globe, Linkedin, Twitter, CreditCard, Building, FileText, CheckCircle, X, Edit, ChevronDown, ChevronUp, Clock, DollarSign, MessageCircle, Save, Upload } from 'lucide-react';
+import { clientAPI } from './api/api';
+// Chart imports removed - unused
+import { User, Star, Calendar, MapPin, Phone, Globe, Linkedin, Twitter, FileText, CheckCircle, X, Edit, ChevronDown, ChevronUp, Clock, DollarSign, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './css/ClientDashboard.css';
 import { motion } from 'framer-motion';
@@ -42,9 +42,8 @@ const ClientDashboard = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
 
-  // Colors for charts
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-  
+
+
   useEffect(() => {
     const fetchClientData = async () => {
       try {
@@ -54,24 +53,24 @@ const ClientDashboard = () => {
         if (!userString) {
           throw new Error('User not found in local storage');
         }
-        
+
         const user = JSON.parse(userString);
         if (!user.email || user.userType !== 'client') {
           throw new Error('Invalid user data');
         }
-        
+
         // Get all clients and find the one matching our email
         const allClientsResponse = await clientAPI.getAllClients();
         const matchingClient = allClientsResponse.data.find(c => c.email === user.email);
-        
+
         if (!matchingClient) {
           throw new Error('Client profile not found');
         }
-        
+
         // Get full client details with the ID
         const clientDetailsResponse = await clientAPI.getClient(matchingClient._id);
         setClient(clientDetailsResponse.data);
-        
+
         // Initialize form data with client data
         setFormData({
           companyName: clientDetailsResponse.data.companyName,
@@ -91,7 +90,7 @@ const ClientDashboard = () => {
           },
           profilePicture: clientDetailsResponse.data.profilePicture || ''
         });
-        
+
         setLoading(false);
       } catch (err) {
         console.error('Error fetching client data:', err);
@@ -101,10 +100,10 @@ const ClientDashboard = () => {
     };
 
     fetchClientData();
-    
+
     // Add animation effect when component mounts
     document.body.classList.add('dashboard-active');
-    
+
     return () => {
       document.body.classList.remove('dashboard-active');
     };
@@ -120,7 +119,7 @@ const ClientDashboard = () => {
           ...formData,
           profilePicture: e.target.result
         });
-        
+
         // If in editing mode, don't update client state yet
         // Otherwise update client state immediately for preview
         if (!editing) {
@@ -152,7 +151,7 @@ const ClientDashboard = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Handle nested properties
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
@@ -193,19 +192,19 @@ const ClientDashboard = () => {
       if (!client || !client._id) {
         throw new Error('Client ID not found');
       }
-      
+
       // Update client using the API
       await clientAPI.updateClient(client._id, formData);
-      
+
       // Update local client state
       setClient({
         ...client,
         ...formData
       });
-      
+
       // Turn off edit mode
       setEditing(false);
-      
+
       // Show success toast
       showToastMessage('Profile updated successfully!', 'success');
     } catch (err) {
@@ -214,35 +213,13 @@ const ClientDashboard = () => {
     }
   };
 
-  const handleVerify = async () => {
-    try {
-      // Ensure we have client ID
-      if (!client || !client._id) {
-        throw new Error('Client ID not found');
-      }
-      
-      // Update client verification status
-      await clientAPI.updateClient(client._id, { verified: true });
-      
-      // Update local client state
-      setClient({
-        ...client,
-        verified: true
-      });
-      
-      // Show success toast
-      showToastMessage('Account verified successfully!', 'success');
-    } catch (err) {
-      console.error('Error verifying account:', err);
-      showToastMessage('Failed to verify account. Please try again.', 'error');
-    }
-  };
+  // handleVerify removed - unused (verification UI is commented out)
 
   const showToastMessage = (message, type = 'success') => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
-    
+
     // Auto hide after 3 seconds
     setTimeout(() => {
       setShowToast(false);
@@ -253,9 +230,7 @@ const ClientDashboard = () => {
     navigate('/post-project');
   };
 
-  const handleChatClick = () => {
-    alert('Chat feature coming soon!');
-  };
+  // handleChatClick removed - unused (chat button is commented out)
 
   // Calculate dashboard overview stats from client orders
   const calculateDashboardStats = () => {
@@ -274,19 +249,19 @@ const ClientDashboard = () => {
       CANCELED: 'canceled',
       DISPUTED: 'disputed'
     };
-    const activeOrders = client.orders.filter(order => 
+    const activeOrders = client.orders.filter(order =>
       order.status === ORDER_STATUS.IN_PROGRESS
-  ).length;
+    ).length;
 
     console.log('Active orders: ', activeOrders);
-    
+
     const totalSpent = client.orders
       .filter(order => order.status === 'completed')
       .reduce((total, order) => total + (order.amount || 0), 0);
-    
+
     const memberSince = new Date(client.memberSince || Date.now());
     const memberDuration = Math.floor((new Date() - memberSince) / (1000 * 60 * 60 * 24 * 30));
-    
+
     return {
       activeOrders,
       totalSpent,
@@ -297,13 +272,13 @@ const ClientDashboard = () => {
   // Generate order status data for charts
   const generateOrderStatusData = () => {
     if (!client || !client.orders) return [];
-    
+
     const statuses = ['in_progress', 'pending', 'completed', 'canceled'];
     const statusCounts = statuses.reduce((acc, status) => {
       acc[status] = 0;
       return acc;
     }, {});
-    
+
     // Count orders by status
     client.orders.forEach(order => {
       const status = order.status || 'pending';
@@ -312,7 +287,7 @@ const ClientDashboard = () => {
       }
     });
 
-    
+
     // Convert to chart format
     return Object.keys(statusCounts).map(status => ({
       name: status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
@@ -352,7 +327,7 @@ const ClientDashboard = () => {
   }
 
   const { activeOrders, totalSpent, memberDuration } = calculateDashboardStats();
-  const orderStatusData = generateOrderStatusData();
+  // orderStatusData unused - charts removed
 
   return (
     <div className="client-dashboard">
@@ -368,9 +343,9 @@ const ClientDashboard = () => {
           </button>
         </div>
       )}
-      
+
       {/* Dashboard Header */}
-      <motion.header 
+      <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -378,9 +353,9 @@ const ClientDashboard = () => {
       >
         <div className="profile-snapshot">
           <div className="profile-pic">
-            <img 
-              src={client.profilePicture || '/default-profile.jpg'} 
-              alt={client.companyName} 
+            <img
+              src={client.profilePicture || '/default-profile.jpg'}
+              alt={client.companyName}
             />
             {client.verified && (
               <span className="verified-badge" title="Verified Account">
@@ -411,7 +386,7 @@ const ClientDashboard = () => {
       </motion.header>
 
       {/* Dashboard Navigation */}
-      <motion.nav 
+      <motion.nav
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
@@ -436,7 +411,7 @@ const ClientDashboard = () => {
       {/* Dashboard Content */}
       <div className="dashboard-content">
         {/* Overview Section */}
-        <motion.section 
+        <motion.section
           id="overview"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -444,7 +419,7 @@ const ClientDashboard = () => {
           className="dashboard-section overview-section"
         >
           <h2>Dashboard Overview <span className="emoji">📊</span></h2>
-          
+
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon orders-icon">
@@ -455,7 +430,7 @@ const ClientDashboard = () => {
                 <p className="stat-value">{activeOrders}</p>
               </div>
             </div>
-            
+
             <div className="stat-card">
               <div className="stat-icon rating-icon">
                 <Star size={24} />
@@ -465,7 +440,7 @@ const ClientDashboard = () => {
                 <p className="stat-value">{clientAPI.getClientRating(client)} <span className="text-sm">/ 5</span></p>
               </div>
             </div>
-            
+
             <div className="stat-card">
               <div className="stat-icon time-icon">
                 <Clock size={24} />
@@ -475,7 +450,7 @@ const ClientDashboard = () => {
                 <p className="stat-value">{memberDuration} months</p>
               </div>
             </div>
-            
+
             <div className="stat-card">
               <div className="stat-icon spend-icon">
                 <DollarSign size={24} />
@@ -489,17 +464,17 @@ const ClientDashboard = () => {
         </motion.section>
 
         {/* Orders Section */}
-        <ProjectsSection 
-        client={client} 
-        handlePostJob={handlePostJob} 
-      />
-        
+        <ProjectsSection
+          client={client}
+          handlePostJob={handlePostJob}
+        />
+
         <ClientOrdersDashboard
-        client={client}
+          client={client}
         />
 
         {/* Reviews Section */}
-        <motion.section 
+        <motion.section
           id="reviews"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -512,7 +487,7 @@ const ClientDashboard = () => {
               {expandedSections.reviews ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </button>
           </div>
-          
+
           {expandedSections.reviews && (
             <div className="reviews-container">
               {client.reviews && client.reviews.length > 0 ? (
@@ -521,11 +496,11 @@ const ClientDashboard = () => {
                     <div className="review-header">
                       <div className="review-rating">
                         {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            size={16} 
-                            className={i < review.rating ? 'star-filled' : 'star-empty'} 
-                            fill={i < review.rating ? '#FFD700' : 'none'} 
+                          <Star
+                            key={i}
+                            size={16}
+                            className={i < review.rating ? 'star-filled' : 'star-empty'}
+                            fill={i < review.rating ? '#FFD700' : 'none'}
                           />
                         ))}
                       </div>
@@ -555,7 +530,7 @@ const ClientDashboard = () => {
         </motion.section>
 
         {/* Profile Settings Section */}
-        <motion.section 
+        <motion.section
           id="profile"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -568,60 +543,60 @@ const ClientDashboard = () => {
               {expandedSections.profile ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </button>
           </div>
-          
+
           {expandedSections.profile && (
             <div className="profile-settings">
               <div className="profile-form">
                 <div className="form-group">
                   <label>Company Name</label>
                   {editing ? (
-                    <input 
-                      type="text" 
-                      name="companyName" 
-                      value={formData.companyName} 
+                    <input
+                      type="text"
+                      name="companyName"
+                      value={formData.companyName}
                       onChange={handleInputChange}
                     />
                   ) : (
                     <input type="text" value={client.companyName} readOnly />
                   )}
                 </div>
-                
+
                 <div className="form-group">
                   <label>Email Address</label>
                   {editing ? (
-                    <input 
-                      type="email" 
-                      name="email" 
-                      value={formData.email} 
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
                       onChange={handleInputChange}
                     />
                   ) : (
                     <input type="email" value={client.email} readOnly />
                   )}
                 </div>
-                
+
                 <div className="form-row">
                   <div className="form-group">
                     <label>Country</label>
                     {editing ? (
-                      <input 
-                        type="text" 
-                        name="location.country" 
-                        value={formData.location.country} 
+                      <input
+                        type="text"
+                        name="location.country"
+                        value={formData.location.country}
                         onChange={handleInputChange}
                       />
                     ) : (
                       <input type="text" value={client.location?.country || ''} readOnly />
                     )}
                   </div>
-                  
+
                   <div className="form-group">
                     <label>City</label>
                     {editing ? (
-                      <input 
-                        type="text" 
-                        name="location.city" 
-                        value={formData.location.city} 
+                      <input
+                        type="text"
+                        name="location.city"
+                        value={formData.location.city}
                         onChange={handleInputChange}
                       />
                     ) : (
@@ -629,30 +604,30 @@ const ClientDashboard = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="form-group">
                   <label>Bio / Company Description</label>
                   {editing ? (
-                    <textarea 
-                      name="bio" 
-                      value={formData.bio} 
+                    <textarea
+                      name="bio"
+                      value={formData.bio}
                       onChange={handleInputChange}
                     />
                   ) : (
                     <textarea readOnly value={client.bio || 'No bio provided yet.'} />
                   )}
                 </div>
-                
+
                 <div className="form-group">
                   <label>Contact Information</label>
                   <div className="contact-info">
                     <div className="contact-item">
                       <Phone size={16} />
                       {editing ? (
-                        <input 
-                          type="text" 
-                          name="contactInfo.phone" 
-                          value={formData.contactInfo.phone} 
+                        <input
+                          type="text"
+                          name="contactInfo.phone"
+                          value={formData.contactInfo.phone}
                           onChange={handleInputChange}
                           placeholder="Phone number"
                         />
@@ -663,10 +638,10 @@ const ClientDashboard = () => {
                     <div className="contact-item">
                       <Globe size={16} />
                       {editing ? (
-                        <input 
-                          type="text" 
-                          name="contactInfo.website" 
-                          value={formData.contactInfo.website} 
+                        <input
+                          type="text"
+                          name="contactInfo.website"
+                          value={formData.contactInfo.website}
                           onChange={handleInputChange}
                           placeholder="Website URL"
                         />
@@ -677,10 +652,10 @@ const ClientDashboard = () => {
                     <div className="contact-item">
                       <Linkedin size={16} />
                       {editing ? (
-                        <input 
-                          type="text" 
-                          name="socialMedia.linkedin" 
-                          value={formData.contactInfo.socialMedia.linkedin} 
+                        <input
+                          type="text"
+                          name="socialMedia.linkedin"
+                          value={formData.contactInfo.socialMedia.linkedin}
                           onChange={handleInputChange}
                           placeholder="LinkedIn profile"
                         />
@@ -691,10 +666,10 @@ const ClientDashboard = () => {
                     <div className="contact-item">
                       <Twitter size={16} />
                       {editing ? (
-                        <input 
-                          type="text" 
-                          name="socialMedia.twitter" 
-                          value={formData.contactInfo.socialMedia.twitter} 
+                        <input
+                          type="text"
+                          name="socialMedia.twitter"
+                          value={formData.contactInfo.socialMedia.twitter}
                           onChange={handleInputChange}
                           placeholder="Twitter profile"
                         />
@@ -704,7 +679,7 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="form-actions">
                   {editing ? (
                     <button className="primary-button save-button" onClick={handleSaveChanges}>
@@ -718,12 +693,12 @@ const ClientDashboard = () => {
                   <button className="secondary-button">Change Password</button>
                 </div>
               </div>
-              
+
               <div className="profile-picture-section">
                 <div className="profile-picture-container">
-                  <img 
-                    src={editing ? formData.profilePicture : client.profilePicture || '/default-profile.jpg'} 
-                    alt={client.companyName} 
+                  <img
+                    src={editing ? formData.profilePicture : client.profilePicture || '/default-profile.jpg'}
+                    alt={client.companyName}
                   />
                   <div className="picture-overlay">
                     <label htmlFor="profilePicture" className="picture-edit-button">
@@ -766,7 +741,7 @@ const ClientDashboard = () => {
       </div>
 
       {/* Dashboard Footer */}
-      <motion.footer 
+      <motion.footer
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}

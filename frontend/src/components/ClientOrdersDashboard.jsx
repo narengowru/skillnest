@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { orderAPI, freelancerAPI } from '../api/api';
-import { FaWhatsapp, FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar, FaCreditCard } from 'react-icons/fa';
+import { FaEye, FaCheck, FaTimes, FaTimesCircle, FaStar, FaCreditCard } from 'react-icons/fa';
 import { MessageCircle } from 'lucide-react';
-import '../css/ClientOrdersDashboard.css'; 
+import '../css/ClientOrdersDashboard.css';
 
 // Load Razorpay script
 const loadRazorpayScript = () => {
@@ -51,15 +51,15 @@ const ReviewModal = ({ order, client, onClose, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!comment.trim()) {
       setError('Please add a comment to your review');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       const reviewData = {
         clientName: client.companyName || client.name || client.email,
@@ -67,7 +67,7 @@ const ReviewModal = ({ order, client, onClose, onSubmit }) => {
         rating,
         comment
       };
-      
+
       await onSubmit(order.freelancerId?._id, reviewData);
       onClose();
     } catch (err) {
@@ -86,7 +86,7 @@ const ReviewModal = ({ order, client, onClose, onSubmit }) => {
             <FaTimesCircle />
           </button>
         </div>
-        
+
         <div className="modal-body">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -103,7 +103,7 @@ const ReviewModal = ({ order, client, onClose, onSubmit }) => {
                 ))}
               </div>
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="review-comment">Your Review</label>
               <textarea
@@ -114,9 +114,9 @@ const ReviewModal = ({ order, client, onClose, onSubmit }) => {
                 rows={5}
               />
             </div>
-            
+
             {error && <div className="form-error">{error}</div>}
-            
+
             <div className="modal-actions">
               <button type="button" className="cancel-btn" onClick={onClose} disabled={loading}>
                 Cancel
@@ -154,7 +154,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
             <FaTimesCircle />
           </button>
         </div>
-        
+
         <div className="modal-body">
           <div className="modal-section">
             <h3>Order Information</h3>
@@ -255,9 +255,9 @@ const ClientOrdersDashboard = ({ client }) => {
               }
             })
           );
-          
+
           setOrders(detailedOrders.filter(order => order !== null));
-          
+
           // Load reviewed orders from localStorage
           const storedReviewedOrders = JSON.parse(localStorage.getItem('clientReviewedOrders') || '[]');
           setReviewedOrders(storedReviewedOrders);
@@ -276,19 +276,19 @@ const ClientOrdersDashboard = ({ client }) => {
     try {
       setError('');
       setSuccess('');
-      
+
       console.log('Accepting order', orderId);
       await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.PAYMENT_PENDING });
-      
+
       // Update the order in the local state
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
           order._id === orderId ? { ...order, status: ORDER_STATUS.PAYMENT_PENDING } : order
         )
       );
-      
+
       setSuccess('Order accepted! Please complete the payment to start the project.');
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -301,10 +301,10 @@ const ClientOrdersDashboard = ({ client }) => {
     try {
       setError('');
       setSuccess('');
-      
+
       // Load Razorpay script
       const Razorpay = await loadRazorpayScript();
-      
+
       // Create order on backend
       const orderResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/razorpay/create-order`, {
         method: 'POST',
@@ -317,13 +317,13 @@ const ClientOrdersDashboard = ({ client }) => {
           receipt: `order_${new Date().toISOString().replace(/[:.]/g, '-')}`
         })
       });
-      
+
       const orderData = await orderResponse.json();
-      
+
       if (!orderData.success) {
         throw new Error(orderData.message || 'Failed to create payment order');
       }
-      
+
       // Initialize Razorpay payment
       const options = {
         key: orderData.key_id,
@@ -346,27 +346,27 @@ const ClientOrdersDashboard = ({ client }) => {
                 razorpay_signature: response.razorpay_signature
               })
             });
-            
+
             const verifyData = await verifyResponse.json();
-            
+
             if (verifyData.success) {
               // Update order status to in-progress
-              await orderAPI.updateOrder(order._id, { 
+              await orderAPI.updateOrder(order._id, {
                 status: ORDER_STATUS.IN_PROGRESS,
                 paymentStatus: 'paid'
               });
-              
+
               // Update local state
-              setOrders(prevOrders => 
-                prevOrders.map(o => 
-                  o._id === order._id ? { 
-                    ...o, 
+              setOrders(prevOrders =>
+                prevOrders.map(o =>
+                  o._id === order._id ? {
+                    ...o,
                     status: ORDER_STATUS.IN_PROGRESS,
                     paymentStatus: 'paid'
                   } : o
                 )
               );
-              
+
               setSuccess('Payment successful! Project is now in progress.');
               setTimeout(() => setSuccess(''), 3000);
             } else {
@@ -385,10 +385,10 @@ const ClientOrdersDashboard = ({ client }) => {
           color: '#3399cc'
         }
       };
-      
+
       const rzp = new Razorpay(options);
       rzp.open();
-      
+
     } catch (err) {
       setError(err.message || 'Failed to initiate payment');
       console.error('Payment error:', err);
@@ -399,19 +399,19 @@ const ClientOrdersDashboard = ({ client }) => {
     try {
       setError('');
       setSuccess('');
-      
+
       console.log('Canceling order', orderId);
       await orderAPI.updateOrder(orderId, { status: ORDER_STATUS.CANCELED });
-      
+
       // Update the order in the local state
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
           order._id === orderId ? { ...order, status: ORDER_STATUS.CANCELED } : order
         )
       );
-      
+
       setSuccess('Order canceled successfully!');
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -420,12 +420,13 @@ const ClientOrdersDashboard = ({ client }) => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleWhatsAppChat = (freelancerPhone) => {
     // Format phone number if needed (remove spaces, add country code if missing)
-    const formattedPhone = freelancerPhone?.startsWith('+') 
-      ? freelancerPhone.replace(/\s/g, '') 
+    const formattedPhone = freelancerPhone?.startsWith('+')
+      ? freelancerPhone.replace(/\s/g, '')
       : `+${freelancerPhone?.replace(/\s/g, '')}`;
-    
+
     // Open WhatsApp in a new tab
     window.open(`https://wa.me/${formattedPhone}`, '_blank');
   };
@@ -455,17 +456,17 @@ const ClientOrdersDashboard = ({ client }) => {
       // Send review to API using the correct API structure
       console.log('Submitting review for freelancer:', freelancerId, reviewData);
       await freelancerAPI.addReview(freelancerId, reviewData);
-    
+
       // Add order ID to reviewedOrders to disable the review button
       const updatedReviewedOrders = [...reviewedOrders, reviewData.orderId || reviewOrder._id];
       setReviewedOrders(updatedReviewedOrders);
-      
+
       // Store in localStorage - use a different key for client reviews
       localStorage.setItem('clientReviewedOrders', JSON.stringify(updatedReviewedOrders));
-      
+
       setSuccess('Review submitted successfully!');
       setTimeout(() => setSuccess(''), 3000);
-      
+
       return Promise.resolve();
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -498,10 +499,10 @@ const ClientOrdersDashboard = ({ client }) => {
   return (
     <div className="client-orders-dashboard">
       <h2>My Orders</h2>
-      
+
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
-      
+
       <div className="orders-grid">
         {orders.map((order) => (
           <div className="order-card" key={order._id}>
@@ -509,16 +510,16 @@ const ClientOrdersDashboard = ({ client }) => {
               <h3>{order.title}</h3>
               <StatusBadge status={order.status} />
             </div>
-            
+
             <div className="order-details">
               <p><strong>Order ID:</strong> {order.orderId}</p>
               <p><strong>Amount:</strong> {order.currency} {order.totalAmount}</p>
               <p><strong>Due Date:</strong> {formatDate(order.dueDate)}</p>
-              
+
               {order.freelancerId && (order.status === ORDER_STATUS.IN_PROGRESS || order.status === ORDER_STATUS.COMPLETED) && (
                 <div className="freelancer-info">
                   <p><strong>Freelancer:</strong> {order.freelancerId.name || order.freelancerId.email || 'N/A'}</p>
-                  <button 
+                  <button
                     className="chat-btn"
                     onClick={() => handleOpenChat(order.freelancerId)}
                   >
@@ -527,17 +528,17 @@ const ClientOrdersDashboard = ({ client }) => {
                 </div>
               )}
             </div>
-            
+
             <div className="order-actions">
               {order.status === ORDER_STATUS.CREATED && (
                 <>
-                  <button 
+                  <button
                     className="accept-btn"
                     onClick={() => handleAcceptOrder(order._id)}
                   >
                     <FaCheck /> Accept
                   </button>
-                  <button 
+                  <button
                     className="reject-btn"
                     onClick={() => handleCancelOrder(order._id)}
                   >
@@ -545,16 +546,16 @@ const ClientOrdersDashboard = ({ client }) => {
                   </button>
                 </>
               )}
-              
+
               {order.status === ORDER_STATUS.PAYMENT_PENDING && (
                 <>
-                  <button 
+                  <button
                     className="payment-btn"
                     onClick={() => handlePayment(order)}
                   >
                     <FaCreditCard /> Pay Now
                   </button>
-                  <button 
+                  <button
                     className="reject-btn"
                     onClick={() => handleCancelOrder(order._id)}
                   >
@@ -562,9 +563,9 @@ const ClientOrdersDashboard = ({ client }) => {
                   </button>
                 </>
               )}
-              
+
               {order.status === ORDER_STATUS.COMPLETED && order.freelancerId && (
-                <button 
+                <button
                   className={`review-btn ${isOrderReviewed(order._id) ? 'reviewed' : ''}`}
                   onClick={() => openReviewModal(order)}
                   disabled={isOrderReviewed(order._id)}
@@ -572,8 +573,8 @@ const ClientOrdersDashboard = ({ client }) => {
                   <FaStar /> {isOrderReviewed(order._id) ? 'Freelancer Reviewed' : 'Review Freelancer'}
                 </button>
               )}
-              
-              <button 
+
+              <button
                 className="view-btn"
                 onClick={() => handleViewDetails(order)}
               >
@@ -589,10 +590,10 @@ const ClientOrdersDashboard = ({ client }) => {
       )}
 
       {reviewOrder && (
-        <ReviewModal 
+        <ReviewModal
           order={reviewOrder}
           client={client}
-          onClose={closeReviewModal} 
+          onClose={closeReviewModal}
           onSubmit={handleSubmitReview}
         />
       )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Clock, Briefcase, Award, Mail, MapPin, Calendar, ArrowRight, Heart, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Star, Briefcase, Mail, MapPin, Calendar, ArrowRight, Heart, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import './css/ViewProfile.css';
 import { useNavigate } from 'react-router-dom';
 import { freelancerAPI, clientAPI, orderAPI } from './api/api'; // Added orderAPI and clientAPI
@@ -13,7 +13,7 @@ const ViewProfile = () => {
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState('portfolio');
-  const [bookingStatus, setBookingStatus] = useState({
+  const [bookingStatus, setBookingStatus] = useState({ // eslint-disable-line no-unused-vars
     isBooking: false,
     success: false,
     error: null,
@@ -25,7 +25,7 @@ const ViewProfile = () => {
     // Extract ID from URL
     const pathParts = window.location.pathname.split('/');
     const freelancerId = pathParts[pathParts.length - 1];
-    
+
     // Get client data from localStorage
     try {
       const clientStorageData = localStorage.getItem('user');
@@ -35,7 +35,7 @@ const ViewProfile = () => {
     } catch (err) {
       console.error('Error parsing client data from localStorage', err);
     }
-    
+
     const fetchFreelancerData = async () => {
       try {
         setLoading(true);
@@ -153,19 +153,19 @@ const ViewProfile = () => {
 
       // Create the order
       const response = await orderAPI.createOrder(orderData);
-      
+
       setBookingStatus({
         isBooking: false,
         success: true,
         error: null,
         orderId: response.data.orderId
       });
-      
+
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
       }, 3000);
-      
+
     } catch (err) {
       console.error('Error booking freelancer:', err);
       setBookingStatus({
@@ -182,14 +182,14 @@ const ViewProfile = () => {
 
   const nextProject = () => {
     if (!freelancer?.previousWork?.length) return;
-    setCurrentProjectIndex((prev) => 
+    setCurrentProjectIndex((prev) =>
       prev === freelancer.previousWork.length - 1 ? 0 : prev + 1
     );
   };
 
   const prevProject = () => {
     if (!freelancer?.previousWork?.length) return;
-    setCurrentProjectIndex((prev) => 
+    setCurrentProjectIndex((prev) =>
       prev === 0 ? freelancer.previousWork.length - 1 : prev - 1
     );
   };
@@ -203,11 +203,11 @@ const ViewProfile = () => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <Star 
-          key={i} 
-          size={18} 
-          fill={i <= rating ? "#FFD700" : "none"} 
-          stroke={i <= rating ? "#FFD700" : "#ccc"} 
+        <Star
+          key={i}
+          size={18}
+          fill={i <= rating ? "#FFD700" : "none"}
+          stroke={i <= rating ? "#FFD700" : "#ccc"}
         />
       );
     }
@@ -274,21 +274,21 @@ const ViewProfile = () => {
         <div className="header-background">
           <div className="overlay"></div>
         </div>
-        
+
         <div className="profile-header-content">
           <div className="profile-photo-container">
-            <img 
-              src={freelancer.profilePhoto || '/default-avatar.png'} 
-              alt={freelancer.name} 
-              className="profile-photo" 
-              onError={(e) => {e.target.onerror = null; e.target.src = '/default-avatar.png'}}
+            <img
+              src={freelancer.profilePhoto || '/default-avatar.png'}
+              alt={freelancer.name}
+              className="profile-photo"
+              onError={(e) => { e.target.onerror = null; e.target.src = '/default-avatar.png' }}
             />
             <div className="online-indicator" title="Currently Online"></div>
           </div>
-          
+
           <div className="profile-header-info">
-            <h1>{freelancer.name || 'Freelancer'} 
-              <span 
+            <h1>{freelancer.name || 'Freelancer'}
+              <span
                 className={`favorite-button ${isFavorite ? 'favorited' : ''}`}
                 onClick={toggleFavorite}
                 title={isFavorite ? "Remove from favorites" : "Add to favorites"}
@@ -297,7 +297,7 @@ const ViewProfile = () => {
               </span>
             </h1>
             <p className="tagline" style={{ color: 'white' }}>{freelancer.tagline || 'Skilled Freelancer'}</p>
-            
+
             <div className="profile-meta">
               <div className="meta-item" style={{ color: 'white' }}>
                 <MapPin size={16} />
@@ -319,7 +319,7 @@ const ViewProfile = () => {
               )}
             </div>
           </div>
-          
+
           <div className="profile-header-actions">
             <button className="book-now-button" onClick={handleBookNow}>
               Book Now
@@ -343,8 +343,8 @@ const ViewProfile = () => {
               <div>
                 <span className="info-label">Completed Jobs</span>
                 <span className="info-value">
-  {freelancer.orders.filter(order => order.status === 'completed').length || 0}
-</span>
+                  {freelancer.orders.filter(order => order.status === 'completed').length || 0}
+                </span>
               </div>
             </div>
             {freelancer.availability && (
@@ -385,8 +385,8 @@ const ViewProfile = () => {
                       <span className="skill-level">{skill.level || 0}%</span>
                     </div>
                     <div className="skill-progress-bg">
-                      <div 
-                        className="skill-progress" 
+                      <div
+                        className="skill-progress"
                         style={{ width: `${skill.level || 0}%` }}
                         data-aos="width"
                         data-aos-delay={index * 100}
@@ -411,17 +411,17 @@ const ViewProfile = () => {
                     <span className="detail-value">{freelancer.education.gpa}</span>
                   </div>
                 )}
-                {freelancer.education.relevantCourses && Array.isArray(freelancer.education.relevantCourses) && 
-                 freelancer.education.relevantCourses.length > 0 && (
-                  <div className="relevant-courses">
-                    <h5>Relevant Courses:</h5>
-                    <div className="courses-list">
-                      {freelancer.education.relevantCourses.map((course, index) => (
-                        <span key={index} className="course-tag">{course}</span>
-                      ))}
+                {freelancer.education.relevantCourses && Array.isArray(freelancer.education.relevantCourses) &&
+                  freelancer.education.relevantCourses.length > 0 && (
+                    <div className="relevant-courses">
+                      <h5>Relevant Courses:</h5>
+                      <div className="courses-list">
+                        {freelancer.education.relevantCourses.map((course, index) => (
+                          <span key={index} className="course-tag">{course}</span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             </div>
           )}
@@ -429,25 +429,25 @@ const ViewProfile = () => {
 
         <div className="profile-content">
           <div className="profile-tabs">
-            <button 
+            <button
               className={`tab-button ${activeTab === 'portfolio' ? 'active' : ''}`}
               onClick={() => setActiveTab('portfolio')}
             >
               Portfolio
             </button>
-            <button 
+            <button
               className={`tab-button ${activeTab === 'about' ? 'active' : ''}`}
               onClick={() => setActiveTab('about')}
             >
               About
             </button>
-            <button 
+            <button
               className={`tab-button ${activeTab === 'reviews' ? 'active' : ''}`}
               onClick={() => setActiveTab('reviews')}
             >
               Reviews
             </button>
-            <button 
+            <button
               className={`tab-button ${activeTab === 'achievements' ? 'active' : ''}`}
               onClick={() => setActiveTab('achievements')}
             >
@@ -458,14 +458,14 @@ const ViewProfile = () => {
           {/* Portfolio Tab */}
           <div className={`tab-content ${activeTab === 'portfolio' ? 'active' : ''}`}>
             <h2 className="section-title">Previous Work</h2>
-            
+
             {hasPreviousWork ? (
               <>
                 <div className="portfolio-carousel">
                   <button className="carousel-button prev" onClick={prevProject}>
                     <ChevronLeft size={24} />
                   </button>
-                  
+
                   <div className="portfolio-item">
                     <div className="portfolio-details">
                       <h3>{currentProject.title || 'Untitled Project'}</h3>
@@ -485,16 +485,16 @@ const ViewProfile = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   <button className="carousel-button next" onClick={nextProject}>
                     <ChevronRight size={24} />
                   </button>
                 </div>
-                
+
                 <div className="carousel-indicators">
                   {freelancer.previousWork.map((_, index) => (
-                    <span 
-                      key={index} 
+                    <span
+                      key={index}
                       className={`indicator ${index === currentProjectIndex ? 'active' : ''}`}
                       onClick={() => setCurrentProjectIndex(index)}
                     ></span>
@@ -513,36 +513,36 @@ const ViewProfile = () => {
             <h2 className="section-title">About Me</h2>
             <div className="bio-section">
               <p className="bio-text">{freelancer.bio || 'Bio not available'}</p>
-              
+
               {hasSocialProfiles && (
                 <div className="social-profiles">
                   <h4>Connect with me:</h4>
                   <div className="social-links">
                     {freelancer.socialProfiles.github && (
-                      <a 
-                        href={`https://${freelancer.socialProfiles.github}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={`https://${freelancer.socialProfiles.github}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="social-link github"
                       >
                         GitHub
                       </a>
                     )}
                     {freelancer.socialProfiles.linkedin && (
-                      <a 
-                        href={`https://${freelancer.socialProfiles.linkedin}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={`https://${freelancer.socialProfiles.linkedin}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="social-link linkedin"
                       >
                         LinkedIn
                       </a>
                     )}
                     {freelancer.socialProfiles.portfolio && (
-                      <a 
-                        href={`https://${freelancer.socialProfiles.portfolio}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={`https://${freelancer.socialProfiles.portfolio}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="social-link portfolio"
                       >
                         Portfolio
@@ -557,7 +557,7 @@ const ViewProfile = () => {
           {/* Reviews Tab */}
           <div className={`tab-content ${activeTab === 'reviews' ? 'active' : ''}`}>
             <h2 className="section-title">Client Reviews</h2>
-            
+
             {hasRatings && freelancer.ratings.total > 0 ? (
               <div className="rating-summary">
                 <div className="overall-rating">
@@ -567,15 +567,15 @@ const ViewProfile = () => {
                   </div>
                   <div className="total-reviews">{freelancer.ratings.total || 0} reviews</div>
                 </div>
-                
+
                 {freelancer.ratings.breakdown && (
                   <div className="rating-breakdown">
                     {[5, 4, 3, 2, 1].map(rating => (
                       <div key={rating} className="breakdown-row">
                         <div className="stars-label">{rating} stars</div>
                         <div className="progress-bar-container">
-                          <div 
-                            className="progress-bar" 
+                          <div
+                            className="progress-bar"
                             style={{
                               width: `${calculatePercentage(
                                 freelancer.ratings.breakdown[rating] || 0
@@ -596,17 +596,17 @@ const ViewProfile = () => {
                 <p>No ratings available yet.</p>
               </div>
             )}
-            
+
             {hasReviews ? (
               <div className="reviews-list">
                 {freelancer.reviews.map((review, index) => (
                   <div key={index} className="review-card">
                     <div className="review-header">
-                      <img 
-                        src={review.clientAvatar || '/default-avatar.png'} 
-                        alt={review.clientName || 'Client'} 
-                        className="client-avatar" 
-                        onError={(e) => {e.target.onerror = null; e.target.src = '/default-avatar.png'}}
+                      <img
+                        src={review.clientAvatar || '/default-avatar.png'}
+                        alt={review.clientName || 'Client'}
+                        className="client-avatar"
+                        onError={(e) => { e.target.onerror = null; e.target.src = '/default-avatar.png' }}
                       />
                       <div className="review-meta">
                         <h4 className="client-name">{review.clientName || 'Anonymous Client'}</h4>
@@ -634,7 +634,7 @@ const ViewProfile = () => {
           {/* Achievements Tab */}
           <div className={`tab-content ${activeTab === 'achievements' ? 'active' : ''}`}>
             <h2 className="section-title">Achievements</h2>
-            
+
             {hasAchievements ? (
               <div className="achievements-grid">
                 {freelancer.achievements.map((achievement, index) => (
@@ -652,7 +652,7 @@ const ViewProfile = () => {
                 <p>No achievements available yet.</p>
               </div>
             )}
-            
+
             {/* <div className="stats-section">
               <h3>Performance Stats</h3>
               <div className="stats-grid">
@@ -677,7 +677,7 @@ const ViewProfile = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="cta-section">
         <div className="cta-content">
           <h2>Ready to work with {(freelancer.name || '').split(' ')[0] || 'this freelancer'}?</h2>

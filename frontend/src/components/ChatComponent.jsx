@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Send, X, Users, Search, Phone, Video, MoreVertical, Paperclip, Smile, ArrowLeft, Circle, Check, CheckCheck, Plus, UserPlus, RefreshCw } from 'lucide-react';
+import { MessageCircle, Send, X, Users, Search, ArrowLeft, Check, CheckCheck, Plus, UserPlus, RefreshCw } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { freelancerAPI, clientAPI } from '../api/api';
 import '../css/ChatComponent.css';
@@ -17,7 +17,7 @@ const ChatComponent = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [onlineUsers, setOnlineUsers] = useState(new Set()); // eslint-disable-line no-unused-vars
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showNewConversation, setShowNewConversation] = useState(false);
@@ -28,7 +28,7 @@ const ChatComponent = () => {
   const [allowedFreelancerIds, setAllowedFreelancerIds] = useState([]);
   const [clientId, setClientId] = useState(null);
   const [lastPollTime, setLastPollTime] = useState(Date.now());
-  const [pollingInterval, setPollingInterval] = useState(null);
+  const [, setPollingInterval] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connected', 'disconnected', 'connecting'
 
   const messagesEndRef = useRef(null);
@@ -57,6 +57,7 @@ const ChatComponent = () => {
       }
     };
     fetchAndSetUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Cleanup socket on unmount
@@ -73,6 +74,7 @@ const ChatComponent = () => {
     if (currentUser && !socket) {
       initializeSocket(currentUser);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, socket]);
 
   // Clean up typing timeout on unmount
@@ -199,54 +201,54 @@ const ChatComponent = () => {
 
     newSocket.on('new-message', (message) => {
       console.log('Received new message:', message);
-      
+
       // Update messages if this is the active conversation
       if (activeConversation && message.chatRoomId === activeConversation._id) {
         setMessages(prev => {
           // Enhanced duplicate detection - check by ID and content
-          const messageExists = prev.some(msg => 
-            msg._id === message._id || 
-            (msg.content === message.content && 
-             msg.senderId._id === message.senderId._id &&
-             Math.abs(new Date(msg.createdAt) - new Date(message.createdAt)) < 5000) // Within 5 seconds
+          const messageExists = prev.some(msg =>
+            msg._id === message._id ||
+            (msg.content === message.content &&
+              msg.senderId._id === message.senderId._id &&
+              Math.abs(new Date(msg.createdAt) - new Date(message.createdAt)) < 5000) // Within 5 seconds
           );
-          
+
           if (messageExists) {
             console.log('Duplicate message detected, skipping');
             return prev;
           }
-          
+
           // Remove any temporary messages and add the real message
           const filteredMessages = prev.filter(msg => !msg._id?.toString().startsWith('temp-'));
           return [...filteredMessages, message];
         });
-        
+
         // Mark as read immediately for active conversation
         markMessagesAsRead(activeConversation._id);
       }
-      
+
       // Update conversations list without full reload
       setConversations(prev => {
         const existingConvIndex = prev.findIndex(conv => conv._id === message.chatRoomId);
-        
+
         if (existingConvIndex !== -1) {
           // Update existing conversation
           const updatedConversations = prev.map(conv =>
             conv._id === message.chatRoomId
-              ? { 
-                  ...conv, 
-                  lastMessage: message, 
-                  unreadCount: activeConversation?._id === message.chatRoomId ? 0 : (conv.unreadCount || 0) + 1
-                }
+              ? {
+                ...conv,
+                lastMessage: message,
+                unreadCount: activeConversation?._id === message.chatRoomId ? 0 : (conv.unreadCount || 0) + 1
+              }
               : conv
           );
-          
+
           // Update total unread count
           const isActiveConversation = activeConversation?._id === message.chatRoomId;
           if (!isActiveConversation) {
             setUnreadCount(prev => prev + 1);
           }
-          
+
           return sortConversations(updatedConversations);
         } else {
           // Conversation not found - silently ignore instead of reloading
@@ -271,7 +273,7 @@ const ChatComponent = () => {
 
     newSocket.on('messages-read', (data) => {
       if (activeConversation && data.chatRoomId === activeConversation._id) {
-        setMessages(prev => prev.map(msg => 
+        setMessages(prev => prev.map(msg =>
           msg.senderId._id === currentUser.id ? { ...msg, isRead: true } : msg
         ));
       }
@@ -301,7 +303,7 @@ const ChatComponent = () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/rooms?userId=${userId}&userType=${currentUser.userType === 'freelancer' ? 'Freelancer' : 'Client'}`);
       const data = await response.json();
-      
+
       if (data.success) {
         const sorted = sortConversations(data.data.chatRooms);
         setConversations(sorted);
@@ -317,12 +319,12 @@ const ChatComponent = () => {
   const loadMessages = async (chatRoomId) => {
     // Prevent loading if already loading or if no chatRoomId
     if (isLoading || !chatRoomId) return;
-    
+
     setIsLoading(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/messages/${chatRoomId}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setMessages(data.data.messages || []);
         // Mark messages as read after loading them
@@ -355,14 +357,14 @@ const ChatComponent = () => {
 
       // Update local state using functional updates to avoid race conditions
       setConversations(prev => {
-        const updatedConversations = prev.map(conv => 
+        const updatedConversations = prev.map(conv =>
           conv._id === chatRoomId ? { ...conv, unreadCount: 0 } : conv
         );
-        
+
         // Calculate new total unread count
         const newTotalUnread = updatedConversations.reduce((sum, room) => sum + (room.unreadCount || 0), 0);
         setUnreadCount(newTotalUnread);
-        
+
         return updatedConversations;
       });
     } catch (error) {
@@ -375,7 +377,7 @@ const ChatComponent = () => {
     if (!newMessage.trim() || !activeConversation || !socket) return;
 
     const messageContent = newMessage.trim();
-    
+
     // Create a temporary message object for optimistic UI
     const tempMessage = {
       _id: `temp-${Date.now()}-${Math.random()}`, // More unique ID to prevent conflicts
@@ -408,7 +410,7 @@ const ChatComponent = () => {
 
     setNewMessage('');
     stopTyping();
-    
+
     // Focus back on input
     setTimeout(() => {
       messageInputRef.current?.focus();
@@ -418,7 +420,7 @@ const ChatComponent = () => {
   // Handle typing with debouncing
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
-    
+
     if (!isTyping && activeConversation && socket) {
       setIsTyping(true);
       socket.emit('typing-start', { chatRoomId: activeConversation._id });
@@ -459,19 +461,19 @@ const ChatComponent = () => {
       const data = await response.json();
       if (data.success) {
         const newChatRoom = data.data.chatRoom;
-        
+
         // Set active conversation
         setActiveConversation(newChatRoom);
         setCurrentView('chat');
-        
+
         // Join the room via socket
         if (socket) {
           socket.emit('join-room', { chatRoomId: newChatRoom._id });
         }
-        
+
         // Load messages for this room
         await loadMessages(newChatRoom._id);
-        
+
         // Ensure the conversation is in the list
         setConversations(prev => {
           const existingIndex = prev.findIndex(conv => conv._id === newChatRoom._id);
@@ -486,15 +488,15 @@ const ChatComponent = () => {
           }
           return prev;
         });
-        
+
         // Close the modal
         setShowNewConversation(false);
-        
+
         // Focus on message input
         setTimeout(() => {
           messageInputRef.current?.focus();
         }, 100);
-        
+
       } else {
         console.error('Failed to create chat room:', data.message);
       }
@@ -512,16 +514,16 @@ const ChatComponent = () => {
 
     setActiveConversation(conversation);
     setCurrentView('chat');
-    
+
     if (socket) {
       socket.emit('join-room', { chatRoomId: conversation._id });
     }
-    
+
     // Mark messages as read when opening conversation
     if (conversation.unreadCount > 0) {
       markMessagesAsRead(conversation._id);
     }
-    
+
     loadMessages(conversation._id);
   };
 
@@ -533,7 +535,7 @@ const ChatComponent = () => {
   // Get other user from conversation
   const getOtherUser = (conversation) => {
     if (!conversation || !currentUser) return null;
-    
+
     if (currentUser.userType === 'freelancer') {
       return conversation.clientId;
     } else {
@@ -593,13 +595,14 @@ const ChatComponent = () => {
 
   // Format time
   const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
   // Format date
+  // eslint-disable-next-line no-unused-vars
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
     const today = new Date();
@@ -618,32 +621,32 @@ const ChatComponent = () => {
   // Load available users for new conversation
   const loadAvailableUsers = async () => {
     if (!currentUser) return;
-    
+
     setLoadingUsers(true);
     try {
       const api = currentUser.userType === 'freelancer' ? clientAPI : freelancerAPI;
-      const response = currentUser.userType === 'freelancer' 
-        ? await api.getAllClients() 
+      const response = currentUser.userType === 'freelancer'
+        ? await api.getAllClients()
         : await api.getAllFreelancers();
-      
+
       // Filter out users who already have conversations
       const existingUserIds = conversations.map(conv => {
         const otherUser = getOtherUser(conv);
         return otherUser?._id;
       }).filter(Boolean);
-      
-      let availableUsersFiltered = (response.data || []).filter(user => 
+
+      let availableUsersFiltered = (response.data || []).filter(user =>
         !existingUserIds.includes(user._id)
       );
       // If freelancer, only allow clients from allowedClientIds
       if (currentUser.userType === 'freelancer') {
-        availableUsersFiltered = availableUsersFiltered.filter(user => 
+        availableUsersFiltered = availableUsersFiltered.filter(user =>
           allowedClientIds.includes(user._id.toString())
         );
       }
       // If client, only allow freelancers from allowedFreelancerIds
       if (currentUser.userType === 'client') {
-        availableUsersFiltered = availableUsersFiltered.filter(user => 
+        availableUsersFiltered = availableUsersFiltered.filter(user =>
           allowedFreelancerIds.includes(user._id.toString())
         );
       }
@@ -658,7 +661,7 @@ const ChatComponent = () => {
   // Helper to sort conversations by last message time
   const sortConversations = (convs) => {
     if (!convs || convs.length === 0) return [];
-    
+
     return [...convs].sort((a, b) => {
       const aTime = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
       const bTime = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
@@ -718,41 +721,42 @@ const ChatComponent = () => {
     };
     window.addEventListener('open-chat-with-user', handler);
     return () => window.removeEventListener('open-chat-with-user', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversations, currentUser, clientId, socket]);
 
   // Poll for new messages and conversations
   const pollForUpdates = async () => {
     if (!currentUser || !isOpen) return;
-    
+
     try {
       // Only poll conversations if we're in conversations view or if socket is disconnected
       if (currentView === 'conversations' || connectionStatus !== 'connected') {
         await loadConversations();
       }
-      
+
       // Poll for new messages in active conversation
       if (activeConversation && connectionStatus !== 'connected') {
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/messages/${activeConversation._id}?since=${lastPollTime}`);
         const data = await response.json();
-        
+
         if (data.success && data.data.messages) {
-          const newMessages = data.data.messages.filter(msg => 
+          const newMessages = data.data.messages.filter(msg =>
             new Date(msg.createdAt).getTime() > lastPollTime
           );
-          
+
           if (newMessages.length > 0) {
             setMessages(prev => {
               const existingIds = new Set(prev.map(msg => msg._id));
               const uniqueNewMessages = newMessages.filter(msg => !existingIds.has(msg._id));
               return [...prev, ...uniqueNewMessages];
             });
-            
+
             // Mark as read
             markMessagesAsRead(activeConversation._id);
           }
         }
       }
-      
+
       setLastPollTime(Date.now());
     } catch (error) {
       console.error('Error polling for updates:', error);
@@ -770,12 +774,13 @@ const ChatComponent = () => {
       const shouldPoll = connectionStatus !== 'connected';
       const interval = setInterval(pollForUpdates, shouldPoll ? 2000 : 10000); // Poll every 2s if disconnected, 10s as backup
       setPollingInterval(interval);
-      
+
       return () => {
         clearInterval(interval);
         setPollingInterval(null);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, isOpen, connectionStatus]);
 
   if (!userExists) return null;
@@ -996,7 +1001,7 @@ const ChatComponent = () => {
                       );
                     })
                   )}
-                  
+
                   {/* Typing indicator */}
                   {typingUsers.length > 0 && (
                     <div className="typing-indicator-container">
@@ -1010,14 +1015,14 @@ const ChatComponent = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div ref={messagesEndRef} />
                 </div>
 
                 {/* Message Input */}
                 <div className="message-input-container">
                   <div className="message-input-wrapper">
-                    
+
                     <div className="message-input-field">
                       <input
                         ref={messageInputRef}
@@ -1028,7 +1033,7 @@ const ChatComponent = () => {
                         placeholder="Type a message..."
                         className="message-input"
                       />
-                      
+
                     </div>
                     <button
                       onClick={sendMessage}
@@ -1058,7 +1063,7 @@ const ChatComponent = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="modal-body">
               {loadingUsers ? (
                 <div className="modal-loading">

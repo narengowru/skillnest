@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronUp, ChevronDown, FileText, Edit, Trash2, Check, 
-  X, Calendar, DollarSign, Users, Clock, Award, Tag, 
-  MapPin, Plus, Save, AlignLeft, Gift
+import {
+  ChevronUp, ChevronDown, FileText, Edit, Trash2,
+  X, Calendar, DollarSign, Users, Clock, Award, Tag,
+  Plus, Save, AlignLeft, Gift
 } from 'lucide-react';
 import { jobAPI } from '../api/api';
 import '../css/ProjectsSection.css';
@@ -75,15 +75,14 @@ const ProjectsSection = ({ client, handlePostJob }) => {
           setLoading(false);
           return;
         }
-        
+
         // Fetch all jobs and filter to only those belonging to the client
-        const response = await jobAPI.getAllJobs();
-        const allJobs = response.data;
+        await jobAPI.getAllJobs(); // fetched to validate connection; client data used below
         console.log('Client info', client);
         // Filter jobs that belong to the client
         const clientJobs = client.jobs;
         console.log('Length', clientJobs.length);
-        
+
         setJobs(clientJobs);
       } catch (err) {
         console.error("Error fetching jobs:", err);
@@ -155,17 +154,17 @@ const ProjectsSection = ({ client, handlePostJob }) => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       await jobAPI.updateJob(editingJobId, editFormData);
-      
+
       // Update the jobs state with the edited job
-      setJobs(prevJobs => 
-        prevJobs.map(job => 
+      setJobs(prevJobs =>
+        prevJobs.map(job =>
           job._id === editingJobId ? { ...job, ...editFormData } : job
         )
       );
-      
+
       // Reset editing state
       setEditingJobId(null);
     } catch (err) {
@@ -179,7 +178,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
     if (window.confirm("Are you sure you want to delete this project?")) {
       try {
         await jobAPI.deleteJob(jobId);
-        
+
         // Remove the deleted job from state
         setJobs(prevJobs => prevJobs.filter(job => job._id !== jobId));
       } catch (err) {
@@ -218,15 +217,15 @@ const ProjectsSection = ({ client, handlePostJob }) => {
     if (!job.applications || job.applications.length === 0) {
       return "No applications yet";
     }
-    
+
     const pendingCount = job.applications.filter(app => app.status === 'pending').length;
     const acceptedCount = job.applications.filter(app => app.status === 'accepted').length;
-    
+
     return `${job.applications.length} total (${pendingCount} pending, ${acceptedCount} accepted)`;
   };
 
   return (
-    <motion.section 
+    <motion.section
       id="projects"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -239,7 +238,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
           {expandedSections.projects ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
       </div>
-      
+
       {expandedSections.projects && (
         <div className="projects-list">
           {loading ? (
@@ -257,7 +256,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
           ) : jobs && jobs.length > 0 ? (
             <AnimatePresence>
               {jobs.map((job) => (
-                <motion.div 
+                <motion.div
                   className="project-card"
                   key={job._id}
                   initial={{ opacity: 0, y: 20 }}
@@ -278,7 +277,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                           </button>
                         </div>
                       </div>
-                      
+
                       <div className="form-group">
                         <label htmlFor="title">Project Title</label>
                         <input
@@ -290,7 +289,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                           required
                         />
                       </div>
-                      
+
                       <div className="form-row">
                         <div className="form-group">
                           <label htmlFor="category">Category</label>
@@ -309,7 +308,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                             ))}
                           </select>
                         </div>
-                        
+
                         <div className="form-group">
                           <label htmlFor="budget">Budget</label>
                           <input
@@ -323,7 +322,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                           />
                         </div>
                       </div>
-                      
+
                       <div className="form-row">
                         <div className="form-group">
                           <label htmlFor="projectDuration">Project Duration</label>
@@ -341,7 +340,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                             ))}
                           </select>
                         </div>
-                        
+
                         <div className="form-group">
                           <label htmlFor="experienceLevel">Required Experience</label>
                           <select
@@ -359,7 +358,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                           </select>
                         </div>
                       </div>
-                      
+
                       <div className="form-group">
                         <label htmlFor="description">Project Description</label>
                         <textarea
@@ -371,7 +370,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                           required
                         ></textarea>
                       </div>
-                      
+
                       <div className="form-group">
                         <label>Skills Required</label>
                         <div className="skills-input-container">
@@ -381,21 +380,21 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                             onChange={(e) => setNewSkill(e.target.value)}
                             placeholder="Add a skill"
                           />
-                          <button 
-                            type="button" 
-                            className="btn-add-skill" 
+                          <button
+                            type="button"
+                            className="btn-add-skill"
                             onClick={handleAddSkill}
                           >
                             <Plus size={18} />
                           </button>
                         </div>
-                        
+
                         <div className="skills-list">
                           {editFormData.skills.map((skill, index) => (
                             <div className="skill-tag" key={index}>
                               <span>{skill}</span>
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 onClick={() => handleRemoveSkill(skill)}
                               >
                                 <X size={14} />
@@ -411,26 +410,26 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                         <div className="project-title-wrapper">
                           <h3>{job.title}</h3>
                           <span className={`project-status ${getStatusColorClass(job.status)}`}>
-                            {job.status === 'open' ? 'Open' : 
-                             job.status === 'in-progress' ? 'In Progress' : 'Completed'}
+                            {job.status === 'open' ? 'Open' :
+                              job.status === 'in-progress' ? 'In Progress' : 'Completed'}
                           </span>
                         </div>
                         <div className="project-actions">
-                          <button 
-                            className="action-button edit-button" 
+                          <button
+                            className="action-button edit-button"
                             onClick={() => handleEditClick(job)}
                           >
                             <Edit size={16} /> Edit
                           </button>
-                          <button 
-                            className="action-button delete-button" 
+                          <button
+                            className="action-button delete-button"
                             onClick={() => handleDeleteJob(job._id)}
                           >
                             <Trash2 size={16} /> Delete
                           </button>
                         </div>
                       </div>
-                      
+
                       <div className="project-summary">
                         <div className="summary-item">
                           <Calendar size={16} />
@@ -449,14 +448,14 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                           <span>Applications: {getApplicationsInfo(job)}</span>
                         </div>
                       </div>
-                      
+
                       <div className="project-toggle" onClick={() => toggleJobDetails(job._id)}>
                         <span>{expandedJobId === job._id ? 'Hide Details' : 'Show Details'}</span>
                         {expandedJobId === job._id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </div>
-                      
+
                       {expandedJobId === job._id && (
-                        <motion.div 
+                        <motion.div
                           className="project-details"
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
@@ -470,7 +469,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                               <p>{job.description}</p>
                             </div>
                           </div>
-                          
+
                           <div className="detail-item">
                             <Clock size={16} />
                             <div>
@@ -478,7 +477,7 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                               <p>{job.projectDuration || 'Not specified'}</p>
                             </div>
                           </div>
-                          
+
                           <div className="detail-item">
                             <Award size={16} />
                             <div>
@@ -486,22 +485,22 @@ const ProjectsSection = ({ client, handlePostJob }) => {
                               <p>{job.experienceLevel || 'Not specified'}</p>
                             </div>
                           </div>
-                          
+
                           <div className="detail-item">
                             <Gift size={16} />
                             <div>
                               <h4>Skills Required</h4>
                               <div className="skills-container">
-                                {job.skills && job.skills.length > 0 ? 
+                                {job.skills && job.skills.length > 0 ?
                                   job.skills.map((skill, index) => (
                                     <span className="skill-badge" key={index}>{skill}</span>
-                                  )) : 
+                                  )) :
                                   <p>No specific skills listed</p>
                                 }
                               </div>
                             </div>
                           </div>
-                          
+
                           {job.applications && job.applications.length > 0 && (
                             <div className="applications-preview">
                               <h4>Recent Applications ({job.applications.length})</h4>

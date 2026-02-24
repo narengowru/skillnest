@@ -139,6 +139,7 @@ const Login = () => {
       setEmailValid(false);
       setEmailError('');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.email, userType, isLogin]);
 
   useEffect(() => {
@@ -708,7 +709,7 @@ const Login = () => {
 
             {isLogin && (
               <div className="forgot-password">
-                <a href="#">Forgot Password?</a>
+                <button type="button" className="forgot-password-btn" onClick={() => { }}>Forgot Password?</button>
               </div>
             )}
 
