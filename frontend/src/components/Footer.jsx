@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="footer-brand">
           <h2 className="footer-logo">SkillNest</h2>
           <div className="footer-contact-info">
-            
+
             <div className="contact-item">
               <i className="icon-phone"></i>
               <span>+91 9876543210</span>
@@ -24,7 +24,7 @@ const Footer = () => {
           <div className="footer-column">
             <h3>Explore</h3>
             <ul>
-              <li><a href="#">About Us</a></li>
+              <li><a href="/">About Us</a></li>
             </ul>
           </div>
         </div>
