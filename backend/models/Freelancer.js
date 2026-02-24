@@ -78,7 +78,7 @@ const bankSchema = new mongoose.Schema({
 const freelancerSchema = new mongoose.Schema({
   name: { type: String, default: '' },
   tagline: { type: String, default: '' },
-  profilePhoto: { type: String, default: '' },
+  profilePhoto: { type: String, default: 'https://i.ibb.co/N6GPXKSt/blank.jpg' },
   bio: { type: String, default: '' },
   email: {
     type: String,

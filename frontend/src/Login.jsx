@@ -308,7 +308,7 @@ const Login = () => {
             password: formData.password,
             tagline: 'Professional Freelancer',
             bio: 'New to the platform',
-            profilePhoto: 'https://via.placeholder.com/150',
+            profilePhoto: 'https://i.ibb.co/N6GPXKSt/blank.jpg',
             hourlyRate: '0',
             jobsCompleted: 0,
             location: 'Remote',
@@ -345,7 +345,7 @@ const Login = () => {
               city: ''
             },
             verified: false,
-            profilePicture: 'default-profile.jpg'
+            profilePicture: 'https://i.ibb.co/N6GPXKSt/blank.jpg'
           });
 
           localStorage.setItem('token', response.data.token);

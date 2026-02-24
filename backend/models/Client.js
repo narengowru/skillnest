@@ -60,7 +60,7 @@ const clientSchema = new mongoose.Schema({
   },
   profilePicture: {
     type: String,
-    default: 'default-profile.jpg'
+    default: 'https://i.ibb.co/N6GPXKSt/blank.jpg'
   },
   orders: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -115,17 +115,17 @@ const clientSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Virtual for average rating calculation
-clientSchema.virtual('avgRating').get(function() {
+clientSchema.virtual('avgRating').get(function () {
   if (this.reviews.length === 0) return 0;
-  
+
   const totalRating = this.reviews.reduce((sum, review) => sum + review.rating, 0);
   return (totalRating / this.reviews.length).toFixed(1);
 });
 
 // Middleware to hash password before saving
-clientSchema.pre('save', async function(next) {
+clientSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -136,7 +136,7 @@ clientSchema.pre('save', async function(next) {
 });
 
 // Method to compare password
-clientSchema.methods.comparePassword = async function(password) {
+clientSchema.methods.comparePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
