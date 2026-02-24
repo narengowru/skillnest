@@ -490,57 +490,8 @@ const Profile = ({ freelancerId }) => {
   };
 
   // eslint-disable-next-line no-unused-vars
-  const handleViewProject = async (order) => {
-    try {
-      // Try to fetch detailed project info from API
-      const response = await jobAPI.getJob(order.id);
-      const projectData = response.data;
-
-      setProjectDetails({
-        title: projectData.title || order.project,
-        imageUrl: projectData.imageUrl || '/api/placeholder/400/250',
-        budget: projectData.budget || order.amount,
-        description: projectData.description || 'Project description not available.',
-        skills: projectData.skills || ['React', 'Node.js', 'UI/UX'],
-        projectDuration: projectData.duration || '2 weeks',
-        experienceLevel: projectData.experienceLevel || 'Intermediate',
-        client: {
-          name: projectData.client?.name || order.client,
-          avatar: projectData.client?.avatar || '/api/placeholder/50/50',
-          rating: projectData.client?.rating || 4.8,
-          totalReviews: projectData.client?.totalReviews || 24,
-          memberSince: projectData.client?.memberSince || 'Jan 2023',
-          location: projectData.client?.location || 'New York, USA',
-          verificationBadge: projectData.client?.verificationBadge || true,
-          whatsappNumber: projectData.client?.whatsappNumber || '+1234567890'
-        }
-      });
-
-    } catch (error) {
-      console.error("Error fetching project details:", error);
-      // Fallback to basic data if API call fails
-      setProjectDetails({
-        title: order.project,
-        imageUrl: '/api/placeholder/400/250',
-        budget: order.amount,
-        description: 'Project details could not be loaded.',
-        skills: ['React', 'Node.js', 'UI/UX'],
-        projectDuration: '2 weeks',
-        experienceLevel: 'Intermediate',
-        client: {
-          name: order.client,
-          avatar: '/api/placeholder/50/50',
-          rating: 4.8,
-          totalReviews: 24,
-          memberSince: 'Jan 2023',
-          location: 'New York, USA',
-          verificationBadge: true,
-          whatsappNumber: '+1234567890'
-        }
-      });
-    }
-
-    setViewingProject(true);
+  const handleViewProject = async (_order) => {
+    // Reserved for future project detail modal implementation
   };
 
   // eslint-disable-next-line no-unused-vars
@@ -759,8 +710,7 @@ const Profile = ({ freelancerId }) => {
 
   // eslint-disable-next-line no-unused-vars
   const closeProjectDetails = () => {
-    setViewingProject(false);
-    setProjectDetails(null);
+    // Reserved for future project detail modal implementation
   };
 
   // eslint-disable-next-line no-unused-vars
