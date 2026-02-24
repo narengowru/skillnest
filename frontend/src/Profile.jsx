@@ -6,6 +6,8 @@ import { freelancerAPI, jobAPI } from './api/api';
 import './css/Profile.css';
 import FreelancerOrdersDashboard from './components/FreelancerOrdersDashboard';
 import { useNavigate } from 'react-router-dom';
+import ResumeParserModal from './components/ResumeParserModal';
+
 
 const Profile = ({ freelancerId }) => {
   const navigate = useNavigate();
@@ -28,17 +30,19 @@ const Profile = ({ freelancerId }) => {
   const [hourlyRateEditMode, setHourlyRateEditMode] = useState(false);
   const [completedJobsCount, setCompletedJobsCount] = useState(0);
   const [bankEditMode, setBankEditMode] = useState(false);
+  const [showResumeParser, setShowResumeParser] = useState(false);
+
 
   const showToast2 = (message, type) => {
     // This is where you would call your toast notification system
     window.showToast?.(message, type) || showSuccessToast(message);
   };
-  
+
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [viewingProject, setViewingProject] = useState(false);
   const [projectDetails, setProjectDetails] = useState(null);
   const [orders, setOrders] = useState([]);
-  
+
   const [newPortfolioItem, setNewPortfolioItem] = useState({
     title: "",
     description: "",
@@ -46,24 +50,24 @@ const Profile = ({ freelancerId }) => {
     client: "",
     feedback: ""
   });
-  
+
   const fileInputRef = useRef(null);
   const [freelancer, setFreelancer] = useState(null);
 
   // Fetch freelancer data when component mounts or freelancerId changes
   useEffect(() => {
     const anything = localStorage.getItem('user');
-    if(!anything) navigate('/login');
-    else{
-      if(JSON.parse(anything).userType === 'client'){
+    if (!anything) navigate('/login');
+    else {
+      if (JSON.parse(anything).userType === 'client') {
         navigate('/client-dashboard');
-      }else{
+      } else {
         const fetchFreelancerData = async () => {
           if (!freelancerId) {
             // If no ID provided, assume we're using the logged-in user's token for auth
             const user = JSON.parse(localStorage.user);  // Convert string to JS object
             const userId = user.id;                      // Now you can access the id
-            console.log(userId); 
+            console.log(userId);
             if (userId) {
               fetchFreelancer(userId);
             } else {
@@ -74,22 +78,35 @@ const Profile = ({ freelancerId }) => {
             fetchFreelancer(freelancerId);
           }
         };
-        
+
 
         fetchFreelancerData();
       }
     }
   }, [freelancerId, navigate]);
 
+  useEffect(() => {
+    // Only show if this is a brand-new registration (flag set in Login.jsx)
+    const isNewRegistration = localStorage.getItem('newRegistration');
+    if (isNewRegistration === 'true' && freelancer) {
+      // Small delay so the profile page finishes loading visually before popup
+      const timer = setTimeout(() => {
+        setShowResumeParser(true);
+        localStorage.removeItem('newRegistration'); // Clear flag — show only once
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [freelancer]);
+
   const fetchFreelancer = async (id) => {
     try {
       setIsLoading(true);
       const response = await freelancerAPI.getFreelancer(id);
       setFreelancer(response.data);
-      
+
       // Check verification status
       setIsVerified(response.data.isVerified || false);
-      
+
       setIsLoading(false);
     } catch (err) {
       console.error("Error fetching freelancer data:", err);
@@ -106,14 +123,14 @@ const Profile = ({ freelancerId }) => {
           // Assuming your API has an endpoint for freelancer orders
           const response = await jobAPI.getAllJobs();
           // Filter jobs that are assigned to this freelancer
-          const freelancerOrders = response.data.filter(job => 
+          const freelancerOrders = response.data.filter(job =>
             job.assignedFreelancer === freelancer._id
           );
-          
+
           if (freelancerOrders.length > 0) {
             setOrders(freelancerOrders);
             // Count completed jobs
-            const completedJobs = freelancerOrders.filter(order => 
+            const completedJobs = freelancerOrders.filter(order =>
               order.status === 'completed'
             ).length;
             setCompletedJobsCount(completedJobs);
@@ -121,7 +138,7 @@ const Profile = ({ freelancerId }) => {
             // If API doesn't return orders, keep the static data for demo
             setOrders(freelancer.orders || []);
             // Count completed jobs from static data
-            const completedJobs = (freelancer.orders || []).filter(order => 
+            const completedJobs = (freelancer.orders || []).filter(order =>
               order.status === 'completed'
             ).length;
             setCompletedJobsCount(completedJobs);
@@ -131,14 +148,14 @@ const Profile = ({ freelancerId }) => {
           // Fallback to static data in case of error
           setOrders(freelancer.orders || []);
           // Count completed jobs from static data
-          const completedJobs = (freelancer.orders || []).filter(order => 
+          const completedJobs = (freelancer.orders || []).filter(order =>
             order.status === 'completed'
           ).length;
           setCompletedJobsCount(completedJobs);
         }
       }
     };
-  
+
     fetchOrders();
   }, [freelancer]);
 
@@ -167,16 +184,16 @@ const Profile = ({ freelancerId }) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const imageBase64 = e.target.result;
-        
+
         // Update the UI with the new image preview
-        setFreelancer({...freelancer, profilePhoto: imageBase64});
-        
+        setFreelancer({ ...freelancer, profilePhoto: imageBase64 });
+
         try {
           // Send the base64 string to the server instead of FormData
-          await freelancerAPI.updateFreelancer(freelancer._id, { 
-            profilePhoto: imageBase64 
+          await freelancerAPI.updateFreelancer(freelancer._id, {
+            profilePhoto: imageBase64
           });
-          
+
           showSuccessToast("Profile photo updated successfully!");
         } catch (error) {
           console.error("Error uploading profile photo:", error);
@@ -195,10 +212,10 @@ const Profile = ({ freelancerId }) => {
         tagline: freelancer.tagline,
         // Include other basic profile fields that might have changed
       };
-      
+
       // Send update request to the API
       await freelancerAPI.updateFreelancer(freelancer._id, profileData);
-      
+
       setProfileEditMode(false);
       showSuccessToast("Profile information updated successfully!");
     } catch (error) {
@@ -263,7 +280,7 @@ const Profile = ({ freelancerId }) => {
   const handleEducationCourseChange = (index, value) => {
     const updatedCourses = [...freelancer.education.relevantCourses];
     updatedCourses[index] = value;
-    
+
     setFreelancer(prev => ({
       ...prev,
       education: {
@@ -286,7 +303,7 @@ const Profile = ({ freelancerId }) => {
   const removeEducationCourse = (index) => {
     const updatedCourses = [...freelancer.education.relevantCourses];
     updatedCourses.splice(index, 1);
-    
+
     setFreelancer(prev => ({
       ...prev,
       education: {
@@ -300,12 +317,12 @@ const Profile = ({ freelancerId }) => {
     if (newSkill.name.trim()) {
       try {
         const updatedSkills = [...freelancer.skills, { ...newSkill }];
-        
+
         // Update on the server
         await freelancerAPI.updateFreelancer(freelancer._id, { skills: updatedSkills });
-        
+
         // Update local state
-        setFreelancer({...freelancer, skills: updatedSkills});
+        setFreelancer({ ...freelancer, skills: updatedSkills });
         setNewSkill({ name: "", level: 75 });
         showSuccessToast("New skill added successfully!");
       } catch (error) {
@@ -318,12 +335,12 @@ const Profile = ({ freelancerId }) => {
   const removeSkill = async (skillName) => {
     try {
       const updatedSkills = freelancer.skills.filter(skill => skill.name !== skillName);
-      
+
       // Update on the server
       await freelancerAPI.updateFreelancer(freelancer._id, { skills: updatedSkills });
-      
+
       // Update local state
-      setFreelancer({...freelancer, skills: updatedSkills});
+      setFreelancer({ ...freelancer, skills: updatedSkills });
       showSuccessToast("Skill removed successfully!");
     } catch (error) {
       console.error("Error removing skill:", error);
@@ -335,15 +352,15 @@ const Profile = ({ freelancerId }) => {
     if (newAchievement.title.trim() && newAchievement.date.trim()) {
       try {
         const updatedAchievements = [
-          ...freelancer.achievements, 
+          ...freelancer.achievements,
           { ...newAchievement, id: Date.now() }
         ];
-        
+
         // Update on the server
         await freelancerAPI.updateFreelancer(freelancer._id, { achievements: updatedAchievements });
-        
+
         // Update local state
-        setFreelancer({...freelancer, achievements: updatedAchievements});
+        setFreelancer({ ...freelancer, achievements: updatedAchievements });
         setNewAchievement({ title: "", icon: "🏆", date: "" });
         showSuccessToast("New achievement added successfully!");
       } catch (error) {
@@ -356,12 +373,12 @@ const Profile = ({ freelancerId }) => {
   const removeAchievement = async (id) => {
     try {
       const updatedAchievements = freelancer.achievements.filter(achievement => achievement.id !== id);
-      
+
       // Update on the server
       await freelancerAPI.updateFreelancer(freelancer._id, { achievements: updatedAchievements });
-      
+
       // Update local state
-      setFreelancer({...freelancer, achievements: updatedAchievements});
+      setFreelancer({ ...freelancer, achievements: updatedAchievements });
       showSuccessToast("Achievement removed successfully!");
     } catch (error) {
       console.error("Error removing achievement:", error);
@@ -373,15 +390,15 @@ const Profile = ({ freelancerId }) => {
     if (newPortfolioItem.title.trim() && newPortfolioItem.description.trim()) {
       try {
         const updatedPortfolio = [
-          ...freelancer.previousWork, 
+          ...freelancer.previousWork,
           { ...newPortfolioItem, id: Date.now() }
         ];
-        
+
         // Update on the server
         await freelancerAPI.updateFreelancer(freelancer._id, { previousWork: updatedPortfolio });
-        
+
         // Update local state
-        setFreelancer({...freelancer, previousWork: updatedPortfolio});
+        setFreelancer({ ...freelancer, previousWork: updatedPortfolio });
         setNewPortfolioItem({
           title: "",
           description: "",
@@ -400,12 +417,12 @@ const Profile = ({ freelancerId }) => {
   const removePortfolioItem = async (id) => {
     try {
       const updatedPortfolio = freelancer.previousWork.filter(item => item.id !== id);
-      
+
       // Update on the server
       await freelancerAPI.updateFreelancer(freelancer._id, { previousWork: updatedPortfolio });
-      
+
       // Update local state
-      setFreelancer({...freelancer, previousWork: updatedPortfolio});
+      setFreelancer({ ...freelancer, previousWork: updatedPortfolio });
       showSuccessToast("Portfolio item removed successfully!");
     } catch (error) {
       console.error("Error removing portfolio item:", error);
@@ -415,20 +432,20 @@ const Profile = ({ freelancerId }) => {
 
   const handleVerificationSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Start loading state if you have one
       setIsLoading(true);
-      
+
       // Assuming you have the freelancer ID available in your component
       // Either from state, context, or props
       const freelancerId = freelancer._id;
-      
+
       // Call the API to update the verification status
       const response = await freelancerAPI.updateFreelancer(freelancerId, {
         isVerified: true
       });
-      
+
       // If the update was successful
       if (response && response.success) {
         // Update local state to reflect the change
@@ -436,11 +453,11 @@ const Profile = ({ freelancerId }) => {
           ...prevState,
           isVerified: true
         }));
-        
+
         // Close the verification modal if you're using one
         setShowVerificationModal(false);
         setIsVerified(true);
-        
+
         // Show success message to the user
         showSuccessToast("Student verification successful!");
       } else {
@@ -464,9 +481,9 @@ const Profile = ({ freelancerId }) => {
     let stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <FaStar 
-          key={i} 
-          className={i <= rating ? 'star filled' : 'star'} 
+        <FaStar
+          key={i}
+          className={i <= rating ? 'star filled' : 'star'}
         />
       );
     }
@@ -478,7 +495,7 @@ const Profile = ({ freelancerId }) => {
       // Try to fetch detailed project info from API
       const response = await jobAPI.getJob(order.id);
       const projectData = response.data;
-      
+
       setProjectDetails({
         title: projectData.title || order.project,
         imageUrl: projectData.imageUrl || '/api/placeholder/400/250',
@@ -498,7 +515,7 @@ const Profile = ({ freelancerId }) => {
           whatsappNumber: projectData.client?.whatsappNumber || '+1234567890'
         }
       });
-      
+
     } catch (error) {
       console.error("Error fetching project details:", error);
       // Fallback to basic data if API call fails
@@ -522,7 +539,7 @@ const Profile = ({ freelancerId }) => {
         }
       });
     }
-    
+
     setViewingProject(true);
   };
 
@@ -530,13 +547,13 @@ const Profile = ({ freelancerId }) => {
     try {
       // Update order status to "In Progress" via API
       await jobAPI.updateApplicationStatus(orderId, freelancer._id, { status: 'In Progress' });
-      
+
       // Update local state optimistically
-      const updatedOrders = orders.map(order => 
-        order.id === orderId ? {...order, status: 'In Progress'} : order
+      const updatedOrders = orders.map(order =>
+        order.id === orderId ? { ...order, status: 'In Progress' } : order
       );
       setOrders(updatedOrders);
-      
+
       showToast2('Order accepted successfully!', 'success');
     } catch (error) {
       console.error("Error accepting order:", error);
@@ -548,13 +565,13 @@ const Profile = ({ freelancerId }) => {
     try {
       // Update order status to "Rejected" via API
       await jobAPI.updateApplicationStatus(orderId, freelancer._id, { status: 'Rejected' });
-      
+
       // Update local state optimistically
-      const updatedOrders = orders.map(order => 
-        order.id === orderId ? {...order, status: 'Rejected'} : order
+      const updatedOrders = orders.map(order =>
+        order.id === orderId ? { ...order, status: 'Rejected' } : order
       );
       setOrders(updatedOrders);
-      
+
       showToast2('Order rejected', 'success');
     } catch (error) {
       console.error("Error rejecting order:", error);
@@ -566,13 +583,13 @@ const Profile = ({ freelancerId }) => {
     try {
       // Update order status to "Completed" via API
       await jobAPI.updateApplicationStatus(orderId, freelancer._id, { status: 'Completed' });
-      
+
       // Update local state optimistically
-      const updatedOrders = orders.map(order => 
-        order.id === orderId ? {...order, status: 'Completed'} : order
+      const updatedOrders = orders.map(order =>
+        order.id === orderId ? { ...order, status: 'Completed' } : order
       );
       setOrders(updatedOrders);
-      
+
       showToast2('Order marked as completed!', 'success');
     } catch (error) {
       console.error("Error completing order:", error);
@@ -630,7 +647,7 @@ const Profile = ({ freelancerId }) => {
   const saveAllChanges = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const updatedData = {
         name: freelancer.name,
@@ -639,7 +656,7 @@ const Profile = ({ freelancerId }) => {
         location: freelancer.location,
         socialProfiles: freelancer.socialProfiles
       };
-      
+
       await freelancerAPI.updateFreelancer(freelancer._id, updatedData);
       showSuccessToast("Settings updated successfully!");
     } catch (error) {
@@ -658,38 +675,38 @@ const Profile = ({ freelancerId }) => {
       showErrorToast("Please enter your current password");
       return;
     }
-   
+
     if (passwordData.newPassword.length < 8) {
       showErrorToast("New password must be at least 8 characters");
       return;
     }
-   
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       showErrorToast("New passwords don't match");
       return;
     }
-   
+
     setIsLoading(true);
     setError(null);
-   
+
     try {
       // Use updateFreelancer instead of updatePassword
       await freelancerAPI.updateFreelancer(freelancer._id, {
         currentPassword: passwordData.currentPassword,
         password: passwordData.newPassword
       });
-     
+
       // Clear password fields after successful update
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
-     
+
       showSuccessToast("Password updated successfully!");
     } catch (error) {
       console.error("Error updating password:", error);
-     
+
       // Handle specific error responses
       if (error.response && error.response.status === 401) {
         showErrorToast("Current password is incorrect");
@@ -711,7 +728,7 @@ const Profile = ({ freelancerId }) => {
 
   const deleteAccount = async () => {
     setIsLoading(true);
-    
+
     try {
       await freelancerAPI.deleteFreelancer(freelancer._id);
       // Handle successful deletion (redirect to homepage, clear authentication, etc.)
@@ -726,7 +743,7 @@ const Profile = ({ freelancerId }) => {
   };
 
   // Toast notification helpers (assumed these functions exist in your app)
-  
+
 
   const showErrorToast = (message) => {
     // Implementation depends on your toast notification system
@@ -743,7 +760,7 @@ const Profile = ({ freelancerId }) => {
     // Clear local storage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
+
     // Redirect to login page
     window.location.href = '/login';
   };
@@ -774,7 +791,7 @@ const Profile = ({ freelancerId }) => {
           </button>
         </div>
       )}
-      
+
       {/* Top Navigation */}
       <nav className="profile-nav">
         <div className="nav-user">
@@ -800,108 +817,108 @@ const Profile = ({ freelancerId }) => {
             <button className="edit-photo-btn" onClick={handleImageUpload}>
               <FaCamera />
             </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              style={{ display: 'none' }} 
-              accept="image/*" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+              accept="image/*"
             />
           </div>
           <div className="profile-header-info">
             {profileEditMode ? (
-              <input 
-                type="text" 
-                name="name" 
-                value={freelancer.name} 
-                onChange={handleInputChange} 
+              <input
+                type="text"
+                name="name"
+                value={freelancer.name}
+                onChange={handleInputChange}
                 className="edit-name-input"
               />
             ) : (
-              <h1  style={{ color: 'white' }}>{freelancer.name} 
+              <h1 style={{ color: 'white' }}>{freelancer.name}
                 <button className="edit-profile-btn" onClick={() => setProfileEditMode(true)}>
                   <FaEdit />
                 </button>
               </h1>
             )}
-            
+
             {profileEditMode ? (
-              <input 
-                type="text" 
-                name="tagline" 
-                value={freelancer.tagline} 
-                onChange={handleInputChange} 
+              <input
+                type="text"
+                name="tagline"
+                value={freelancer.tagline}
+                onChange={handleInputChange}
                 className="edit-tagline-input"
               />
             ) : (
-              <p  style={{ color: '#c0c0c0' }} className="tagline">{freelancer.tagline}</p>
+              <p style={{ color: '#c0c0c0' }} className="tagline">{freelancer.tagline}</p>
             )}
-            
+
             <div className="profile-stats">
-            <div className="stat">
-  <span className="stat-value" style={{ color: 'white' }}>{completedJobsCount}</span>
-  <span className="stat-label" style={{ color: 'white' }}>Jobs Completed</span>
-</div>
               <div className="stat">
-  {hourlyRateEditMode ? (
-    <div className="hourly-rate-edit">
-      <input 
-        type="text" 
-        name="hourlyRate" 
-        value={freelancer.hourlyRate} 
-        onChange={handleInputChange} 
-        className="edit-hourly-rate-input"
-      />
-      <div className="hourly-rate-actions">
-        <button 
-          className="save-btn" 
-          onClick={async () => {
-            try {
-              await freelancerAPI.updateFreelancer(freelancer._id, { hourlyRate: freelancer.hourlyRate });
-              setHourlyRateEditMode(false);
-              showSuccessToast("Hourly rate updated successfully!");
-            } catch (error) {
-              console.error("Error updating hourly rate:", error);
-              showSuccessToast("Failed to update hourly rate. Please try again.");
-            }
-          }}
-        >
-          Save
-        </button>
-        <button 
-          className="cancel-btn" 
-          onClick={() => setHourlyRateEditMode(false)}
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  ) : (
-    <>
-      <span className="stat-value" style={{ color: 'white' }}>
-        {freelancer.hourlyRate}
-        <button 
-          className="edit-hourly-btn" 
-          onClick={() => setHourlyRateEditMode(true)}
-          style={{ marginLeft: '5px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-        >
-          <FaEdit style={{ fontSize: '14px', color: '#c0c0c0' }} />
-        </button>
-      </span>
-      <span className="stat-label" style={{ color: 'white' }}>Hourly Rate</span>
-    </>
-  )}
-</div>
-              <div className="stat">
-                <span className="stat-value"  style={{ color: 'white' }}>{freelancer.ratings.average}/5</span>
-                <span className="stat-label"  style={{ color: 'white' }}>Rating</span>
+                <span className="stat-value" style={{ color: 'white' }}>{completedJobsCount}</span>
+                <span className="stat-label" style={{ color: 'white' }}>Jobs Completed</span>
               </div>
               <div className="stat">
-                <span className="stat-value"  style={{ color: 'white' }}><FaMedal className="medal-icon"/></span>
-                <span className="stat-label"  style={{ color: 'white' }}>Top Rated</span>
+                {hourlyRateEditMode ? (
+                  <div className="hourly-rate-edit">
+                    <input
+                      type="text"
+                      name="hourlyRate"
+                      value={freelancer.hourlyRate}
+                      onChange={handleInputChange}
+                      className="edit-hourly-rate-input"
+                    />
+                    <div className="hourly-rate-actions">
+                      <button
+                        className="save-btn"
+                        onClick={async () => {
+                          try {
+                            await freelancerAPI.updateFreelancer(freelancer._id, { hourlyRate: freelancer.hourlyRate });
+                            setHourlyRateEditMode(false);
+                            showSuccessToast("Hourly rate updated successfully!");
+                          } catch (error) {
+                            console.error("Error updating hourly rate:", error);
+                            showSuccessToast("Failed to update hourly rate. Please try again.");
+                          }
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="cancel-btn"
+                        onClick={() => setHourlyRateEditMode(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <span className="stat-value" style={{ color: 'white' }}>
+                      {freelancer.hourlyRate}
+                      <button
+                        className="edit-hourly-btn"
+                        onClick={() => setHourlyRateEditMode(true)}
+                        style={{ marginLeft: '5px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                      >
+                        <FaEdit style={{ fontSize: '14px', color: '#c0c0c0' }} />
+                      </button>
+                    </span>
+                    <span className="stat-label" style={{ color: 'white' }}>Hourly Rate</span>
+                  </>
+                )}
+              </div>
+              <div className="stat">
+                <span className="stat-value" style={{ color: 'white' }}>{freelancer.ratings.average}/5</span>
+                <span className="stat-label" style={{ color: 'white' }}>Rating</span>
+              </div>
+              <div className="stat">
+                <span className="stat-value" style={{ color: 'white' }}><FaMedal className="medal-icon" /></span>
+                <span className="stat-label" style={{ color: 'white' }}>Top Rated</span>
               </div>
             </div>
-            
+
             {profileEditMode && (
               <div className="profile-actions">
                 <button className="save-btn" onClick={saveProfileChanges}>Save Changes</button>
@@ -914,8 +931,8 @@ const Profile = ({ freelancerId }) => {
 
       {/* Main Content Tabs */}
       <div className="profile-tabs">
-        <button 
-          className={activeTab === 'overview' ? 'active' : ''} 
+        <button
+          className={activeTab === 'overview' ? 'active' : ''}
           onClick={() => setActiveTab('overview')}
         >
           Overview
@@ -926,32 +943,32 @@ const Profile = ({ freelancerId }) => {
         >
           Portfolio
         </button> */}
-        <button 
-          className={activeTab === 'reviews' ? 'active' : ''} 
+        <button
+          className={activeTab === 'reviews' ? 'active' : ''}
           onClick={() => setActiveTab('reviews')}
         >
           Reviews
         </button>
-        <button 
-          className={activeTab === 'education' ? 'active' : ''} 
+        <button
+          className={activeTab === 'education' ? 'active' : ''}
           onClick={() => setActiveTab('education')}
         >
           Education
         </button>
-        <button 
-          className={activeTab === 'orders' ? 'active' : ''} 
+        <button
+          className={activeTab === 'orders' ? 'active' : ''}
           onClick={() => setActiveTab('orders')}
         >
           Orders
         </button>
-        <button 
-          className={activeTab === 'bank' ? 'active' : ''} 
+        <button
+          className={activeTab === 'bank' ? 'active' : ''}
           onClick={() => setActiveTab('bank')}
         >
           Bank Details
         </button>
-        <button 
-          className={activeTab === 'settings' ? 'active' : ''} 
+        <button
+          className={activeTab === 'settings' ? 'active' : ''}
           onClick={() => setActiveTab('settings')}
         >
           Account Settings
@@ -965,20 +982,20 @@ const Profile = ({ freelancerId }) => {
             <section className="bio-section">
               <div className="section-header">
                 <h2>About Me</h2>
-                <button 
+                <button
                   className="toggle-edit-btn"
                   onClick={() => setBioEditMode(!bioEditMode)}
                 >
                   {bioEditMode ? 'Done' : <FaEdit />}
                 </button>
               </div>
-              
+
               {bioEditMode ? (
                 <div className="bio-edit">
-                  <textarea 
-                    name="bio" 
-                    value={freelancer.bio} 
-                    onChange={handleInputChange} 
+                  <textarea
+                    name="bio"
+                    value={freelancer.bio}
+                    onChange={handleInputChange}
                     className="edit-bio-input"
                   />
                   <div className="bio-actions">
@@ -994,22 +1011,22 @@ const Profile = ({ freelancerId }) => {
             <section className="skills-section">
               <div className="section-header">
                 <h2>Skills</h2>
-                <button 
+                <button
                   className="toggle-edit-btn"
                   onClick={() => setSkillEditMode(!skillEditMode)}
                 >
                   {skillEditMode ? 'Done' : <FaEdit />}
                 </button>
               </div>
-              
+
               <div className="skills-container">
                 {freelancer.skills.map((skill, index) => (
                   <div className="skill-item" key={index}>
                     <div className="skill-header">
                       <span className="skill-name">{skill.name}</span>
                       {skillEditMode && (
-                        <button 
-                          className="remove-skill-btn" 
+                        <button
+                          className="remove-skill-btn"
                           onClick={() => removeSkill(skill.name)}
                         >
                           <FaTrash />
@@ -1017,8 +1034,8 @@ const Profile = ({ freelancerId }) => {
                       )}
                     </div>
                     <div className="skill-bar-container">
-                      <div 
-                        className="skill-bar" 
+                      <div
+                        className="skill-bar"
                         style={{ width: `${skill.level}%` }}
                       ></div>
                     </div>
@@ -1026,21 +1043,21 @@ const Profile = ({ freelancerId }) => {
                   </div>
                 ))}
               </div>
-              
+
               {skillEditMode && (
                 <div className="add-skill-form">
-                  <input 
-                    type="text" 
-                    placeholder="New skill name" 
-                    value={newSkill.name} 
-                    onChange={(e) => setNewSkill({...newSkill, name: e.target.value})} 
+                  <input
+                    type="text"
+                    placeholder="New skill name"
+                    value={newSkill.name}
+                    onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
                   />
-                  <input 
-                    type="range" 
-                    min="1" 
-                    max="100" 
-                    value={newSkill.level} 
-                    onChange={(e) => setNewSkill({...newSkill, level: parseInt(e.target.value)})} 
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={newSkill.level}
+                    onChange={(e) => setNewSkill({ ...newSkill, level: parseInt(e.target.value) })}
                   />
                   <span>{newSkill.level}%</span>
                   <button onClick={addNewSkill} className="add-skill-btn">
@@ -1053,14 +1070,14 @@ const Profile = ({ freelancerId }) => {
             <section className="achievements-section">
               <div className="section-header">
                 <h2>Achievements</h2>
-                <button 
+                <button
                   className="toggle-edit-btn"
                   onClick={() => setAchievementEditMode(!achievementEditMode)}
                 >
                   {achievementEditMode ? 'Done' : <FaEdit />}
                 </button>
               </div>
-              
+
               <div className="achievements-container">
                 {freelancer.achievements.map((achievement) => (
                   <div className="achievement-card" key={achievement.id}>
@@ -1070,8 +1087,8 @@ const Profile = ({ freelancerId }) => {
                       <p>{achievement.date}</p>
                     </div>
                     {achievementEditMode && (
-                      <button 
-                        className="remove-achievement-btn" 
+                      <button
+                        className="remove-achievement-btn"
                         onClick={() => removeAchievement(achievement.id)}
                       >
                         <FaTrash />
@@ -1080,23 +1097,23 @@ const Profile = ({ freelancerId }) => {
                   </div>
                 ))}
               </div>
-              
+
               {achievementEditMode && (
                 <div className="add-achievement-form">
                   <div className="form-group">
                     <label>Achievement Title</label>
-                    <input 
-                      type="text" 
-                      placeholder="E.g. Top Rated Freelancer" 
-                      value={newAchievement.title} 
-                      onChange={(e) => setNewAchievement({...newAchievement, title: e.target.value})} 
+                    <input
+                      type="text"
+                      placeholder="E.g. Top Rated Freelancer"
+                      value={newAchievement.title}
+                      onChange={(e) => setNewAchievement({ ...newAchievement, title: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
                     <label>Icon (emoji)</label>
-                    <select 
-                      value={newAchievement.icon} 
-                      onChange={(e) => setNewAchievement({...newAchievement, icon: e.target.value})}
+                    <select
+                      value={newAchievement.icon}
+                      onChange={(e) => setNewAchievement({ ...newAchievement, icon: e.target.value })}
                     >
                       <option value="🏆">🏆 Trophy</option>
                       <option value="🚀">🚀 Rocket</option>
@@ -1108,11 +1125,11 @@ const Profile = ({ freelancerId }) => {
                   </div>
                   <div className="form-group">
                     <label>Date</label>
-                    <input 
-                      type="text" 
-                      placeholder="E.g. January 2025" 
-                      value={newAchievement.date} 
-                      onChange={(e) => setNewAchievement({...newAchievement, date: e.target.value})} 
+                    <input
+                      type="text"
+                      placeholder="E.g. January 2025"
+                      value={newAchievement.date}
+                      onChange={(e) => setNewAchievement({ ...newAchievement, date: e.target.value })}
                     />
                   </div>
                   <button onClick={addNewAchievement} className="add-achievement-btn">
@@ -1128,14 +1145,14 @@ const Profile = ({ freelancerId }) => {
           <div className="portfolio-content">
             <div className="section-header">
               <h2>Previous Work</h2>
-              <button 
+              <button
                 className="toggle-edit-btn"
                 onClick={() => setPortfolioEditMode(!portfolioEditMode)}
               >
                 {portfolioEditMode ? 'Done' : <FaEdit />}
               </button>
             </div>
-            
+
             <div className="portfolio-grid">
               {freelancer.previousWork.map((work) => (
                 <div className="portfolio-item" key={work.id}>
@@ -1162,34 +1179,34 @@ const Profile = ({ freelancerId }) => {
                 </div>
               ))}
             </div>
-            
+
             {portfolioEditMode && (
               <div className="add-portfolio-form">
                 <h3>Add New Portfolio Item</h3>
                 <div className="form-group">
                   <label>Project Title</label>
-                  <input 
-                    type="text" 
-                    placeholder="E.g. E-commerce Platform" 
-                    value={newPortfolioItem.title} 
-                    onChange={(e) => setNewPortfolioItem({...newPortfolioItem, title: e.target.value})} 
+                  <input
+                    type="text"
+                    placeholder="E.g. E-commerce Platform"
+                    value={newPortfolioItem.title}
+                    onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, title: e.target.value })}
                   />
                 </div>
                 <div className="form-group">
                   <label>Client Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="E.g. FashionMart" 
-                    value={newPortfolioItem.client} 
-                    onChange={(e) => setNewPortfolioItem({...newPortfolioItem, client: e.target.value})} 
+                  <input
+                    type="text"
+                    placeholder="E.g. FashionMart"
+                    value={newPortfolioItem.client}
+                    onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, client: e.target.value })}
                   />
                 </div>
                 <div className="form-group">
                   <label>Description</label>
-                  <textarea 
-                    placeholder="Describe the project" 
-                    value={newPortfolioItem.description} 
-                    onChange={(e) => setNewPortfolioItem({...newPortfolioItem, description: e.target.value})} 
+                  <textarea
+                    placeholder="Describe the project"
+                    value={newPortfolioItem.description}
+                    onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, description: e.target.value })}
                   />
                 </div>
                 <div className="form-group">
@@ -1203,10 +1220,10 @@ const Profile = ({ freelancerId }) => {
                 </div>
                 <div className="form-group">
                   <label>Client Feedback</label>
-                  <textarea 
-                    placeholder="What did the client say about your work?" 
-                    value={newPortfolioItem.feedback} 
-                    onChange={(e) => setNewPortfolioItem({...newPortfolioItem, feedback: e.target.value})} 
+                  <textarea
+                    placeholder="What did the client say about your work?"
+                    value={newPortfolioItem.feedback}
+                    onChange={(e) => setNewPortfolioItem({ ...newPortfolioItem, feedback: e.target.value })}
                   />
                 </div>
                 <button onClick={addNewPortfolioItem} className="add-portfolio-btn">
@@ -1232,9 +1249,9 @@ const Profile = ({ freelancerId }) => {
                   <div className="rating-row" key={rating}>
                     <span>{rating} stars</span>
                     <div className="rating-bar-container">
-                      <div 
-                        className="rating-bar" 
-                        style={{ width: `${(count/freelancer.ratings.total)*100}%` }}
+                      <div
+                        className="rating-bar"
+                        style={{ width: `${(count / freelancer.ratings.total) * 100}%` }}
                       ></div>
                     </div>
                     <span>{count}</span>
@@ -1242,7 +1259,7 @@ const Profile = ({ freelancerId }) => {
                 ))}
               </div>
             </div>
-            
+
             <div className="reviews-list">
               <h2>Client Reviews</h2>
               {freelancer.reviews.map((review) => (
@@ -1268,64 +1285,64 @@ const Profile = ({ freelancerId }) => {
           <div className="education-content">
             <div className="section-header">
               <h2>Education</h2>
-              <button 
+              <button
                 className="toggle-edit-btn"
                 onClick={() => setEducationEditMode(!educationEditMode)}
               >
                 {educationEditMode ? 'Done' : <FaEdit />}
               </button>
             </div>
-            
+
             <div className="education-card">
               {educationEditMode ? (
                 <div className="education-edit-form">
                   <div className="form-group">
                     <label>University/College</label>
-                    <input 
-                      type="text" 
-                      name="university" 
-                      value={freelancer.education.university} 
-                      onChange={handleEducationChange} 
+                    <input
+                      type="text"
+                      name="university"
+                      value={freelancer.education.university}
+                      onChange={handleEducationChange}
                     />
                   </div>
                   <div className="form-group">
                     <label>Degree</label>
-                    <input 
-                      type="text" 
-                      name="degree" 
-                      value={freelancer.education.degree} 
-                      onChange={handleEducationChange} 
+                    <input
+                      type="text"
+                      name="degree"
+                      value={freelancer.education.degree}
+                      onChange={handleEducationChange}
                     />
                   </div>
                   <div className="form-group">
                     <label>Year</label>
-                    <input 
-                      type="text" 
-                      name="year" 
-                      value={freelancer.education.year} 
-                      onChange={handleEducationChange} 
+                    <input
+                      type="text"
+                      name="year"
+                      value={freelancer.education.year}
+                      onChange={handleEducationChange}
                     />
                   </div>
                   <div className="form-group">
                     <label>GPA</label>
-                    <input 
-                      type="text" 
-                      name="gpa" 
-                      value={freelancer.education.gpa} 
-                      onChange={handleEducationChange} 
+                    <input
+                      type="text"
+                      name="gpa"
+                      value={freelancer.education.gpa}
+                      onChange={handleEducationChange}
                     />
                   </div>
                   <div className="form-group">
                     <label>Relevant Courses</label>
                     {freelancer.education.relevantCourses.map((course, index) => (
                       <div className="course-input" key={index}>
-                        <input 
-                          type="text" 
-                          value={course} 
-                          onChange={(e) => handleEducationCourseChange(index, e.target.value)} 
+                        <input
+                          type="text"
+                          value={course}
+                          onChange={(e) => handleEducationCourseChange(index, e.target.value)}
                         />
-                        <button 
-                          className="remove-course-btn" 
+                        <button
+                          className="remove-course-btn"
                           onClick={() => removeEducationCourse(index)}
                         >
                           <FaTrash />
@@ -1364,7 +1381,7 @@ const Profile = ({ freelancerId }) => {
             </div>
           </div>
         )}
-         {activeTab === "orders" && (
+        {activeTab === "orders" && (
           <FreelancerOrdersDashboard freelancer={freelancer} />
         )}
 
@@ -1372,54 +1389,54 @@ const Profile = ({ freelancerId }) => {
           <div className="bank-content">
             <div className="section-header">
               <h2>Bank Account Details</h2>
-              <button 
+              <button
                 className="toggle-edit-btn"
                 onClick={() => setBankEditMode(!bankEditMode)}
               >
                 {bankEditMode ? 'Done' : <FaEdit />}
               </button>
             </div>
-            
+
             <div className="bank-card">
               {bankEditMode ? (
                 <div className="bank-edit-form">
                   <div className="form-group">
                     <label>Account Holder Name</label>
-                    <input 
-                      type="text" 
-                      name="accountHolderName" 
-                      value={freelancer.bank?.accountHolderName || ''} 
-                      onChange={handleBankInputChange} 
+                    <input
+                      type="text"
+                      name="accountHolderName"
+                      value={freelancer.bank?.accountHolderName || ''}
+                      onChange={handleBankInputChange}
                       placeholder="Enter account holder name"
                     />
                   </div>
                   <div className="form-group">
                     <label>Bank Name</label>
-                    <input 
-                      type="text" 
-                      name="bankName" 
-                      value={freelancer.bank?.bankName || ''} 
-                      onChange={handleBankInputChange} 
+                    <input
+                      type="text"
+                      name="bankName"
+                      value={freelancer.bank?.bankName || ''}
+                      onChange={handleBankInputChange}
                       placeholder="Enter bank name"
                     />
                   </div>
                   <div className="form-group">
                     <label>Account Number</label>
-                    <input 
-                      type="text" 
-                      name="accountNumber" 
-                      value={freelancer.bank?.accountNumber || ''} 
-                      onChange={handleBankInputChange} 
+                    <input
+                      type="text"
+                      name="accountNumber"
+                      value={freelancer.bank?.accountNumber || ''}
+                      onChange={handleBankInputChange}
                       placeholder="Enter account number"
                     />
                   </div>
                   <div className="form-group">
                     <label>IFSC Code</label>
-                    <input 
-                      type="text" 
-                      name="ifscCode" 
-                      value={freelancer.bank?.ifscCode || ''} 
-                      onChange={handleBankInputChange} 
+                    <input
+                      type="text"
+                      name="ifscCode"
+                      value={freelancer.bank?.ifscCode || ''}
+                      onChange={handleBankInputChange}
                       placeholder="Enter IFSC code"
                     />
                   </div>
@@ -1445,8 +1462,8 @@ const Profile = ({ freelancerId }) => {
                     <div className="bank-detail-row">
                       <span className="detail-label">Account Number:</span>
                       <span className="detail-value">
-                        {freelancer.bank?.accountNumber ? 
-                          `${freelancer.bank.accountNumber.slice(0, 4)}****${freelancer.bank.accountNumber.slice(-4)}` : 
+                        {freelancer.bank?.accountNumber ?
+                          `${freelancer.bank.accountNumber.slice(0, 4)}****${freelancer.bank.accountNumber.slice(-4)}` :
                           'Not provided'
                         }
                       </span>
@@ -1467,33 +1484,33 @@ const Profile = ({ freelancerId }) => {
           </div>
         )}
 
-{activeTab === 'settings' && (
-  <div className="settings-content">
-    <h2>Account Settings</h2>
-    
-    <div className="settings-section">
-      <h3>Personal Information</h3>
-      <div className="settings-form">
-        <div className="form-group">
-          <label>Full Name</label>
-          <input type="text" name="name" value={freelancer.name} onChange={handleInputChange} />
-        </div>
-        <div className="form-group">
-          <label>Email Address</label>
-          <input type="email" name="email" value={freelancer.email} onChange={handleInputChange} />
-        </div>
-        <div className="form-group">
-          <label>Phone Number</label>
-          <input type="text" name="phone" value={freelancer.phone} onChange={handleInputChange} />
-        </div>
-        <div className="form-group">
-          <label>Location</label>
-          <input type="text" name="location" value={freelancer.location} onChange={handleInputChange} />
-        </div>
-      </div>
-    </div>
-    
-    {/* <div className="settings-section">
+        {activeTab === 'settings' && (
+          <div className="settings-content">
+            <h2>Account Settings</h2>
+
+            <div className="settings-section">
+              <h3>Personal Information</h3>
+              <div className="settings-form">
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input type="text" name="name" value={freelancer.name} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Email Address</label>
+                  <input type="email" name="email" value={freelancer.email} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Phone Number</label>
+                  <input type="text" name="phone" value={freelancer.phone} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Location</label>
+                  <input type="text" name="location" value={freelancer.location} onChange={handleInputChange} />
+                </div>
+              </div>
+            </div>
+
+            {/* <div className="settings-section">
       <h3>Security</h3>
       <div className="settings-form">
         <div className="form-group">
@@ -1511,32 +1528,53 @@ const Profile = ({ freelancerId }) => {
         <button className="update-password-btn" onClick={handlePasswordUpdate}>Update Password</button>
       </div>
     </div> */}
-    
-    <div className="settings-section">
-      <h3>Social Profiles</h3>
-      <div className="settings-form">
-        <div className="form-group social-input">
-          <FaLinkedin className="social-icon" />
-          <input type="text" name="linkedin" value={freelancer.socialProfiles.linkedin} onChange={handleSocialInputChange} />
-        </div>
-        <div className="form-group social-input">
-          <FaGithub className="social-icon" />
-          <input type="text" name="github" value={freelancer.socialProfiles.github} onChange={handleSocialInputChange} />
-        </div>
-        <div className="form-group social-input">
-          <FaGlobe className="social-icon" />
-          <input type="text" name="portfolio" value={freelancer.socialProfiles.portfolio} onChange={handleSocialInputChange} />
-        </div>
-      </div>
-    </div>
-    
-    <div className="settings-buttons">
-      <button className="save-changes-btn" onClick={saveAllChanges}>Save All Changes</button>
-      <button className="delete-account-btn" onClick={confirmDeleteAccount}>Delete Account</button>
-    </div>
-  </div>
-)}
+
+            <div className="settings-section">
+              <h3>Social Profiles</h3>
+              <div className="settings-form">
+                <div className="form-group social-input">
+                  <FaLinkedin className="social-icon" />
+                  <input type="text" name="linkedin" value={freelancer.socialProfiles.linkedin} onChange={handleSocialInputChange} />
+                </div>
+                <div className="form-group social-input">
+                  <FaGithub className="social-icon" />
+                  <input type="text" name="github" value={freelancer.socialProfiles.github} onChange={handleSocialInputChange} />
+                </div>
+                <div className="form-group social-input">
+                  <FaGlobe className="social-icon" />
+                  <input type="text" name="portfolio" value={freelancer.socialProfiles.portfolio} onChange={handleSocialInputChange} />
+                </div>
+              </div>
+            </div>
+
+            <div className="settings-buttons">
+              <button className="save-changes-btn" onClick={saveAllChanges}>Save All Changes</button>
+              <button className="delete-account-btn" onClick={confirmDeleteAccount}>Delete Account</button>
+            </div>
+          </div>
+        )}
       </main>
+
+      {showResumeParser && (
+        <ResumeParserModal
+          freelancerId={freelancer._id}
+          onComplete={(parsedData) => {
+            // Merge parsed data into local freelancer state so UI updates immediately
+            setFreelancer(prev => ({
+              ...prev,
+              bio: parsedData.bio || prev.bio,
+              skills: parsedData.skills?.length ? parsedData.skills : prev.skills,
+              education: parsedData.education?.university ? parsedData.education : prev.education,
+              achievements: parsedData.achievements?.length ? parsedData.achievements : prev.achievements,
+              location: parsedData.location || prev.location,
+              languages: parsedData.languages?.length ? parsedData.languages : prev.languages,
+            }));
+            setShowResumeParser(false);
+            showSuccessToast('🎉 Profile auto-filled from your resume! Review and edit anytime.');
+          }}
+          onSkip={() => setShowResumeParser(false)}
+        />
+      )}
 
       {/* Student Verification Modal */}
       {showVerificationModal && (
@@ -1544,44 +1582,44 @@ const Profile = ({ freelancerId }) => {
           <div className="verification-modal">
             <h2>Verify Student Status</h2>
             <p>Please upload a clear image of your college/school ID to verify your student status.</p>
-            
+
             <form onSubmit={handleVerificationSubmit}>
               <div className="file-upload-container">
                 <label htmlFor="verification-file" className="file-upload-label">
                   <FaIdCard /> Choose ID Image
                 </label>
-                <input 
-                  type="file" 
-                  id="verification-file" 
-                  onChange={handleVerificationFileChange} 
-                  accept="image/*" 
-                  required 
+                <input
+                  type="file"
+                  id="verification-file"
+                  onChange={handleVerificationFileChange}
+                  accept="image/*"
+                  required
                 />
                 {verificationFile && (
                   <p className="file-name">{verificationFile.name}</p>
                 )}
               </div>
-              
+
               <div className="verification-form-group">
                 <label>University/College Name</label>
                 <input type="text" placeholder="Enter your institution name" required />
               </div>
-              
+
               <div className="verification-form-group">
                 <label>Student ID Number</label>
                 <input type="text" placeholder="Enter your student ID" required />
               </div>
-              
+
               <div className="verification-form-group">
                 <label>Graduation Year</label>
                 <input type="text" placeholder="Expected graduation year" required />
               </div>
-              
+
               <div className="modal-buttons">
                 <button type="submit" className="submit-verification-btn">Submit for Verification</button>
-                <button 
-                  type="button" 
-                  className="cancel-verification-btn" 
+                <button
+                  type="button"
+                  className="cancel-verification-btn"
                   onClick={() => setShowVerificationModal(false)}
                 >
                   Cancel

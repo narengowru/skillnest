@@ -37,7 +37,11 @@ export const freelancerAPI = {
   getFreelancer: (id) => API.get(`/freelancers/${id}`),
   updateFreelancer: (id, data) => API.put(`/freelancers/${id}`, data),
   deleteFreelancer: (id) => API.delete(`/freelancers/${id}`),
-  addReview: (id, reviewData) => API.post(`/freelancers/${id}/reviews`, reviewData)
+  addReview: (id, reviewData) => API.post(`/freelancers/${id}/reviews`, reviewData),
+  parseResume: (formData) =>
+    API.post('/freelancers/parse-resume', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 // Job endpoints

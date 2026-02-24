@@ -98,9 +98,9 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [emailValid, setEmailValid] = useState(false);
-  
+
   const studentDomains = ['.edu', '.edu.in', '.ac.in', '.ac.uk', '.edu.au', '.edu.ca'];
-  
+
   const navigate = useNavigate();
 
   const isValidStudentEmail = (email) => {
@@ -124,7 +124,7 @@ const Login = () => {
         // Only validate student email for freelancer signup
         const isValid = isValidStudentEmail(formData.email);
         setEmailValid(isValid);
-        
+
         if (!isValid && formData.email.includes('@')) {
           setEmailError('Please use a valid student email domain');
         } else {
@@ -147,21 +147,21 @@ const Login = () => {
         setShowCountryDropdown(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showCountryDropdown]);
-  
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Only allow digits for phone number
     if (name === 'phoneNumber') {
       if (value && !/^\d*$/.test(value)) {
         return;
       }
     }
-    
+
     setFormData({
       ...formData,
       [name]: value,
@@ -235,26 +235,26 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       if (isLogin) {
         // Handle login
         let response;
-        
+
         if (userType === 'freelancer') {
           response = await freelancerAPI.login({
             email: formData.email,
             password: formData.password
           });
-          
+
           localStorage.setItem('token', response.data.token);
-          
+
           const userData = {
             id: response.data.freelancer?.id,
             name: response.data.freelancer?.name,
@@ -262,12 +262,11 @@ const Login = () => {
             userType: 'freelancer',
             isLoggedIn: true
           };
-          
+
           localStorage.setItem('user', JSON.stringify(userData));
           setUser(userData);
-          
+
           showToastMessage(`Welcome back, ${response.data.freelancer?.name || 'freelancer'}!`);
-          
           setTimeout(() => {
             navigate('/profile');
           }, 1500);
@@ -276,9 +275,9 @@ const Login = () => {
             email: formData.email,
             password: formData.password
           });
-          
+
           localStorage.setItem('token', response.data.token);
-          
+
           const userData = {
             id: response.data.client?.id,
             companyName: response.data.client?.companyName,
@@ -286,12 +285,12 @@ const Login = () => {
             userType: 'client',
             isLoggedIn: true
           };
-          
+
           localStorage.setItem('user', JSON.stringify(userData));
           setUser(userData);
-          
+
           showToastMessage(`Welcome back, ${response.data.client?.companyName || 'client'}!`);
-          
+
           setTimeout(() => {
             navigate('/client-dashboard');
           }, 1500);
@@ -299,7 +298,7 @@ const Login = () => {
       } else {
         // Handle signup
         const fullPhoneNumber = formData.phoneNumber ? formData.countryCode + formData.phoneNumber : '';
-        
+
         if (userType === 'freelancer') {
           const response = await freelancerAPI.register({
             name: formData.name,
@@ -314,9 +313,9 @@ const Login = () => {
             location: 'Remote',
             languages: ['English']
           });
-          
+
           localStorage.setItem('token', response.data.token);
-          
+
           const userData = {
             id: response.data.freelancer?.id,
             name: response.data.freelancer?.name || formData.name,
@@ -324,12 +323,12 @@ const Login = () => {
             userType: 'freelancer',
             isLoggedIn: true
           };
-          
+
           localStorage.setItem('user', JSON.stringify(userData));
           setUser(userData);
-          
+
           showToastMessage('Registration successful! Welcome to our Freelancer community!');
-          
+          localStorage.setItem('newRegistration', 'true');
           setTimeout(() => {
             navigate('/profile');
           }, 1500);
@@ -347,9 +346,9 @@ const Login = () => {
             verified: false,
             profilePicture: 'default-profile.jpg'
           });
-          
+
           localStorage.setItem('token', response.data.token);
-          
+
           const userData = {
             id: response.data.client?.id,
             email: formData.email,
@@ -357,12 +356,12 @@ const Login = () => {
             userType: 'client',
             isLoggedIn: true
           };
-          
+
           localStorage.setItem('user', JSON.stringify(userData));
           setUser(userData);
-          
+
           showToastMessage('Registration successful! Welcome to our Client community!');
-          
+
           setTimeout(() => {
             navigate('/client-dashboard');
           }, 1500);
@@ -370,15 +369,15 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Authentication error:', error);
-      
+
       let errorMessage = 'An error occurred. Please try again.';
-      
+
       if (error.response) {
         // Server responded with error status
-        errorMessage = error.response.data?.message || 
-                      error.response.data?.error ||
-                      `Error: ${error.response.status}`;
-        
+        errorMessage = error.response.data?.message ||
+          error.response.data?.error ||
+          `Error: ${error.response.status}`;
+
         if (error.response.status === 401) {
           errorMessage = 'Invalid credentials. Please check your email and password.';
         } else if (error.response.status === 409) {
@@ -393,7 +392,7 @@ const Login = () => {
         // Something else happened
         errorMessage = error.message || 'An unexpected error occurred.';
       }
-      
+
       showToastMessage(errorMessage, 'error');
     } finally {
       setIsLoading(false);
@@ -404,7 +403,7 @@ const Login = () => {
     const styleElement = document.createElement('style');
     styleElement.textContent = additionalStyles;
     document.head.appendChild(styleElement);
-    
+
     return () => {
       document.head.removeChild(styleElement);
     };
@@ -479,8 +478,8 @@ const Login = () => {
         <div className="floating-element elem2"></div>
         <div className="floating-element elem3"></div>
       </div>
-      
-      <motion.div 
+
+      <motion.div
         className="form-container"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -490,13 +489,13 @@ const Login = () => {
           <h1>{isLogin ? 'Welcome Back' : 'Join Us Today'}</h1>
           <p>{isLogin ? 'Login to access your account' : 'Create an account to get started'}</p>
         </div>
-        
+
         <div className="toggle-container">
           <div className={`toggle-option ${isLogin ? 'active' : ''}`} onClick={() => setIsLogin(true)}>Login</div>
           <div className={`toggle-option ${!isLogin ? 'active' : ''}`} onClick={() => setIsLogin(false)}>Sign Up</div>
           <div className="slider" style={{ transform: isLogin ? 'translateX(0)' : 'translateX(100%)' }}></div>
         </div>
-        
+
         <div className="user-type-toggle">
           <div className={`user-type-option ${userType === 'freelancer' ? 'active' : ''}`} onClick={() => toggleUserType('freelancer')}>
             Freelancer
@@ -505,9 +504,9 @@ const Login = () => {
             Client
           </div>
         </div>
-        
+
         <AnimatePresence mode="wait">
-          <motion.form 
+          <motion.form
             key={`${isLogin ? 'login' : 'signup'}-${userType}`}
             initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -530,7 +529,7 @@ const Login = () => {
                 />
               </div>
             )}
-            
+
             {!isLogin && userType === 'client' && (
               <div className="form-group">
                 <label htmlFor="companyName">Company Name</label>
@@ -545,7 +544,7 @@ const Login = () => {
                 />
               </div>
             )}
-            
+
             <div className="form-group">
               <label htmlFor="email">Email Address</label>
               <input
@@ -557,27 +556,27 @@ const Login = () => {
                 placeholder={userType === 'freelancer' && !isLogin ? "Enter your student email" : "Enter your email address"}
                 required
                 className={
-                  formData.email 
-                    ? (!isLogin && userType === 'freelancer' 
-                        ? (emailValid ? 'valid-input' : (emailError ? 'invalid-input' : '')) 
-                        : (emailValid ? 'valid-input' : '')) 
+                  formData.email
+                    ? (!isLogin && userType === 'freelancer'
+                      ? (emailValid ? 'valid-input' : (emailError ? 'invalid-input' : ''))
+                      : (emailValid ? 'valid-input' : ''))
                     : ''
                 }
               />
               {emailError && <div className="error-message">{emailError}</div>}
-              
+
               {!isLogin && userType === 'freelancer' && (
                 <small className="help-text">
                   As a freelancer, you must use a student email to Sign Up
                 </small>
               )}
             </div>
-            
+
             {!isLogin && (
               <div className="form-group">
                 <label htmlFor="phone">Phone Number</label>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                  <div style={{ position: 'relative', width: '140px'}}>
+                  <div style={{ position: 'relative', width: '140px' }}>
                     <div
                       onClick={() => setShowCountryDropdown(!showCountryDropdown)}
                       style={{
@@ -594,7 +593,7 @@ const Login = () => {
                         position: 'relative'
                       }}
                     >
-                      <img 
+                      <img
                         src={`https://flagcdn.com/w40/${getCurrentFlag()}.png`}
                         alt="flag"
                         style={{
@@ -606,22 +605,22 @@ const Login = () => {
                         }}
                       />
                       <span>{formData.countryCode || '+91'}</span>
-                      <svg 
-                        style={{ 
+                      <svg
+                        style={{
                           marginLeft: 'auto',
                           width: '16px',
                           height: '16px',
                           transform: showCountryDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
                           transition: 'transform 0.3s'
                         }}
-                        fill="none" 
-                        stroke="currentColor" 
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
                         <polyline points="6 9 12 15 18 9"></polyline>
                       </svg>
                     </div>
-                    
+
                     {showCountryDropdown && (
                       <div
                         style={{
@@ -658,7 +657,7 @@ const Login = () => {
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = formData.countryCode === item.code ? '#f0f7ff' : 'transparent'}
                           >
-                            <img 
+                            <img
                               src={`https://flagcdn.com/w40/${item.flag}.png`}
                               alt={item.country}
                               style={{
@@ -692,7 +691,7 @@ const Login = () => {
                 </small> */}
               </div>
             )}
-            
+
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <input
@@ -706,25 +705,25 @@ const Login = () => {
                 minLength="6"
               />
             </div>
-            
+
             {isLogin && (
               <div className="forgot-password">
                 <a href="#">Forgot Password?</a>
               </div>
             )}
-            
-            <motion.button 
+
+            <motion.button
               type="submit"
               className="submit-btn"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               disabled={isLoading}
             >
-              {isLoading ? 
-                (isLogin ? 'Logging in...' : 'Signing up...') : 
+              {isLoading ?
+                (isLogin ? 'Logging in...' : 'Signing up...') :
                 (isLogin ? 'Login' : 'Sign Up')}
             </motion.button>
-            
+
             <div className="form-footer">
               <p>
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
@@ -736,10 +735,10 @@ const Login = () => {
           </motion.form>
         </AnimatePresence>
       </motion.div>
-      
+
       <AnimatePresence>
         {showToast && (
-          <motion.div 
+          <motion.div
             className={`toast-message ${toastType}`}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
