@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Sparkles, Bot } from 'lucide-react';
+import { Send, Sparkles } from 'lucide-react';
 import { aiAssistantAPI } from '../api/api';
 
 const AIAssistantTab = ({ currentUser, style }) => {

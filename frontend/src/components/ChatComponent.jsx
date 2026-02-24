@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Send, X, Users, Search, ArrowLeft, Check, CheckCheck, Plus, UserPlus, RefreshCw, Bot, Sparkles } from 'lucide-react';
+import { MessageCircle, Send, X, Users, Search, ArrowLeft, Check, CheckCheck, Plus, UserPlus, RefreshCw, Sparkles } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { freelancerAPI, clientAPI } from '../api/api';
 import '../css/ChatComponent.css';
