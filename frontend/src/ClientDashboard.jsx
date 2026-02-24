@@ -269,32 +269,6 @@ const ClientDashboard = () => {
     };
   };
 
-  // Generate order status data for charts
-  const generateOrderStatusData = () => {
-    if (!client || !client.orders) return [];
-
-    const statuses = ['in_progress', 'pending', 'completed', 'canceled'];
-    const statusCounts = statuses.reduce((acc, status) => {
-      acc[status] = 0;
-      return acc;
-    }, {});
-
-    // Count orders by status
-    client.orders.forEach(order => {
-      const status = order.status || 'pending';
-      if (statusCounts[status] !== undefined) {
-        statusCounts[status]++;
-      }
-    });
-
-
-    // Convert to chart format
-    return Object.keys(statusCounts).map(status => ({
-      name: status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-      value: statusCounts[status]
-    }));
-  };
-
   if (loading) {
     return (
       <div className="dashboard-loading">
