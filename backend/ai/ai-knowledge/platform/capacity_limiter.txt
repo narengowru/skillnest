@@ -1,0 +1,22 @@
+Project Capacity Limiter Policy – SkillNest
+
+Purpose:
+SkillNest ensures fair opportunity distribution among students.
+
+Rule:
+A student can work on a maximum of 2 active projects per month.
+
+Reason:
+- Prevents overloading.
+- Encourages equal project access.
+- Maintains quality delivery.
+- Gives new students opportunity.
+
+What Counts as Active Project:
+- Project status = Accepted
+- Project status = In Progress
+
+Once project is completed, it no longer counts toward the limit.
+
+If limit is reached:
+- Student cannot accept new projects until next month.

@@ -1,0 +1,17 @@
+Escrow System in SkillNest:
+
+SkillNest follows a milestone-based escrow concept.
+
+How It Works:
+1. Client agrees to hire a student.
+2. Payment is reserved for the project.
+3. Student completes the work.
+4. Client approves submission.
+5. Payment is released to student.
+
+Purpose:
+- Protect clients from incomplete work.
+- Protect students from non-payment.
+- Ensure trust between both parties.
+
+Escrow ensures secure and structured transactions.

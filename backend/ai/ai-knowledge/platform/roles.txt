@@ -1,0 +1,25 @@
+There are three main roles in SkillNest:
+
+1. Student (Freelancer):
+- Creates a skill-based profile.
+- Adds portfolio and academic projects.
+- Browses available projects.
+- Submits bids to projects.
+- Communicates with clients.
+- Completes assigned work.
+- Receives reviews and ratings.
+
+2. Client:
+- Creates an account.
+- Posts freelance projects with budget and deadline.
+- Reviews student profiles.
+- Accepts or rejects bids.
+- Communicates with selected student.
+- Reviews completed work.
+- Leaves rating and feedback.
+
+3. Admin:
+- Verifies user accounts.
+- Monitors disputes.
+- Manages reported users.
+- Maintains platform integrity.

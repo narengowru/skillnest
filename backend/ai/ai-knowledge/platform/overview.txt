@@ -1,0 +1,24 @@
+SkillNest is a student-focused freelancing marketplace.
+
+Purpose:
+SkillNest connects students and recent graduates with businesses, startups, and individuals who need short-term freelance services.
+
+Target Users:
+- Students (Freelancers)
+- Clients (Businesses / Individuals)
+- Admin
+
+Core Idea:
+Unlike general freelancing platforms, SkillNest is designed specifically for beginners and early-career freelancers.
+
+Key Features:
+- Skill-based student profiles
+- Project posting by clients
+- Project bidding system
+- Real-time messaging
+- Portfolio showcasing
+- Review and rating system
+- Student verification system
+
+Mission:
+To bridge the gap between education and industry by helping students gain real-world experience, build portfolios, and earn income.

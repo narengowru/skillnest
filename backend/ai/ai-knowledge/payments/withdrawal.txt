@@ -1,0 +1,35 @@
+Withdrawal Policy – SkillNest
+
+Eligibility:
+A freelancer can request withdrawal only when:
+- The project status is marked as "Completed".
+- The client has approved the final submission.
+- Payment is successfully received in escrow.
+
+Processing Time:
+- Withdrawal requests are processed within 7 working days.
+- Processing time may vary during weekends or public holidays.
+
+Minimum Withdrawal:
+- A minimum withdrawal amount may apply as per platform policy.
+- Requests below the minimum threshold will be rejected.
+
+Withdrawal Status Types:
+1. Pending – Request submitted and under review.
+2. Approved – Request verified and scheduled for processing.
+3. Processed – Payment successfully transferred.
+4. Failed – Payment transfer failed due to incorrect details or bank issues.
+
+Failure Conditions:
+Withdrawal may fail if:
+- Incorrect bank details are provided.
+- Account verification is incomplete.
+- Suspicious activity is detected.
+
+Security Checks:
+- All withdrawals undergo verification checks.
+- Platform may temporarily hold funds if fraud is suspected.
+
+Important:
+- Commission (10%) is deducted before withdrawal.
+- SkillNest reserves the right to delay withdrawal in case of dispute.

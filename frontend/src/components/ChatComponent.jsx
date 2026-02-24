@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Send, X, Users, Search, ArrowLeft, Check, CheckCheck, Plus, UserPlus, RefreshCw } from 'lucide-react';
+import { MessageCircle, Send, X, Users, Search, ArrowLeft, Check, CheckCheck, Plus, UserPlus, RefreshCw, Bot, Sparkles } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { freelancerAPI, clientAPI } from '../api/api';
 import '../css/ChatComponent.css';
+import AIAssistantTab from './AIAssistantTab'; // adjust path if needed
 
 const ChatComponent = () => {
   // All hooks at the top
@@ -30,6 +31,7 @@ const ChatComponent = () => {
   const [lastPollTime, setLastPollTime] = useState(Date.now());
   const [, setPollingInterval] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connected', 'disconnected', 'connecting'
+  const [activeTab, setActiveTab] = useState('messages'); // 'messages' | 'ai'
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -808,7 +810,7 @@ const ChatComponent = () => {
           {/* Header */}
           <div className="chat-header">
             <div className="header-left">
-              {currentView === 'chat' && (
+              {currentView === 'chat' && activeTab === 'messages' && (
                 <button
                   onClick={handleBackToConversations}
                   className="back-button"
@@ -816,7 +818,7 @@ const ChatComponent = () => {
                   <ArrowLeft size={20} />
                 </button>
               )}
-              {currentView === 'chat' && getOtherUser(activeConversation) && (
+              {currentView === 'chat' && activeTab === 'messages' && getOtherUser(activeConversation) && (
                 <>
                   <img
                     src={getProfilePhoto(getOtherUser(activeConversation))}
@@ -829,7 +831,7 @@ const ChatComponent = () => {
                   </span>
                 </>
               )}
-              {currentView === 'conversations' && (
+              {(currentView === 'conversations' || activeTab === 'ai') && (
                 <h3 className="header-title">Messages</h3>
               )}
               {connectionStatus !== 'connected' && (
@@ -839,7 +841,7 @@ const ChatComponent = () => {
               )}
             </div>
             <div className="header-right">
-              {currentView === 'chat' && (
+              {currentView === 'chat' && activeTab === 'messages' && (
                 <>
                   <button
                     onClick={() => {
@@ -875,8 +877,31 @@ const ChatComponent = () => {
             </div>
           </div>
 
-          {/* Content */}
-          <div className="chat-content">
+          {/* Tab Bar */}
+          <div className="chat-tabs">
+            <button
+              className={`chat-tab ${activeTab === 'messages' ? 'chat-tab-active' : ''}`}
+              onClick={() => setActiveTab('messages')}
+            >
+              <MessageCircle size={15} />
+              <span>Messages</span>
+              {unreadCount > 0 && (
+                <span className="tab-unread-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+              )}
+            </button>
+            <button
+              className={`chat-tab ${activeTab === 'ai' ? 'chat-tab-active' : ''}`}
+              onClick={() => setActiveTab('ai')}
+            >
+              <Sparkles size={15} />
+              <span>AI Assistant</span>
+              <span className="tab-new-badge">NEW</span>
+            </button>
+          </div>
+
+          {/* Content — always rendered, toggled via CSS to preserve state */}
+          <AIAssistantTab currentUser={currentUser} style={{ display: activeTab === 'ai' ? 'flex' : 'none' }} />
+          <div className="chat-content" style={{ display: activeTab === 'messages' ? 'flex' : 'none' }}>
             {currentView === 'conversations' ? (
               <div className="conversations-container">
                 {/* Search */}

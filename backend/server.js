@@ -69,6 +69,9 @@ app.use('/api/recommendations', require('./routes/recommendations')); // Recomme
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));
 
+const aiAssistantRoutes = require('./routes/aiAssistantRoutes');
+app.use('/api/ai-assistant', aiAssistantRoutes);
+
 // Basic route
 app.get('/api', (req, res) => {
   res.json({ message: 'Welcome to the Freelancer Marketplace API' });

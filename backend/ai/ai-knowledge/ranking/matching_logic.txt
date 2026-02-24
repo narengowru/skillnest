@@ -1,0 +1,15 @@
+Freelancer Matching Logic:
+
+SkillNest uses backend algorithm to match freelancers based on:
+
+1. Skill Match Percentage
+2. Budget Compatibility
+3. Past Performance Rating
+4. Project Completion Rate
+5. Response Time
+6. Similar Project Experience
+
+Matching Score is calculated internally.
+
+AI Assistant does not calculate match score.
+AI only explains the results returned by backend.

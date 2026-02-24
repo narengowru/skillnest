@@ -210,4 +210,21 @@ export const recommendationAPI = {
     API.post('/recommendations/clear-cache')
 };
 
+export const aiAssistantAPI = {
+  /**
+   * Send a message to the Grok-powered AI assistant.
+   * @param {string} message - User's message
+   * @param {Array}  conversationHistory - [{role, content}] array of prior turns
+   */
+  chat: (message, conversationHistory = []) =>
+    API.post('/ai-assistant/chat', { message, conversationHistory }),
+
+  /**
+   * Get suggested starter questions based on user type.
+   * @param {'Client'|'Freelancer'} userType
+   */
+  getSuggestions: (userType) =>
+    API.get('/ai-assistant/suggestions', { params: { userType } })
+};
+
 export default API;

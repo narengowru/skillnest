@@ -1,0 +1,45 @@
+SkillNest Workflow:
+
+1. Registration:
+Users sign up as Student or Client.
+Accounts may require verification.
+
+2. Profile Setup:
+Students complete profile with:
+- Skills
+- Education
+- Portfolio
+- Certifications
+
+3. Project Posting (Client):
+Client posts project including:
+- Title
+- Description
+- Required skills
+- Budget
+- Deadline
+
+4. Bidding:
+Students browse projects.
+Students submit bids with proposal and pricing.
+
+5. Selection:
+Client reviews bids.
+Client accepts one student.
+
+6. Communication:
+Client and student communicate through integrated messaging.
+
+7. Completion:
+Student submits final work.
+Client reviews and approves.
+
+8. Review:
+Both parties leave ratings and feedback.
+
+9. Order Status:
+Order can be:
+- Pending
+- Accepted
+- Rejected
+- Completed

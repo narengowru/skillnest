@@ -1,0 +1,15 @@
+Commission Policy:
+
+SkillNest takes a platform commission of 10% from the freelancer’s earnings.
+
+Example:
+If project budget = ₹5000
+Platform commission (10%) = ₹500
+Freelancer receives = ₹4500
+
+Commission is used for:
+- Platform maintenance
+- Server hosting
+- Security
+- Feature upgrades
+- Support services

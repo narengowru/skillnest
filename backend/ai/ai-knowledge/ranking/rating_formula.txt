@@ -1,0 +1,17 @@
+Rating Calculation System:
+
+Freelancer rating is calculated based on:
+
+1. Client Reviews (Primary Factor)
+2. Project Completion Rate
+3. Response Time
+4. Number of Completed Projects
+5. Bid Acceptance Ratio
+
+Rating Scale:
+1 to 5 stars.
+
+Higher rating improves:
+- Profile visibility
+- Recommendation ranking
+- Client trust

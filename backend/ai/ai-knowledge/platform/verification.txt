@@ -1,0 +1,34 @@
+Student Verification Process – SkillNest
+
+Purpose:
+SkillNest verifies student accounts to ensure trust and authenticity.
+
+Verification Methods:
+
+1. Student ID Verification:
+- The student must upload a valid college ID card.
+- The ID must clearly show:
+  - Student Name
+  - College Name
+  - Photo
+  - Valid academic year
+
+2. Manual Document Verification:
+- If student ID is unclear, additional documents may be requested.
+- Admin reviews submitted documents manually.
+
+Verification Steps:
+1. Student uploads ID in Profile Page.
+2. Admin reviews submission.
+3. If approved → Account marked as "Verified Student".
+4. If rejected → Student notified to re-upload.
+
+Verification Status Types:
+- Not Verified
+- Under Review
+- Verified
+- Rejected
+
+Only verified students can:
+- Apply for projects
+- Receive payments

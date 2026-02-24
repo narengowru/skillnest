@@ -1,0 +1,17 @@
+Dispute Handling Process:
+
+A dispute can be raised if:
+- Work quality is unsatisfactory.
+- Deadline is missed.
+- Payment disagreement occurs.
+
+Dispute Steps:
+1. User raises dispute.
+2. Admin reviews project details.
+3. Admin reviews chat logs and submission.
+4. Admin makes final decision.
+
+Possible Outcomes:
+- Refund to client.
+- Partial payment.
+- Full payment to freelancer.

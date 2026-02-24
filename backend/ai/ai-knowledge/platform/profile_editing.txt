@@ -1,0 +1,26 @@
+Profile Editing Guide – SkillNest
+
+Users can update profile information anytime.
+
+Steps to Edit Profile:
+1. Go to Profile Page.
+2. Click the pencil (edit) icon next to the section.
+3. Modify the required information.
+4. Click the "Save" button to apply changes.
+
+Editable Fields for Students:
+- Skills
+- Bio / Description
+- Portfolio
+- Education
+- Certifications
+- Contact Information
+
+Editable Fields for Clients:
+- Company Name
+- Profile Description
+- Contact Information
+
+Important:
+- Changes are saved only after clicking "Save".
+- Incomplete profiles may reduce visibility.

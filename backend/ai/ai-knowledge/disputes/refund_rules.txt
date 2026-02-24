@@ -1,0 +1,12 @@
+Refund Rules:
+
+Refund may occur if:
+- Freelancer fails to deliver work.
+- Work is significantly different from project description.
+- Deadline is missed without communication.
+
+No refund if:
+- Client approves the final submission.
+- Client requests additional work outside original agreement.
+
+Refund decisions are reviewed by admin.
