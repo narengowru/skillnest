@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Plus, X, Upload, Check } from 'lucide-react';
 import './css/PostProject.css';
-import { jobAPI } from './api/api';
+import { jobAPI, uploadAPI } from './api/api';
 import { clientAPI } from './api/api';
 
 const PostProject = () => {
@@ -9,6 +9,7 @@ const PostProject = () => {
   const [newSkill, setNewSkill] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   // clientData state removed — data is used only via setProject, not rendered directly
   const [showLocationInput, setShowLocationInput] = useState(false);
 
@@ -163,7 +164,14 @@ const PostProject = () => {
         throw new Error("Client ID is required");
       }
 
-      const response = await jobAPI.createJob(project);
+      // Use default project image if client did not upload one
+      const DEFAULT_PROJECT_IMAGE = 'https://i.ibb.co/N6F9HFmC/default.jpg';
+      const jobData = {
+        ...project,
+        imageUrl: project.imageUrl || DEFAULT_PROJECT_IMAGE,
+      };
+
+      const response = await jobAPI.createJob(jobData);
       console.log("Project submitted:", response.data);
 
       // Extract the job ID
@@ -205,18 +213,28 @@ const PostProject = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  // Image upload simulation
-  const handleImageChange = (e) => {
+  // Upload project image to Cloudinary via backend
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProject({
-          ...project,
-          imageUrl: e.target.result
-        });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Show instant local preview while upload is in-flight
+    const previewUrl = URL.createObjectURL(file);
+    setProject((prev) => ({ ...prev, imageUrl: previewUrl }));
+    setIsUploadingImage(true);
+
+    try {
+      const uploadResponse = await uploadAPI.uploadProfilePhoto(file);
+      const cloudinaryUrl = uploadResponse.data.url;
+
+      // Replace preview with the final Cloudinary URL
+      setProject((prev) => ({ ...prev, imageUrl: cloudinaryUrl }));
+    } catch (error) {
+      console.error('Error uploading project image:', error);
+      // On failure revert so the user knows something went wrong
+      setProject((prev) => ({ ...prev, imageUrl: '' }));
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -336,13 +354,19 @@ const PostProject = () => {
                 <div className="image-upload-container">
                   <label htmlFor="projectImage" className="image-upload-label">
                     <div className="upload-area">
-                      {project.imageUrl ? (
+                      {isUploadingImage ? (
+                        <>
+                          <Upload size={48} style={{ opacity: 0.4 }} />
+                          <p style={{ color: '#4361ee', fontWeight: 600 }}>Uploading…</p>
+                          <span>Please wait while your image is being uploaded</span>
+                        </>
+                      ) : project.imageUrl ? (
                         <img src={project.imageUrl} alt="Project preview" className="uploaded-image" />
                       ) : (
                         <>
                           <Upload size={48} />
                           <p>Upload Project Image</p>
-                          <span>Drag & drop or click to browse</span>
+                          <span>Drag &amp; drop or click to browse</span>
                         </>
                       )}
                     </div>

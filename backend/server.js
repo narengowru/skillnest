@@ -64,6 +64,7 @@ app.use('/api/clients', require('./routes/clients'));
 app.use('/api/chat', require('./routes/chatRoutes')); // Fixed route path
 app.use('/api/razorpay', require('./routes/razorpayRoutes'));
 app.use('/api/recommendations', require('./routes/recommendations')); // Recommendation system
+app.use('/api/upload', require('./routes/uploadRoutes')); // Cloudinary image upload
 // Note: chatHandlers should be imported and used with Socket.IO, not as middleware
 
 // Serve uploaded files

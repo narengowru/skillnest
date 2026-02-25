@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { clientAPI } from './api/api';
+import { clientAPI, uploadAPI } from './api/api';
 // Chart imports removed - unused
 import { User, Star, Calendar, MapPin, Phone, Globe, Linkedin, Twitter, FileText, CheckCircle, X, Edit, ChevronDown, ChevronUp, Clock, DollarSign, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import './css/ClientDashboard.css';
 import { motion } from 'framer-motion';
 import ProjectsSection from './components/ProjectsSection';
 import ClientOrdersDashboard from './components/ClientOrdersDashboard';
+import ToastContainer from './components/ToastContainer';
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
@@ -38,9 +39,7 @@ const ClientDashboard = () => {
     },
     profilePicture: ''
   });
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success');
+  // Toast state managed by ToastContainer via window.showToast()
 
 
 
@@ -109,27 +108,35 @@ const ClientDashboard = () => {
     };
   }, []);
 
-  // Handle profile picture change
-  const handleProfilePictureChange = (e) => {
+  // Handle profile picture change — uploads to Cloudinary via backend
+  const handleProfilePictureChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData({
-          ...formData,
-          profilePicture: e.target.result
-        });
+    if (!file) return;
 
-        // If in editing mode, don't update client state yet
-        // Otherwise update client state immediately for preview
-        if (!editing) {
-          setClient({
-            ...client,
-            profilePicture: e.target.result
-          });
-        }
-      };
-      reader.readAsDataURL(file);
+    // Show instant local preview while the upload is in-flight
+    const previewUrl = URL.createObjectURL(file);
+    setFormData((prev) => ({ ...prev, profilePicture: previewUrl }));
+    setClient((prev) => ({ ...prev, profilePicture: previewUrl }));
+
+    try {
+      // Upload file to Cloudinary through our backend endpoint
+      const uploadResponse = await uploadAPI.uploadProfilePhoto(file);
+      const cloudinaryUrl = uploadResponse.data.url;
+
+      // Persist the Cloudinary URL in both local state and the database
+      setFormData((prev) => ({ ...prev, profilePicture: cloudinaryUrl }));
+      setClient((prev) => ({ ...prev, profilePicture: cloudinaryUrl }));
+
+      // Save immediately so the URL is persisted even if the user doesn't
+      // click "Save Changes" afterwards
+      if (client?._id) {
+        await clientAPI.updateClient(client._id, { profilePicture: cloudinaryUrl });
+      }
+
+      showToastMessage('Profile picture updated successfully!', 'success');
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      showToastMessage('Failed to update profile picture. Please try again.', 'error');
     }
   };
 
@@ -216,14 +223,7 @@ const ClientDashboard = () => {
   // handleVerify removed - unused (verification UI is commented out)
 
   const showToastMessage = (message, type = 'success') => {
-    setToastMessage(message);
-    setToastType(type);
-    setShowToast(true);
-
-    // Auto hide after 3 seconds
-    setTimeout(() => {
-      setShowToast(false);
-    }, 3000);
+    window.showToast?.(message, type);
   };
 
   const handlePostJob = () => {
@@ -305,18 +305,8 @@ const ClientDashboard = () => {
 
   return (
     <div className="client-dashboard">
-      {/* Toast Notification */}
-      {showToast && (
-        <div className={`toast-notification ${toastType}`}>
-          <div className="toast-icon">
-            {toastType === 'success' ? <CheckCircle size={20} /> : <X size={20} />}
-          </div>
-          <div className="toast-message">{toastMessage}</div>
-          <button className="toast-close" onClick={() => setShowToast(false)}>
-            <X size={16} />
-          </button>
-        </div>
-      )}
+      {/* Toast Notification — rendered via ToastContainer (fixed, top-right, portal) */}
+      <ToastContainer />
 
       {/* Dashboard Header */}
       <motion.header

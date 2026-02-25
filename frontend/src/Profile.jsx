@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaLinkedin, FaGithub, FaGlobe, FaEdit, FaCamera, FaTrash, FaPlus, FaStar, FaCheckCircle, FaIdCard, FaMedal, FaTimes } from 'react-icons/fa';
 // lucide-react imports removed - unused
-import { freelancerAPI, jobAPI } from './api/api';
+import { freelancerAPI, jobAPI, uploadAPI } from './api/api';
 import './css/Profile.css';
 import FreelancerOrdersDashboard from './components/FreelancerOrdersDashboard';
 import { useNavigate } from 'react-router-dom';
@@ -177,28 +177,28 @@ const Profile = ({ freelancerId }) => {
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // First create a preview using FileReader
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageBase64 = e.target.result;
+    if (!file) return;
 
-        // Update the UI with the new image preview
-        setFreelancer({ ...freelancer, profilePhoto: imageBase64 });
+    // Show a local object-URL preview immediately so the UI feels instant
+    const previewUrl = URL.createObjectURL(file);
+    setFreelancer((prev) => ({ ...prev, profilePhoto: previewUrl }));
 
-        try {
-          // Send the base64 string to the server instead of FormData
-          await freelancerAPI.updateFreelancer(freelancer._id, {
-            profilePhoto: imageBase64
-          });
+    try {
+      // Upload file to Cloudinary through our backend endpoint
+      const uploadResponse = await uploadAPI.uploadProfilePhoto(file);
+      const cloudinaryUrl = uploadResponse.data.url;
 
-          showSuccessToast("Profile photo updated successfully!");
-        } catch (error) {
-          console.error("Error uploading profile photo:", error);
-          showSuccessToast("Failed to update profile photo. Please try again.");
-        }
-      };
-      reader.readAsDataURL(file);
+      // Persist the Cloudinary URL in the database
+      await freelancerAPI.updateFreelancer(freelancer._id, {
+        profilePhoto: cloudinaryUrl,
+      });
+
+      // Replace the temporary object URL with the final Cloudinary URL
+      setFreelancer((prev) => ({ ...prev, profilePhoto: cloudinaryUrl }));
+      showSuccessToast('Profile photo updated successfully!');
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      showSuccessToast('Failed to update profile photo. Please try again.');
     }
   };
 

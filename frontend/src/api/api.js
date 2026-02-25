@@ -210,6 +210,17 @@ export const recommendationAPI = {
     API.post('/recommendations/clear-cache')
 };
 
+// Upload endpoints (Cloudinary)
+export const uploadAPI = {
+  uploadProfilePhoto: (file) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    return API.post('/upload/profile-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
+
 export const aiAssistantAPI = {
   /**
    * Send a message to the Grok-powered AI assistant.

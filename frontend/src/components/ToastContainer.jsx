@@ -1,54 +1,116 @@
-import { useState, useEffect } from 'react';
-import "../css/ToastContainer.css";
-
-const Toast = ({ message, type, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 4000);
-    
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  return (
-    <div className={`toast-notification toast-${type}`}>
-      <div className="toast-icon">
-        {type === 'success' && <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>}
-      </div>
-      <div className="toast-message">{message}</div>
-      <button className="toast-close" onClick={onClose}>×</button>
-    </div>
-  );
-};
+import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { CheckCircle, X, AlertCircle } from 'lucide-react';
 
 const ToastContainer = () => {
   const [toasts, setToasts] = useState([]);
 
-  const showToast = (message, type = 'success') => {
+  const removeToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const addToast = useCallback((message, type = 'success') => {
     const id = Date.now();
-    setToasts(current => [...current, { id, message, type }]);
-    return id;
-  };
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => removeToast(id), 3500);
+  }, [removeToast]);
 
-  const removeToast = (id) => {
-    setToasts(current => current.filter(toast => toast.id !== id));
-  };
+  useEffect(() => {
+    // Expose globally so any component can call window.showToast('msg', 'success')
+    window.showToast = addToast;
+    return () => {
+      delete window.showToast;
+    };
+  }, [addToast]);
 
-  // Export the showToast function to be used elsewhere
-  window.showToast = showToast;
-
-  return (
-    <div className="toast-container">
-      {toasts.map(toast => (
-        <Toast 
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          onClose={() => removeToast(toast.id)}
-        />
+  return createPortal(
+    <div style={styles.wrapper}>
+      {toasts.map((toast) => (
+        <div key={toast.id} style={{ ...styles.toast, ...styles[toast.type] }}>
+          <span style={styles.icon}>
+            {toast.type === 'success'
+              ? <CheckCircle size={18} color="#06d6a0" />
+              : <AlertCircle size={18} color="#ef476f" />}
+          </span>
+          <span style={styles.message}>{toast.message}</span>
+          <button style={styles.close} onClick={() => removeToast(toast.id)}>
+            <X size={14} color="#888" />
+          </button>
+        </div>
       ))}
-    </div>
+    </div>,
+    document.body
   );
 };
+
+const styles = {
+  wrapper: {
+    position: 'fixed',
+    top: '24px',
+    right: '24px',
+    zIndex: 999999,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    pointerEvents: 'none',
+  },
+  toast: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    minWidth: '300px',
+    maxWidth: '420px',
+    padding: '14px 18px',
+    borderRadius: '12px',
+    background: '#ffffff',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.07), 0 12px 36px rgba(0,0,0,0.18)',
+    fontSize: '0.92rem',
+    fontWeight: 500,
+    fontFamily: 'inherit',
+    pointerEvents: 'all',
+    animation: 'toastIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) both',
+  },
+  success: {
+    borderLeft: '5px solid #06d6a0',
+    color: '#1a1a1a',
+  },
+  error: {
+    borderLeft: '5px solid #ef476f',
+    color: '#1a1a1a',
+  },
+  icon: {
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+  },
+  message: {
+    flex: 1,
+    lineHeight: 1.4,
+    color: '#1a1a1a',
+  },
+  close: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '2px',
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: '4px',
+    flexShrink: 0,
+  },
+};
+
+// Inject keyframe animation once
+if (typeof document !== 'undefined' && !document.getElementById('toast-keyframes')) {
+  const style = document.createElement('style');
+  style.id = 'toast-keyframes';
+  style.textContent = `
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(calc(100% + 32px)); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 export default ToastContainer;
