@@ -15,6 +15,7 @@ const ClientDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeSection, setActiveSection] = useState('overview');
+  const [activeTab, setActiveTab] = useState('overview');
   const [expandedSections, setExpandedSections] = useState({
     profile: true,
     orders: true,
@@ -149,10 +150,13 @@ const ClientDashboard = () => {
 
   const handleMenuClick = (section) => {
     setActiveSection(section);
-    // Smooth scroll to the section
-    const element = document.getElementById(section);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    setActiveTab(section);
+    // Only scroll for home-view sub-sections
+    if (section !== 'projects' && section !== 'orders') {
+      const element = document.getElementById(section);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
@@ -357,16 +361,19 @@ const ClientDashboard = () => {
         className="dashboard-nav"
       >
         <ul>
-          <li className={activeSection === 'overview' ? 'active' : ''}>
+          <li className={activeTab === 'overview' ? 'active' : ''}>
             <button onClick={() => handleMenuClick('overview')}>Overview</button>
           </li>
-          <li className={activeSection === 'orders' ? 'active' : ''}>
-            <button onClick={() => handleMenuClick('orders')}>Orders & Projects</button>
+          <li className={activeTab === 'projects' ? 'active' : ''}>
+            <button onClick={() => handleMenuClick('projects')}>Projects</button>
           </li>
-          <li className={activeSection === 'reviews' ? 'active' : ''}>
+          <li className={activeTab === 'orders' ? 'active' : ''}>
+            <button onClick={() => handleMenuClick('orders')}>Orders</button>
+          </li>
+          <li className={activeTab === 'reviews' ? 'active' : ''}>
             <button onClick={() => handleMenuClick('reviews')}>Reviews</button>
           </li>
-          <li className={activeSection === 'profile' ? 'active' : ''}>
+          <li className={activeTab === 'profile' ? 'active' : ''}>
             <button onClick={() => handleMenuClick('profile')}>Profile Settings</button>
           </li>
         </ul>
@@ -374,312 +381,321 @@ const ClientDashboard = () => {
 
       {/* Dashboard Content */}
       <div className="dashboard-content">
-        {/* Overview Section */}
-        <motion.section
-          id="overview"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="dashboard-section overview-section"
-        >
-          <h2>Dashboard Overview <span className="emoji">📊</span></h2>
 
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon orders-icon">
-                <FileText size={24} />
-              </div>
-              <div className="stat-info">
-                <h3>Active Orders</h3>
-                <p className="stat-value">{activeOrders}</p>
-              </div>
-            </div>
+        {/* Projects Tab — isolated view */}
+        {activeTab === 'projects' && (
+          <ProjectsSection
+            client={client}
+            handlePostJob={handlePostJob}
+          />
+        )}
 
-            <div className="stat-card">
-              <div className="stat-icon rating-icon">
-                <Star size={24} />
-              </div>
-              <div className="stat-info">
-                <h3>Overall Rating</h3>
-                <p className="stat-value">{clientAPI.getClientRating(client)} <span className="text-sm">/ 5</span></p>
-              </div>
-            </div>
+        {/* Orders Tab — isolated view */}
+        {activeTab === 'orders' && (
+          <ClientOrdersDashboard
+            client={client}
+          />
+        )}
 
-            <div className="stat-card">
-              <div className="stat-icon time-icon">
-                <Clock size={24} />
-              </div>
-              <div className="stat-info">
-                <h3>Member Duration</h3>
-                <p className="stat-value">{memberDuration} months</p>
-              </div>
-            </div>
+        {/* Home view: Overview + Reviews + Profile Settings */}
+        {activeTab !== 'projects' && activeTab !== 'orders' && (
+          <>
+            {/* Overview Section */}
+            <motion.section
+              id="overview"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="dashboard-section overview-section"
+            >
+              <h2>Dashboard Overview <span className="emoji">📊</span></h2>
 
-            <div className="stat-card">
-              <div className="stat-icon spend-icon">
-                <DollarSign size={24} />
-              </div>
-              <div className="stat-info">
-                <h3>Total Spent</h3>
-                <p className="stat-value">${totalSpent.toFixed(2)}</p>
-              </div>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Orders Section */}
-        <ProjectsSection
-          client={client}
-          handlePostJob={handlePostJob}
-        />
-
-        <ClientOrdersDashboard
-          client={client}
-        />
-
-        {/* Reviews Section */}
-        <motion.section
-          id="reviews"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="dashboard-section"
-        >
-          <div className="section-header" onClick={() => toggleSection('reviews')}>
-            <h2>Your Reviews <span className="emoji">⭐</span></h2>
-            <button className="toggle-button">
-              {expandedSections.reviews ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            </button>
-          </div>
-
-          {expandedSections.reviews && (
-            <div className="reviews-container">
-              {client.reviews && client.reviews.length > 0 ? (
-                client.reviews.map((review, index) => (
-                  <div className="review-card" key={review._id || index}>
-                    <div className="review-header">
-                      <div className="review-rating">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            size={16}
-                            className={i < review.rating ? 'star-filled' : 'star-empty'}
-                            fill={i < review.rating ? '#FFD700' : 'none'}
-                          />
-                        ))}
-                      </div>
-                      <div className="review-date">
-                        {new Date(review.date).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="review-content">
-                      <p>"{review.comment}"</p>
-                    </div>
-                    <div className="review-footer">
-                      <span className="reviewer">
-                        <strong>Freelancer ID:</strong> {review.freelancerId}
-                      </span>
-                    </div>
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-icon orders-icon">
+                    <FileText size={24} />
                   </div>
-                ))
-              ) : (
-                <div className="empty-state">
-                  <Star size={48} />
-                  <h3>No Reviews Yet</h3>
-                  <p>You haven't reviewed any freelancers yet. After completing a project, consider leaving feedback!</p>
+                  <div className="stat-info">
+                    <h3>Active Orders</h3>
+                    <p className="stat-value">{activeOrders}</p>
+                  </div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-icon rating-icon">
+                    <Star size={24} />
+                  </div>
+                  <div className="stat-info">
+                    <h3>Overall Rating</h3>
+                    <p className="stat-value">{clientAPI.getClientRating(client)} <span className="text-sm">/ 5</span></p>
+                  </div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-icon time-icon">
+                    <Clock size={24} />
+                  </div>
+                  <div className="stat-info">
+                    <h3>Member Duration</h3>
+                    <p className="stat-value">{memberDuration} months</p>
+                  </div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-icon spend-icon">
+                    <DollarSign size={24} />
+                  </div>
+                  <div className="stat-info">
+                    <h3>Total Spent</h3>
+                    <p className="stat-value">${totalSpent.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+            </motion.section>
+
+            {/* Reviews Section */}
+            <motion.section
+              id="reviews"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="dashboard-section"
+            >
+              <div className="section-header" onClick={() => toggleSection('reviews')}>
+                <h2>Your Reviews <span className="emoji">⭐</span></h2>
+                <button className="toggle-button">
+                  {expandedSections.reviews ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </button>
+              </div>
+
+              {expandedSections.reviews && (
+                <div className="reviews-container">
+                  {client.reviews && client.reviews.length > 0 ? (
+                    client.reviews.map((review, index) => (
+                      <div className="review-card" key={review._id || index}>
+                        <div className="review-header">
+                          <div className="review-rating">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                size={16}
+                                className={i < review.rating ? 'star-filled' : 'star-empty'}
+                                fill={i < review.rating ? '#FFD700' : 'none'}
+                              />
+                            ))}
+                          </div>
+                          <div className="review-date">
+                            {new Date(review.date).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="review-content">
+                          <p>"{review.comment}"</p>
+                        </div>
+                        <div className="review-footer">
+                          <span className="reviewer">
+                            <strong>Freelancer ID:</strong> {review.freelancerId}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-state">
+                      <Star size={48} />
+                      <h3>No Reviews Yet</h3>
+                      <p>You haven't reviewed any freelancers yet. After completing a project, consider leaving feedback!</p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
-        </motion.section>
+            </motion.section>
 
-        {/* Profile Settings Section */}
-        <motion.section
-          id="profile"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
-          className="dashboard-section"
-        >
-          <div className="section-header" onClick={() => toggleSection('profile')}>
-            <h2>Profile Settings <span className="emoji">👤</span></h2>
-            <button className="toggle-button">
-              {expandedSections.profile ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            </button>
-          </div>
-
-          {expandedSections.profile && (
-            <div className="profile-settings">
-              <div className="profile-form">
-                <div className="form-group">
-                  <label>Company Name</label>
-                  {editing ? (
-                    <input
-                      type="text"
-                      name="companyName"
-                      value={formData.companyName}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <input type="text" value={client.companyName} readOnly />
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label>Email Address</label>
-                  {editing ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <input type="email" value={client.email} readOnly />
-                  )}
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Country</label>
-                    {editing ? (
-                      <input
-                        type="text"
-                        name="location.country"
-                        value={formData.location.country}
-                        onChange={handleInputChange}
-                      />
-                    ) : (
-                      <input type="text" value={client.location?.country || ''} readOnly />
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label>City</label>
-                    {editing ? (
-                      <input
-                        type="text"
-                        name="location.city"
-                        value={formData.location.city}
-                        onChange={handleInputChange}
-                      />
-                    ) : (
-                      <input type="text" value={client.location?.city || ''} readOnly />
-                    )}
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Bio / Company Description</label>
-                  {editing ? (
-                    <textarea
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <textarea readOnly value={client.bio || 'No bio provided yet.'} />
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label>Contact Information</label>
-                  <div className="contact-info">
-                    <div className="contact-item">
-                      <Phone size={16} />
-                      {editing ? (
-                        <input
-                          type="text"
-                          name="contactInfo.phone"
-                          value={formData.contactInfo.phone}
-                          onChange={handleInputChange}
-                          placeholder="Phone number"
-                        />
-                      ) : (
-                        <span>{client.contactInfo?.phone || 'Not provided'}</span>
-                      )}
-                    </div>
-                    <div className="contact-item">
-                      <Globe size={16} />
-                      {editing ? (
-                        <input
-                          type="text"
-                          name="contactInfo.website"
-                          value={formData.contactInfo.website}
-                          onChange={handleInputChange}
-                          placeholder="Website URL"
-                        />
-                      ) : (
-                        <span>{client.contactInfo?.website || 'Not provided'}</span>
-                      )}
-                    </div>
-                    <div className="contact-item">
-                      <Linkedin size={16} />
-                      {editing ? (
-                        <input
-                          type="text"
-                          name="socialMedia.linkedin"
-                          value={formData.contactInfo.socialMedia.linkedin}
-                          onChange={handleInputChange}
-                          placeholder="LinkedIn profile"
-                        />
-                      ) : (
-                        <span>{client.contactInfo?.socialMedia?.linkedin || 'Not linked'}</span>
-                      )}
-                    </div>
-                    <div className="contact-item">
-                      <Twitter size={16} />
-                      {editing ? (
-                        <input
-                          type="text"
-                          name="socialMedia.twitter"
-                          value={formData.contactInfo.socialMedia.twitter}
-                          onChange={handleInputChange}
-                          placeholder="Twitter profile"
-                        />
-                      ) : (
-                        <span>{client.contactInfo?.socialMedia?.twitter || 'Not linked'}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-actions">
-                  {editing ? (
-                    <button className="primary-button save-button" onClick={handleSaveChanges}>
-                      <Save size={16} /> Save Changes
-                    </button>
-                  ) : (
-                    <button className="primary-button" onClick={toggleEdit}>
-                      <Edit size={16} /> Edit Profile
-                    </button>
-                  )}
-                  <button className="secondary-button">Change Password</button>
-                </div>
+            {/* Profile Settings Section */}
+            <motion.section
+              id="profile"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
+              className="dashboard-section"
+            >
+              <div className="section-header" onClick={() => toggleSection('profile')}>
+                <h2>Profile Settings <span className="emoji">👤</span></h2>
+                <button className="toggle-button">
+                  {expandedSections.profile ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </button>
               </div>
 
-              <div className="profile-picture-section">
-                <div className="profile-picture-container">
-                  <img
-                    src={editing ? formData.profilePicture : client.profilePicture || '/default-profile.jpg'}
-                    alt={client.companyName}
-                  />
-                  <div className="picture-overlay">
-                    <label htmlFor="profilePicture" className="picture-edit-button">
-                      <Edit size={16} />
-                      <span>Change</span>
-                    </label>
-                    <input
-                      type="file"
-                      id="profilePicture"
-                      accept="image/*"
-                      onChange={handleProfilePictureChange}
-                      className="file-input"
-                      style={{ display: 'none' }}
-                    />
+              {expandedSections.profile && (
+                <div className="profile-settings">
+                  <div className="profile-form">
+                    <div className="form-group">
+                      <label>Company Name</label>
+                      {editing ? (
+                        <input
+                          type="text"
+                          name="companyName"
+                          value={formData.companyName}
+                          onChange={handleInputChange}
+                        />
+                      ) : (
+                        <input type="text" value={client.companyName} readOnly />
+                      )}
+                    </div>
+
+                    <div className="form-group">
+                      <label>Email Address</label>
+                      {editing ? (
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                        />
+                      ) : (
+                        <input type="email" value={client.email} readOnly />
+                      )}
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Country</label>
+                        {editing ? (
+                          <input
+                            type="text"
+                            name="location.country"
+                            value={formData.location.country}
+                            onChange={handleInputChange}
+                          />
+                        ) : (
+                          <input type="text" value={client.location?.country || ''} readOnly />
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label>City</label>
+                        {editing ? (
+                          <input
+                            type="text"
+                            name="location.city"
+                            value={formData.location.city}
+                            onChange={handleInputChange}
+                          />
+                        ) : (
+                          <input type="text" value={client.location?.city || ''} readOnly />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Bio / Company Description</label>
+                      {editing ? (
+                        <textarea
+                          name="bio"
+                          value={formData.bio}
+                          onChange={handleInputChange}
+                        />
+                      ) : (
+                        <textarea readOnly value={client.bio || 'No bio provided yet.'} />
+                      )}
+                    </div>
+
+                    <div className="form-group">
+                      <label>Contact Information</label>
+                      <div className="contact-info">
+                        <div className="contact-item">
+                          <Phone size={16} />
+                          {editing ? (
+                            <input
+                              type="text"
+                              name="contactInfo.phone"
+                              value={formData.contactInfo.phone}
+                              onChange={handleInputChange}
+                              placeholder="Phone number"
+                            />
+                          ) : (
+                            <span>{client.contactInfo?.phone || 'Not provided'}</span>
+                          )}
+                        </div>
+                        <div className="contact-item">
+                          <Globe size={16} />
+                          {editing ? (
+                            <input
+                              type="text"
+                              name="contactInfo.website"
+                              value={formData.contactInfo.website}
+                              onChange={handleInputChange}
+                              placeholder="Website URL"
+                            />
+                          ) : (
+                            <span>{client.contactInfo?.website || 'Not provided'}</span>
+                          )}
+                        </div>
+                        <div className="contact-item">
+                          <Linkedin size={16} />
+                          {editing ? (
+                            <input
+                              type="text"
+                              name="socialMedia.linkedin"
+                              value={formData.contactInfo.socialMedia.linkedin}
+                              onChange={handleInputChange}
+                              placeholder="LinkedIn profile"
+                            />
+                          ) : (
+                            <span>{client.contactInfo?.socialMedia?.linkedin || 'Not linked'}</span>
+                          )}
+                        </div>
+                        <div className="contact-item">
+                          <Twitter size={16} />
+                          {editing ? (
+                            <input
+                              type="text"
+                              name="socialMedia.twitter"
+                              value={formData.contactInfo.socialMedia.twitter}
+                              onChange={handleInputChange}
+                              placeholder="Twitter profile"
+                            />
+                          ) : (
+                            <span>{client.contactInfo?.socialMedia?.twitter || 'Not linked'}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-actions">
+                      {editing ? (
+                        <button className="primary-button save-button" onClick={handleSaveChanges}>
+                          <Save size={16} /> Save Changes
+                        </button>
+                      ) : (
+                        <button className="primary-button" onClick={toggleEdit}>
+                          <Edit size={16} /> Edit Profile
+                        </button>
+                      )}
+                      <button className="secondary-button">Change Password</button>
+                    </div>
                   </div>
-                </div>
-                {/* <div className="account-status">
+
+                  <div className="profile-picture-section">
+                    <div className="profile-picture-container">
+                      <img
+                        src={editing ? formData.profilePicture : client.profilePicture || '/default-profile.jpg'}
+                        alt={client.companyName}
+                      />
+                      <div className="picture-overlay">
+                        <label htmlFor="profilePicture" className="picture-edit-button">
+                          <Edit size={16} />
+                          <span>Change</span>
+                        </label>
+                        <input
+                          type="file"
+                          id="profilePicture"
+                          accept="image/*"
+                          onChange={handleProfilePictureChange}
+                          className="file-input"
+                          style={{ display: 'none' }}
+                        />
+                      </div>
+                    </div>
+                    {/* <div className="account-status">
                   <h3>Account Status</h3>
                   <div className={`status-indicator ${client.verified ? 'verified' : 'unverified'}`}>
                     {client.verified ? (
@@ -698,10 +714,12 @@ const ClientDashboard = () => {
                     <button className="verify-button" onClick={handleVerify}>Verify Now</button>
                   )}
                 </div> */}
-              </div>
-            </div>
-          )}
-        </motion.section>
+                  </div>
+                </div>
+              )}
+            </motion.section>
+          </>
+        )}
       </div>
 
       {/* Dashboard Footer */}
