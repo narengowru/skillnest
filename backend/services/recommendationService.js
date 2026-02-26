@@ -680,7 +680,7 @@ class RecommendationService {
     async getFreelancerRecommendations(clientId, options = {}) {
         const {
             limit = 20,
-            minScore = 50 // Minimum match score (0-100)
+            minScore = 50 // Minimum match s    core (0-100)
         } = options;
 
         try {

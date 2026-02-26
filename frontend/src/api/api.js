@@ -223,12 +223,14 @@ export const uploadAPI = {
 
 export const aiAssistantAPI = {
   /**
-   * Send a message to the Grok-powered AI assistant.
-   * @param {string} message - User's message
-   * @param {Array}  conversationHistory - [{role, content}] array of prior turns
+   * Send a message to the Groq-powered AI assistant.
+   * @param {string} message              - User's message
+   * @param {Array}  conversationHistory  - [{role, content}] array of prior turns
+   * @param {string} userId               - Logged-in user's MongoDB _id (from localStorage user.id)
+   * @param {string} userType             - "freelancer" or "client"
    */
-  chat: (message, conversationHistory = []) =>
-    API.post('/ai-assistant/chat', { message, conversationHistory }),
+  chat: (message, conversationHistory = [], userId = null, userType = null) =>
+    API.post('/ai-assistant/chat', { message, conversationHistory, userId, userType }),
 
   /**
    * Get suggested starter questions based on user type.

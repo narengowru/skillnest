@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { aiAssistantAPI } from '../api/api';
 
 const AIAssistantTab = ({ currentUser, style }) => {
+    const navigate = useNavigate();
     const [aiMessages, setAiMessages] = useState([
         {
             id: 'welcome',
@@ -44,7 +46,32 @@ const AIAssistantTab = ({ currentUser, style }) => {
         loadSuggestions();
     }, [currentUser]);
 
-    // Build conversation history array for API context (exclude welcome message)
+    // ── User identity helpers ─────────────────────────────────────────────────
+    // localStorage stores { "id": "...", "userType": "freelancer" }
+    // currentUser prop may also carry these — check both sources.
+    const getUserId = () =>
+        currentUser?.id        // prop: { id: "..." }
+        || currentUser?._id    // prop: { _id: "..." }
+        || (() => {            // fallback: parse localStorage directly
+            try {
+                const u = JSON.parse(localStorage.getItem('user') || '{}');
+                return u.id || u._id || null;
+            } catch { return null; }
+        })();
+
+    const getUserType = () =>
+        currentUser?.userType
+        || currentUser?.role
+        || (() => {
+            try {
+                const u = JSON.parse(localStorage.getItem('user') || '{}');
+                return u.userType || u.role || null;
+            } catch { return null; }
+        })();
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Build conversation history for API context (exclude welcome message)
     const buildHistory = () =>
         aiMessages
             .filter(m => m.id !== 'welcome')
@@ -67,7 +94,13 @@ const AIAssistantTab = ({ currentUser, style }) => {
         setIsAiLoading(true);
 
         try {
-            const res = await aiAssistantAPI.chat(content, buildHistory());
+            const userId = getUserId();
+            const userType = getUserType();
+
+            // ↓ THE FIX: pass userId + userType so the backend can
+            //   inject the user's identity into tool calls (e.g. job recommendations)
+            const res = await aiAssistantAPI.chat(content, buildHistory(), userId, userType);
+
             const reply = res.data?.data?.reply || 'Sorry, I could not generate a response. Please try again.';
             setAiMessages(prev => [
                 ...prev,
@@ -98,13 +131,41 @@ const AIAssistantTab = ({ currentUser, style }) => {
         }
     };
 
-    // Render **bold** and newlines in AI responses
+    // Render AI response text:
+    //   **bold**, newlines, and [label](url) markdown links
     const renderContent = (text) => {
-        const parts = text.split(/(\*\*[^*]+\*\*)/g);
+        // Split on bold markers and markdown links
+        const parts = text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
         return parts.map((part, i) => {
+            // Bold
             if (part.startsWith('**') && part.endsWith('**')) {
                 return <strong key={i}>{part.slice(2, -2)}</strong>;
             }
+            // Markdown link: [label](url)
+            const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            if (linkMatch) {
+                const label = linkMatch[1];
+                const url = linkMatch[2];
+                const isInternal = url.startsWith('/');
+                return (
+                    <a
+                        key={i}
+                        href={isInternal ? undefined : url}
+                        onClick={isInternal ? (e) => { e.preventDefault(); navigate(url); } : undefined}
+                        target={isInternal ? undefined : '_blank'}
+                        rel={isInternal ? undefined : 'noopener noreferrer'}
+                        style={{
+                            color: '#a78bfa',
+                            fontWeight: 600,
+                            textDecoration: 'underline',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {label}
+                    </a>
+                );
+            }
+            // Plain text with newlines
             return part.split('\n').map((line, j) => (
                 <React.Fragment key={`${i}-${j}`}>
                     {line}
@@ -119,7 +180,6 @@ const AIAssistantTab = ({ currentUser, style }) => {
 
     return (
         <div className="ai-assistant-view" style={style}>
-
 
             {/* Message list */}
             <div className="ai-messages-container">
