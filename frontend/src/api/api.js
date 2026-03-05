@@ -53,7 +53,9 @@ export const jobAPI = {
   deleteJob: (id) => API.delete(`/jobs/${id}`),
   applyToJob: (id, applicationData) => API.post(`/jobs/${id}/apply`, applicationData),
   updateApplicationStatus: (jobId, applicationId, statusData) =>
-    API.put(`/jobs/${jobId}/applications/${applicationId}`, statusData)
+    API.put(`/jobs/${jobId}/applications/${applicationId}`, statusData),
+  // Push a proposal ID into the job's proposals[] array
+  addProposalToJob: (jobId, proposalId) => API.post(`/jobs/${jobId}/proposals`, { proposalId }),
 };
 
 // Order endpoints
@@ -219,6 +221,30 @@ export const uploadAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+};
+
+// Proposal endpoints
+export const proposalAPI = {
+  // Submit a new proposal (freelancer)
+  createProposal: (proposalData) => API.post('/proposals', proposalData),
+
+  // Get all proposals for a specific job (client viewing applicants)
+  getProposalsByJob: (jobId) => API.get(`/proposals/job/${jobId}`),
+
+  // Get all proposals submitted by a freelancer
+  getProposalsByFreelancer: (freelancerId) => API.get(`/proposals/freelancer/${freelancerId}`),
+
+  // Get all proposals received by a client
+  getProposalsByClient: (clientId) => API.get(`/proposals/client/${clientId}`),
+
+  // Get a single proposal by ID
+  getProposal: (id) => API.get(`/proposals/${id}`),
+
+  // Update proposal status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+  updateProposalStatus: (id, status) => API.put(`/proposals/${id}/status`, { status }),
+
+  // Delete / withdraw a proposal
+  deleteProposal: (id) => API.delete(`/proposals/${id}`),
 };
 
 export const aiAssistantAPI = {

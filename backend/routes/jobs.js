@@ -13,5 +13,6 @@ router.put('/:id', jobController.updateJob);
 router.delete('/:id', jobController.deleteJob);
 router.post('/:id/apply', jobController.applyToJob);
 router.put('/:jobId/applications/:applicationId', jobController.updateApplicationStatus);
+router.post('/:id/proposals', jobController.addProposalToJob);
 
 module.exports = router;

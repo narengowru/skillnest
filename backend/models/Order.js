@@ -86,7 +86,7 @@ const orderSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   category: { type: String, required: true },
-  
+
   // Financial details
   amount: { type: Number, required: true },
   currency: { type: String, default: 'USD' },
@@ -98,23 +98,23 @@ const orderSchema = new mongoose.Schema({
     enum: Object.values(PAYMENT_STATUS),
     default: PAYMENT_STATUS.PENDING
   },
-  
+
   // Order status and timeline
   status: {
     type: String,
     enum: Object.values(ORDER_STATUS),
-    default: ORDER_STATUS.CREATED
+    default: ORDER_STATUS.PAYMENT_PENDING
   },
   startDate: { type: Date, default: Date.now },
   dueDate: { type: Date, required: true },
   completedDate: { type: Date },
-  
+
   // Project management
   milestones: [milestoneSchema],
   deliverables: [String],
   revisions: [revisionSchema],
   maxRevisions: { type: Number, default: 3 },
-  
+
   // Communication and documents
   messages: [{
     sender: {
@@ -131,7 +131,7 @@ const orderSchema = new mongoose.Schema({
     isRead: { type: Boolean, default: false }
   }],
   attachments: [String],
-  
+
   // Rating and review
   clientReview: {
     rating: { type: Number, min: 1, max: 5 },
@@ -143,7 +143,7 @@ const orderSchema = new mongoose.Schema({
     comment: { type: String },
     createdAt: { type: Date }
   },
-  
+
   // Dispute management
   disputes: [{
     raisedBy: {
@@ -165,7 +165,7 @@ const orderSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     resolvedAt: { type: Date }
   }],
-  
+
   // Cancellation information
   cancellationInfo: {
     canceledBy: {
@@ -180,10 +180,10 @@ const orderSchema = new mongoose.Schema({
     refundAmount: { type: Number },
     canceledAt: { type: Date }
   },
-  
+
   // Terms and conditions
   terms: { type: String },
-  
+
   // Admin metadata
   isArchived: { type: Boolean, default: false },
   notes: { type: String }
@@ -199,7 +199,7 @@ orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: 1 });
 
 // Virtual to get the project duration in days
-orderSchema.virtual('projectDuration').get(function() {
+orderSchema.virtual('projectDuration').get(function () {
   if (!this.dueDate) return null;
   const startDate = this.startDate || this.createdAt;
   const millisPerDay = 1000 * 60 * 60 * 24;
@@ -207,38 +207,38 @@ orderSchema.virtual('projectDuration').get(function() {
 });
 
 // Method to calculate the milestone progress percentage
-orderSchema.methods.calculateProgress = function() {
+orderSchema.methods.calculateProgress = function () {
   if (!this.milestones || this.milestones.length === 0) return 0;
-  
+
   const completedMilestones = this.milestones.filter(
     milestone => milestone.status === 'approved'
   ).length;
-  
+
   return Math.round((completedMilestones / this.milestones.length) * 100);
 };
 
 // Method to check if the order is overdue
-orderSchema.methods.isOverdue = function() {
+orderSchema.methods.isOverdue = function () {
   if (!this.dueDate) return false;
   if (['completed', 'canceled', 'disputed'].includes(this.status)) return false;
-  
+
   return this.dueDate < new Date();
 };
 
 // Pre-save hook to generate order ID if not provided
-orderSchema.pre('save', function(next) {
+orderSchema.pre('save', function (next) {
   if (!this.orderId) {
     // Generate a unique order ID with ORD prefix and timestamp
     const timestamp = new Date().getTime().toString().slice(-8);
     const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     this.orderId = `ORD-${timestamp}-${random}`;
   }
-  
+
   // Calculate total amount if not set
   if (this.amount && !this.totalAmount) {
     this.totalAmount = this.amount + (this.serviceFee || 0);
   }
-  
+
   next();
 });
 

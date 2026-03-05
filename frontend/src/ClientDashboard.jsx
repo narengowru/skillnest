@@ -7,6 +7,7 @@ import './css/ClientDashboard.css';
 import { motion } from 'framer-motion';
 import ProjectsSection from './components/ProjectsSection';
 import ClientOrdersDashboard from './components/ClientOrdersDashboard';
+import ClientProposals from './components/ClientProposals';
 import ToastContainer from './components/ToastContainer';
 
 const ClientDashboard = () => {
@@ -152,7 +153,7 @@ const ClientDashboard = () => {
     setActiveSection(section);
     setActiveTab(section);
     // Only scroll for home-view sub-sections
-    if (section !== 'projects' && section !== 'orders') {
+    if (section !== 'projects' && section !== 'orders' && section !== 'proposals') {
       const element = document.getElementById(section);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
@@ -370,6 +371,9 @@ const ClientDashboard = () => {
           <li className={activeTab === 'orders' ? 'active' : ''}>
             <button onClick={() => handleMenuClick('orders')}>Orders</button>
           </li>
+          <li className={activeTab === 'proposals' ? 'active' : ''}>
+            <button onClick={() => handleMenuClick('proposals')}>Proposals</button>
+          </li>
           <li className={activeTab === 'reviews' ? 'active' : ''}>
             <button onClick={() => handleMenuClick('reviews')}>Reviews</button>
           </li>
@@ -397,8 +401,13 @@ const ClientDashboard = () => {
           />
         )}
 
+        {/* Proposals Tab — isolated view */}
+        {activeTab === 'proposals' && (
+          <ClientProposals client={client} />
+        )}
+
         {/* Home view: Overview + Reviews + Profile Settings */}
-        {activeTab !== 'projects' && activeTab !== 'orders' && (
+        {activeTab !== 'projects' && activeTab !== 'orders' && activeTab !== 'proposals' && (
           <>
             {/* Overview Section */}
             <motion.section

@@ -4,52 +4,64 @@ import { useNavigate } from 'react-router-dom';
 
 const formatDate = (dateString) => {
   try {
-    // Parse ISO date string (e.g., "2025-04-23T16:52:29.932Z")
     const date = new Date(dateString);
-    
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      return 'Invalid date';
-    }
-    
-    // Return formatted date string
-    return date.toDateString(); // Example: "Wed Apr 23 2025"
+    if (isNaN(date.getTime())) return 'Invalid date';
+    return date.toDateString();
   } catch (error) {
     return 'Invalid date';
   }
 };
 
-const FindJobCard = ({ 
+const FindJobCard = ({
   id,
-  image, 
-  category, 
-  postedDate,  // ISO format date string: "2025-04-23T16:52:29.932Z"
-  description
+  image,
+  category,
+  title,
+  postedDate,
+  description,
+  onApply   // if provided, shows the Apply Now button (freelancers only)
 }) => {
   const navigate = useNavigate();
 
-  const handleClick = () => {
+  const handleCardClick = () => {
     navigate(`/details/${id}`);
   };
 
+  const handleApplyClick = (e) => {
+    e.stopPropagation(); // prevent navigating to job details
+    if (onApply) onApply();
+  };
+
   return (
-    <div className="find-job-card" onClick={handleClick} style={{ cursor: 'pointer' }}>
+    <div className="find-job-card" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
       <div className="find-job-card-image-container">
-        <img 
-          src={image} 
-          alt="Job Category" 
+        <img
+          src={image}
+          alt="Job Category"
           className="find-job-card-image"
         />
       </div>
       <div className="find-job-card-category">
         {category}
       </div>
+      {title && (
+        <div className="find-job-card-title">
+          {title}
+        </div>
+      )}
       <div className="find-job-card-date">
         Posted on: {formatDate(postedDate)}
       </div>
       <div className="find-job-card-description">
         {description}
       </div>
+      {onApply && (
+        <div className="find-job-card-footer">
+          <button className="apply-now-btn" onClick={handleApplyClick}>
+            ✉ Apply Now
+          </button>
+        </div>
+      )}
     </div>
   );
 };

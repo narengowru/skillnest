@@ -13,12 +13,12 @@ exports.getAllJobs = async (req, res) => {
 // Get a specific job
 exports.getJobById = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id);
-    
+    const job = await Job.findById(req.params.id).populate('proposals');
+
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
     }
-    
+
     res.status(200).json(job);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -44,11 +44,11 @@ exports.updateJob = async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     );
-    
+
     if (!updatedJob) {
       return res.status(404).json({ message: 'Job not found' });
     }
-    
+
     res.status(200).json(updatedJob);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -59,11 +59,11 @@ exports.updateJob = async (req, res) => {
 exports.deleteJob = async (req, res) => {
   try {
     const job = await Job.findByIdAndDelete(req.params.id);
-    
+
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
     }
-    
+
     res.status(200).json({ message: 'Job deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -74,30 +74,30 @@ exports.deleteJob = async (req, res) => {
 exports.applyToJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
-    
+
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
     }
-    
+
     const { freelancerId, coverLetter, proposedRate } = req.body;
-    
+
     // Check if freelancer already applied
     const alreadyApplied = job.applications.some(
       app => app.freelancerId.toString() === freelancerId
     );
-    
+
     if (alreadyApplied) {
       return res.status(400).json({ message: 'You have already applied to this job' });
     }
-    
+
     job.applications.push({
       freelancerId,
       coverLetter,
       proposedRate
     });
-    
+
     await job.save();
-    
+
     res.status(201).json({
       message: 'Application submitted successfully',
       job
@@ -112,27 +112,27 @@ exports.updateApplicationStatus = async (req, res) => {
   try {
     const { jobId, applicationId } = req.params;
     const { status } = req.body;
-    
+
     const job = await Job.findById(jobId);
-    
+
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
     }
-    
+
     const applicationIndex = job.applications.findIndex(
       app => app._id.toString() === applicationId
     );
-    
+
     if (applicationIndex === -1) {
       return res.status(404).json({ message: 'Application not found' });
     }
-    
+
     job.applications[applicationIndex].status = status;
-    
+
     // If accepting this application, update job status
     if (status === 'accepted') {
       job.status = 'in-progress';
-      
+
       // Reject all other applications
       job.applications.forEach((app, index) => {
         if (index !== applicationIndex && app.status === 'pending') {
@@ -140,13 +140,44 @@ exports.updateApplicationStatus = async (req, res) => {
         }
       });
     }
-    
+
     await job.save();
-    
+
     res.status(200).json({
       message: 'Application status updated successfully',
       job
     });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Add a proposal reference to a job's proposals array
+exports.addProposalToJob = async (req, res) => {
+  try {
+    const { proposalId } = req.body;
+
+    if (!proposalId) {
+      return res.status(400).json({ message: 'proposalId is required' });
+    }
+
+    const job = await Job.findById(req.params.id);
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    // Guard against duplicates
+    const alreadyAdded = job.proposals.some(
+      (p) => p.toString() === proposalId.toString()
+    );
+    if (alreadyAdded) {
+      return res.status(200).json({ message: 'Proposal already linked to job', job });
+    }
+
+    job.proposals.push(proposalId);
+    await job.save();
+
+    res.status(200).json({ message: 'Proposal added to job successfully', job });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
