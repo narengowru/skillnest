@@ -111,6 +111,10 @@ const freelancerSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Order'
   }],
+  invitations: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Invitation'
+  }],
   // Track job applications for recommendation system
   applications: [{
     jobId: {

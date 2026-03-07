@@ -5,6 +5,7 @@ import { FaLinkedin, FaGithub, FaGlobe, FaEdit, FaCamera, FaTrash, FaPlus, FaSta
 import { freelancerAPI, jobAPI, uploadAPI } from './api/api';
 import './css/Profile.css';
 import FreelancerOrdersDashboard from './components/FreelancerOrdersDashboard';
+import FreelancerInvitations from './components/FreelancerInvitations';
 import { useNavigate } from 'react-router-dom';
 import ResumeParserModal from './components/ResumeParserModal';
 
@@ -920,6 +921,12 @@ const Profile = ({ freelancerId }) => {
           Orders
         </button>
         <button
+          className={activeTab === 'invitations' ? 'active' : ''}
+          onClick={() => setActiveTab('invitations')}
+        >
+          Invitations
+        </button>
+        <button
           className={activeTab === 'bank' ? 'active' : ''}
           onClick={() => setActiveTab('bank')}
         >
@@ -1340,7 +1347,11 @@ const Profile = ({ freelancerId }) => {
           </div>
         )}
         {activeTab === "orders" && (
-          <FreelancerOrdersDashboard freelancer={freelancer} />
+          <FreelancerOrdersDashboard key={`orders-${activeTab}`} freelancer={freelancer} />
+        )}
+
+        {activeTab === "invitations" && (
+          <FreelancerInvitations key={`invitations-${activeTab}`} freelancer={freelancer} />
         )}
 
         {activeTab === 'bank' && (

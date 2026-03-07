@@ -266,4 +266,16 @@ export const aiAssistantAPI = {
     API.get('/ai-assistant/suggestions', { params: { userType } })
 };
 
+// ── Invitation API ───────────────────────────────────────────────────────────
+export const invitationAPI = {
+  sendInvitation: (data) => API.post('/invitations', data),
+  getByClient: (clientId, status) =>
+    API.get(`/invitations/client/${clientId}`, { params: status ? { status } : {} }),
+  getByFreelancer: (freelancerId, status) =>
+    API.get(`/invitations/freelancer/${freelancerId}`, { params: status ? { status } : {} }),
+  getById: (id) => API.get(`/invitations/${id}`),
+  updateStatus: (id, status) => API.put(`/invitations/${id}/status`, { status }),
+  deleteInvitation: (id) => API.delete(`/invitations/${id}`),
+};
+
 export default API;

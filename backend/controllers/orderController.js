@@ -56,9 +56,11 @@ exports.createOrder = async (req, res) => {
       messages
     } = req.body;
 
-    // Check if job exists
-    const job = await Job.findById(jobId) || await Freelancer.findById(jobId);
-    if (!job) {
+    // Check if job exists (optional — invitation-based orders may not have a jobId)
+    const job = jobId
+      ? (await Job.findById(jobId) || await Freelancer.findById(jobId))
+      : null;
+    if (jobId && !job) {
       return res.status(404).json({ message: 'Job not found' });
     }
 

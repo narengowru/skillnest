@@ -223,38 +223,50 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
   const [reviewedOrders, setReviewedOrders] = useState([]);
+  const [activeStatusTab, setActiveStatusTab] = useState('payment-pending');
 
   useEffect(() => {
     const fetchOrders = async () => {
-      if (freelancer && freelancer.orders && freelancer.orders.length > 0) {
-        try {
-          const detailedOrders = await Promise.all(
-            freelancer.orders.map(async (orderId) => {
-              try {
-                const response = await orderAPI.getOrder(orderId._id);
-                return response.data;
-              } catch (err) {
-                console.error(`Failed to fetch order ${orderId}:`, err);
-                return null;
-              }
-            })
-          );
+      if (!freelancer?._id) { setLoading(false); return; }
+      setLoading(true);
+      try {
+        // Re-fetch freelancer to get the latest orders[] array (avoids stale prop)
+        const { freelancerAPI } = await import('../api/api');
+        const freshFreelancer = await freelancerAPI.getFreelancer(freelancer._id);
+        const orderIds = freshFreelancer.data?.orders || [];
 
-          setOrders(detailedOrders.filter(order => order !== null));
-
-          // Load reviewed orders from localStorage
-          const storedReviewedOrders = JSON.parse(localStorage.getItem('reviewedOrders') || '[]');
-          setReviewedOrders(storedReviewedOrders);
-        } catch (err) {
-          setError('Failed to fetch orders. Please try again later.');
-          console.error('Error fetching orders:', err);
+        if (orderIds.length === 0) {
+          setOrders([]);
+          setLoading(false);
+          return;
         }
+
+        const detailedOrders = await Promise.all(
+          orderIds.map(async (orderId) => {
+            const id = typeof orderId === 'object' ? orderId._id : orderId;
+            try {
+              const res = await orderAPI.getOrder(id);
+              return res.data;
+            } catch (err) {
+              console.error(`Failed to fetch order ${id}:`, err);
+              return null;
+            }
+          })
+        );
+
+        setOrders(detailedOrders.filter(Boolean));
+        const storedReviewedOrders = JSON.parse(localStorage.getItem('reviewedOrders') || '[]');
+        setReviewedOrders(storedReviewedOrders);
+      } catch (err) {
+        setError('Failed to fetch orders. Please try again later.');
+        console.error('Error fetching orders:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchOrders();
-  }, [freelancer]);
+  }, [freelancer?._id]);
 
   const handleAcceptOrder = async (orderId) => {
     try {
@@ -403,7 +415,19 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
     return <div className="orders-loading">Loading orders...</div>;
   }
 
-  if (!freelancer || !orders || orders.length === 0) {
+  // Tab config — one entry per relevant status (no 'All' tab, 'created' excluded)
+  const STATUS_TABS = [
+    { key: 'payment-pending', label: '💳 Awaiting Payment', color: '#f59e0b', bg: '#fff8e1', border: '#fde68a' },
+    { key: 'in-progress', label: '⚡ In Progress', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
+    { key: 'under-review', label: '🔍 Under Review', color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe' },
+    { key: 'completed', label: '✅ Completed', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
+    { key: 'canceled', label: '✕ Cancelled', color: '#ef4444', bg: '#fef2f2', border: '#fecaca' },
+    { key: 'disputed', label: '⚠️ Disputed', color: '#dc2626', bg: '#fff1f2', border: '#fca5a5' },
+  ];
+
+  const filteredOrders = orders.filter(o => o.status === activeStatusTab);
+
+  if (!freelancer) {
     return <div className="orders-empty">No orders found.</div>;
   }
 
@@ -414,85 +438,132 @@ const FreelancerOrdersDashboard = ({ freelancer }) => {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
-      <div className="orders-grid">
-        {orders.map((order) => (
-          <div className="order-card" key={order._id}>
-            <div className="order-header">
-              <h3>{order.title}</h3>
-              <StatusBadge status={order.status} />
-            </div>
-
-            <div className="order-details">
-              <p><strong>Order ID:</strong> {order.orderId}</p>
-              <p><strong>Amount:</strong> {order.currency} {order.totalAmount}</p>
-              <p><strong>Due Date:</strong> {formatDate(order.dueDate)}</p>
-
-              {order.clientId && (order.status === ORDER_STATUS.IN_PROGRESS || order.status === ORDER_STATUS.PAYMENT_PENDING) && (
-                <div className="freelancer-info">
-                  <p><strong>Client:</strong> {order.clientId.companyName || 'N/A'}</p>
-                  <button
-                    className="chat-btn"
-                    onClick={() => handleOpenChat(order.clientId)}
-                  >
-                    <MessageCircle /> Chat
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="order-actions">
-              {(order.status === ORDER_STATUS.CREATED && order.whoPlaced !== 'freelancer') && (
-                <>
-                  <button
-                    className="accept-btn"
-                    onClick={() => handleAcceptOrder(order._id)}
-                  >
-                    <FaCheck /> Accept
-                  </button>
-                  <button
-                    className="reject-btn"
-                    onClick={() => handleRejectOrder(order._id)}
-                  >
-                    <FaTimes /> Reject
-                  </button>
-                </>
-              )}
-
-              {order.status === ORDER_STATUS.PAYMENT_PENDING && (
-                <div className="payment-pending-notice">
-                  <p>Waiting for client payment to start the project</p>
-                </div>
-              )}
-
-              {order.status === ORDER_STATUS.IN_PROGRESS && (
-                <button
-                  className="complete-btn"
-                  onClick={() => handleCompleteOrder(order._id)}
-                >
-                  <FaCheck /> Mark as Completed
-                </button>
-              )}
-
-              {order.status === ORDER_STATUS.COMPLETED && order.clientId && (
-                <button
-                  className={`review-btn ${isOrderReviewed(order._id) ? 'reviewed' : ''}`}
-                  onClick={() => openReviewModal(order)}
-                  disabled={isOrderReviewed(order._id)}
-                >
-                  <FaStar /> {isOrderReviewed(order._id) ? 'Client Reviewed' : 'Review Client'}
-                </button>
-              )}
-
-              <button
-                className="view-btn"
-                onClick={() => handleViewDetails(order)}
-              >
-                <FaEye /> View Details
-              </button>
-            </div>
-          </div>
-        ))}
+      {/* ── Status Tabs ── */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '22px' }}>
+        {STATUS_TABS.map(tab => {
+          const count = orders.filter(o => o.status === tab.key).length;
+          const active = activeStatusTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveStatusTab(tab.key)}
+              style={{
+                padding: '8px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer',
+                background: active ? tab.bg : '#f3f4f6',
+                color: active ? tab.color : '#6b7280',
+                fontWeight: active ? '700' : '600', fontSize: '13px',
+                outline: active ? `1.5px solid ${tab.border}` : 'none',
+                boxShadow: active ? `0 2px 8px ${tab.border}` : 'none',
+                transition: 'all 0.15s',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}
+            >
+              {tab.label}
+              <span style={{
+                background: active ? tab.color : '#e5e7eb',
+                color: active ? '#fff' : '#6b7280',
+                borderRadius: '20px', padding: '1px 8px',
+                fontSize: '11px', fontWeight: '700',
+              }}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
+
+      {/* ── Orders grid or empty state ── */}
+      {filteredOrders.length === 0 ? (
+        <div style={{
+          border: '2px dashed #e5e7eb', borderRadius: '16px',
+          padding: '50px 20px', textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '40px', marginBottom: '10px' }}>📭</div>
+          <p style={{ color: '#6b7280', margin: 0, fontWeight: '600' }}>
+            No {STATUS_TABS.find(t => t.key === activeStatusTab)?.label.replace(/^[\S]+ /, '')} orders yet.
+          </p>
+        </div>
+      ) : (
+        <div className="orders-grid">
+          {filteredOrders.map((order) => (
+            <div className="order-card" key={order._id}>
+              <div className="order-header">
+                <h3>{order.title}</h3>
+                <StatusBadge status={order.status} />
+              </div>
+
+              <div className="order-details">
+                <p><strong>Order ID:</strong> {order.orderId}</p>
+                <p><strong>Amount:</strong> {order.currency} {order.totalAmount}</p>
+                <p><strong>Due Date:</strong> {formatDate(order.dueDate)}</p>
+
+                {order.clientId && (order.status === ORDER_STATUS.IN_PROGRESS || order.status === ORDER_STATUS.PAYMENT_PENDING) && (
+                  <div className="freelancer-info">
+                    <p><strong>Client:</strong> {order.clientId.companyName || 'N/A'}</p>
+                    <button
+                      className="chat-btn"
+                      onClick={() => handleOpenChat(order.clientId)}
+                    >
+                      <MessageCircle /> Chat
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="order-actions">
+                {(order.status === ORDER_STATUS.CREATED && order.whoPlaced !== 'freelancer') && (
+                  <>
+                    <button
+                      className="accept-btn"
+                      onClick={() => handleAcceptOrder(order._id)}
+                    >
+                      <FaCheck /> Accept
+                    </button>
+                    <button
+                      className="reject-btn"
+                      onClick={() => handleRejectOrder(order._id)}
+                    >
+                      <FaTimes /> Reject
+                    </button>
+                  </>
+                )}
+
+                {order.status === ORDER_STATUS.PAYMENT_PENDING && (
+                  <div className="payment-pending-notice">
+                    <p>Waiting for client payment to start the project</p>
+                  </div>
+                )}
+
+                {order.status === ORDER_STATUS.IN_PROGRESS && (
+                  <button
+                    className="complete-btn"
+                    onClick={() => handleCompleteOrder(order._id)}
+                  >
+                    <FaCheck /> Mark as Completed
+                  </button>
+                )}
+
+                {order.status === ORDER_STATUS.COMPLETED && order.clientId && (
+                  <button
+                    className={`review-btn ${isOrderReviewed(order._id) ? 'reviewed' : ''}`}
+                    onClick={() => openReviewModal(order)}
+                    disabled={isOrderReviewed(order._id)}
+                  >
+                    <FaStar /> {isOrderReviewed(order._id) ? 'Client Reviewed' : 'Review Client'}
+                  </button>
+                )}
+
+                <button
+                  className="view-btn"
+                  onClick={() => handleViewDetails(order)}
+                >
+                  <FaEye /> View Details
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {selectedOrder && (
         <OrderDetailsModal order={selectedOrder} onClose={closeModal} />

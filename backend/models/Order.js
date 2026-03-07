@@ -70,7 +70,7 @@ const orderSchema = new mongoose.Schema({
   jobId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Job',
-    required: true
+    default: null
   },
   clientId: {
     type: mongoose.Schema.Types.ObjectId,

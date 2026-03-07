@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Briefcase, Mail, MapPin, Calendar, ArrowRight, Heart, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Star, Briefcase, Mail, MapPin, Calendar, ArrowRight, Heart, Check, ChevronRight, ChevronLeft, X } from 'lucide-react';
 import './css/ViewProfile.css';
 import { useNavigate } from 'react-router-dom';
-import { freelancerAPI, clientAPI, orderAPI } from './api/api'; // Added orderAPI and clientAPI
+import { freelancerAPI, clientAPI, invitationAPI } from './api/api';
 
 const ViewProfile = () => {
   const [freelancer, setFreelancer] = useState(null);
@@ -13,12 +13,14 @@ const ViewProfile = () => {
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState('portfolio');
-  const [bookingStatus, setBookingStatus] = useState({ // eslint-disable-line no-unused-vars
-    isBooking: false,
-    success: false,
-    error: null,
-    orderId: null
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    projectTitle: '', description: '', budgetType: 'fixed',
+    budgetAmount: '', deadline: '', message: '',
   });
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const [inviteError, setInviteError] = useState(null);
+  const [inviteSent, setInviteSent] = useState(false);
   const [clientData, setClientData] = useState(null);
 
   useEffect(() => {
@@ -66,117 +68,46 @@ const ViewProfile = () => {
     }
   };
 
-  const handleBookNow = async () => {
-    // Check if freelancer data is available
-    if (!freelancer) {
-      setShowToast(true);
-      setBookingStatus({
-        isBooking: false,
-        success: false,
-        error: 'Freelancer data not available'
-      });
-      setTimeout(() => setShowToast(false), 3000);
-      return;
-    }
-
-    // Check if client is logged in
+  // Opens the Send Invitation modal
+  const handleBookNow = () => {
     if (!clientData || !clientData.email || !clientData.isLoggedIn) {
       navigate('/login');
-      setShowToast(true);
-      setBookingStatus({
-        isBooking: false,
-        success: false,
-        error: 'Please log in as a client to book this freelancer'
-      });
-      setTimeout(() => setShowToast(false), 3000);
       return;
     }
+    setInviteError(null);
+    setInviteSent(false);
+    setInviteForm({ projectTitle: '', description: '', budgetType: 'fixed', budgetAmount: '', deadline: '', message: '' });
+    setShowInviteModal(true);
+  };
 
+  const handleInviteChange = (e) => {
+    setInviteForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setInviteError(null);
+  };
+
+  const handleInviteSubmit = async (e) => {
+    e.preventDefault();
+    setInviteSubmitting(true);
+    setInviteError(null);
     try {
-      setBookingStatus({ isBooking: true, success: false, error: null });
-
-      // Get client ID from email
       const clientId = await getClientIdByEmail(clientData.email);
-      console.log('Client ID', clientId);
-      if (!clientId) {
-        throw new Error('Client account not found');
-      }
+      if (!clientId) throw new Error('Client account not found. Please log in again.');
 
-      // Calculate due date (30 days from now by default)
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 30);
-
-      // Create order data
-      const orderData = {
-        jobId: freelancer._id, // Using freelancer ID as job ID for simplicity
-        clientId: clientId,
-        whoPlaced: "client",
+      await invitationAPI.sendInvitation({
+        clientId,
         freelancerId: freelancer._id,
-        title: `Project with ${freelancer.name || 'Freelancer'}`,
-        description: `Collaboration with ${freelancer.name || 'Freelancer'} based on skills and profile match.`,
-        category: freelancer.skills && freelancer.skills.length > 0 ? freelancer.skills[0].name : 'General',
-        amount: parseFloat(freelancer.hourlyRate?.replace(/[^0-9.]/g, '') || 0) * 40, // Default to 40 hours
-        currency: 'USD',
-        serviceFee: parseFloat(freelancer.hourlyRate?.replace(/[^0-9.]/g, '') || 0) * 40 * 0.10, // 10% service fee
-        totalAmount: parseFloat(freelancer.hourlyRate?.replace(/[^0-9.]/g, '') || 0) * 40 * 1.10, // Including service fee
-        paymentMethod: 'Credit Card',
-        dueDate: dueDate.toISOString(),
-        deliverables: ['Project files', 'Documentation', 'Source code'],
-        milestones: [
-          {
-            title: 'Project Initiation',
-            description: 'Initial planning and setup phase',
-            amount: parseFloat(freelancer.hourlyRate?.replace(/[^0-9.]/g, '') || 0) * 10, // 25% of total
-            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week
-            deliverables: ['Project plan', 'Initial setup'],
-            status: 'pending'
-          },
-          {
-            title: 'Development Phase',
-            description: 'Main development work',
-            amount: parseFloat(freelancer.hourlyRate?.replace(/[^0-9.]/g, '') || 0) * 20, // 50% of total
-            dueDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(), // 3 weeks
-            deliverables: ['Working prototype', 'Progress report'],
-            status: 'pending'
-          },
-          {
-            title: 'Project Completion',
-            description: 'Final delivery and review',
-            amount: parseFloat(freelancer.hourlyRate?.replace(/[^0-9.]/g, '') || 0) * 10, // 25% of total
-            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 4 weeks
-            deliverables: ['Final deliverables', 'Documentation'],
-            status: 'pending'
-          }
-        ],
-        terms: 'Standard terms and conditions apply.'
-      };
-
-      // Create the order
-      const response = await orderAPI.createOrder(orderData);
-
-      setBookingStatus({
-        isBooking: false,
-        success: true,
-        error: null,
-        orderId: response.data.orderId
+        projectTitle: inviteForm.projectTitle,
+        description: inviteForm.description,
+        budgetType: inviteForm.budgetType,
+        budgetAmount: Number(inviteForm.budgetAmount),
+        deadline: new Date(inviteForm.deadline).toISOString(),
+        message: inviteForm.message,
       });
-
-      setShowToast(true);
-      setTimeout(() => {
-        setShowToast(false);
-      }, 3000);
-
+      setInviteSent(true);
     } catch (err) {
-      console.error('Error booking freelancer:', err);
-      setBookingStatus({
-        isBooking: false,
-        success: false,
-        error: err.message || 'Failed to create booking'
-      });
-      setShowToast(true);
-      setTimeout(() => {
-        setShowToast(false);
-      }, 3000);
+      setInviteError(err.response?.data?.message || err.message || 'Failed to send invitation.');
+    } finally {
+      setInviteSubmitting(false);
     }
   };
 
@@ -261,11 +192,197 @@ const ViewProfile = () => {
 
   return (
     <div className="view-profile-container">
+
+      {/* ── Send Invitation Modal ───────────────────────────────────────── */}
+      {showInviteModal && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowInviteModal(false); }}
+        >
+          <div style={{
+            background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '540px',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.25)', overflow: 'hidden',
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '22px 28px', borderBottom: '1px solid #f0f0f0',
+              background: 'linear-gradient(135deg, #6c63ff 0%, #48b8d0 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <div>
+                <h3 style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: '800' }}>
+                  Send Invitation
+                </h3>
+                <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>
+                  to <strong>{freelancer.name}</strong>
+                </p>
+              </div>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%',
+                  width: '34px', height: '34px', cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', color: '#fff'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '28px', maxHeight: '70vh', overflowY: 'auto' }}>
+              {inviteSent ? (
+                /* ── Success state ── */
+                <div style={{ textAlign: 'center', padding: '30px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ fontSize: '56px' }}>🎉</div>
+                  <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#111827' }}>
+                    Invitation Sent!
+                  </h3>
+                  <p style={{ margin: 0, color: '#6b7280', fontSize: '14px', maxWidth: '320px', lineHeight: '1.6' }}>
+                    Your invitation has been sent to <strong>{freelancer.name}</strong>.
+                    They'll be notified and can accept or decline from their profile.
+                  </p>
+                  <button
+                    onClick={() => setShowInviteModal(false)}
+                    style={{
+                      marginTop: '8px', padding: '10px 28px', borderRadius: '10px', border: 'none',
+                      background: 'linear-gradient(135deg,#6c63ff,#48b8d0)', color: '#fff',
+                      fontWeight: '700', fontSize: '14px', cursor: 'pointer',
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : (
+                /* ── Form ── */
+                <form onSubmit={handleInviteSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+
+                  {/* Project Title */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Project Title <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      name="projectTitle" value={inviteForm.projectTitle}
+                      onChange={handleInviteChange} required
+                      placeholder="e.g. E-commerce Website Redesign"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Project Description <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <textarea
+                      name="description" value={inviteForm.description}
+                      onChange={handleInviteChange} required rows={4}
+                      placeholder="Describe what you need done, deliverables, and any special requirements…"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #e5e7eb', fontSize: '14px', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  {/* Budget Type + Amount */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Budget Type <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <select
+                        name="budgetType" value={inviteForm.budgetType}
+                        onChange={handleInviteChange} required
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', background: '#fff', boxSizing: 'border-box' }}
+                      >
+                        <option value="fixed">Fixed Price</option>
+                        <option value="hourly">Hourly Rate</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Budget Amount ($) <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        type="number" name="budgetAmount" value={inviteForm.budgetAmount}
+                        onChange={handleInviteChange} required min="1"
+                        placeholder="e.g. 500"
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Deadline */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Deadline <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="date" name="deadline" value={inviteForm.deadline}
+                      onChange={handleInviteChange} required
+                      min={new Date().toISOString().split('T')[0]}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  {/* Optional Message */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Personal Message <span style={{ color: '#9ca3af', fontWeight: '400', textTransform: 'none' }}>(optional)</span>
+                    </label>
+                    <textarea
+                      name="message" value={inviteForm.message}
+                      onChange={handleInviteChange} rows={3}
+                      placeholder="Add a personal note to the freelancer…"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #e5e7eb', fontSize: '14px', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  {/* Error */}
+                  {inviteError && (
+                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: '10px', padding: '10px 14px', fontSize: '13px' }}>
+                      ⚠️ {inviteError}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '4px' }}>
+                    <button
+                      type="button" onClick={() => setShowInviteModal(false)}
+                      disabled={inviteSubmitting}
+                      style={{ padding: '10px 22px', borderRadius: '10px', border: '1.5px solid #e5e7eb', background: '#fff', color: '#374151', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit" disabled={inviteSubmitting}
+                      style={{
+                        padding: '10px 28px', borderRadius: '10px', border: 'none',
+                        background: inviteSubmitting ? '#c4b5fd' : 'linear-gradient(135deg,#6c63ff,#48b8d0)',
+                        color: '#fff', fontWeight: '700', fontSize: '14px', cursor: inviteSubmitting ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 4px 14px rgba(108,99,255,0.35)',
+                      }}
+                    >
+                      {inviteSubmitting ? 'Sending…' : '✉️ Send Invitation'}
+                    </button>
+                  </div>
+
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast notification */}
       {showToast && (
         <div className="toast-notification success">
           <Check size={20} />
-          <span>Booking request sent successfully! We'll notify you when {freelancer.name.split(' ')[0]} confirms.</span>
+          <span>Invitation sent! {freelancer.name.split(' ')[0]} will be notified.</span>
         </div>
       )}
 
