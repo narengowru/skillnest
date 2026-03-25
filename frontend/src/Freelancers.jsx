@@ -240,11 +240,15 @@ const Freelancers = () => {
                       ))}
                     </div>
                   </>
-                ) : clientProfile ? (
-                  <div className="fl-banner fl-banner--build">
-                    <strong>📝 Building your recommendations:</strong> Post jobs with skill requirements to get AI-powered freelancer suggestions tailored to your needs!
-                  </div>
-                ) : null}
+                ) : (
+                  /* No recommendations yet — nudge client to post a job */
+                  !loadingRecommendations && (
+                    <div className="fl-banner fl-banner--build">
+                      📝 <strong>Building your recommendations:</strong> Post jobs with skill
+                      requirements to get AI-powered freelancer suggestions tailored to your needs!
+                    </div>
+                  )
+                )}
               </div>
             )}
 
