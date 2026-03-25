@@ -9,7 +9,7 @@ const ViewProfile = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [error, setError] = useState(null);
-  const [showToast, setShowToast] = useState(false);
+  const [showToast] = useState(false);
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState('portfolio');

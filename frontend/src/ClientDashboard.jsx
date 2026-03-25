@@ -15,7 +15,6 @@ const ClientDashboard = () => {
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeSection, setActiveSection] = useState('overview');
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedSections, setExpandedSections] = useState({
     profile: true,
@@ -150,7 +149,6 @@ const ClientDashboard = () => {
   };
 
   const handleMenuClick = (section) => {
-    setActiveSection(section);
     setActiveTab(section);
     // Only scroll for home-view sub-sections
     if (section !== 'projects' && section !== 'orders' && section !== 'proposals') {

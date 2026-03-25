@@ -389,9 +389,9 @@ const ClientProposals = ({ client }) => {
         } finally {
             setLoading(false);
         }
-    }, [client?._id, refreshKey]);
+    }, [client?._id]);
 
-    useEffect(() => { fetchAll(); }, [fetchAll]);
+    useEffect(() => { fetchAll(); }, [fetchAll, refreshKey]);
 
     const handleRefresh = () => setRefreshKey((k) => k + 1);
 

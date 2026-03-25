@@ -147,13 +147,29 @@ const AIAssistantTab = ({ currentUser, style }) => {
                 const label = linkMatch[1];
                 const url = linkMatch[2];
                 const isInternal = url.startsWith('/');
-                return (
+                return isInternal ? (
+                    <button
+                        key={i}
+                        onClick={() => navigate(url)}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            color: '#a78bfa',
+                            fontWeight: 600,
+                            textDecoration: 'underline',
+                            cursor: 'pointer',
+                            font: 'inherit',
+                        }}
+                    >
+                        {label}
+                    </button>
+                ) : (
                     <a
                         key={i}
-                        href={isInternal ? undefined : url}
-                        onClick={isInternal ? (e) => { e.preventDefault(); navigate(url); } : undefined}
-                        target={isInternal ? undefined : '_blank'}
-                        rel={isInternal ? undefined : 'noopener noreferrer'}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         style={{
                             color: '#a78bfa',
                             fontWeight: 600,
