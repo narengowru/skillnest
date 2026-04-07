@@ -279,3 +279,15 @@ export const invitationAPI = {
 };
 
 export default API;
+
+// OTP endpoints
+export const otpAPI = {
+  sendOTP: (email, userType) => API.post('/otp/send', { email, userType }),
+  verifyOTP: (email, otp) => API.post('/otp/verify', { email, otp }),
+};
+
+// AI Proposal Generator
+export const generateProposalAPI = {
+  generate: (freelancerId, project) =>
+    API.post('/generate-proposal', { freelancerId, project }),
+};

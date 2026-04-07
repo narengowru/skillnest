@@ -3,8 +3,10 @@ import { ChevronRight, ChevronLeft, Plus, X, Upload, Check } from 'lucide-react'
 import './css/PostProject.css';
 import { jobAPI, uploadAPI } from './api/api';
 import { clientAPI } from './api/api';
+import { useNavigate } from 'react-router-dom';
 
 const PostProject = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [newSkill, setNewSkill] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -151,6 +153,7 @@ const PostProject = () => {
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submission on Enter
       handleSkillAdd();
     }
   };
@@ -195,10 +198,10 @@ const PostProject = () => {
       setIsSubmitting(false);
       setSubmitSuccess(true);
 
+      // Redirect to /profile and open the Projects tab
       setTimeout(() => {
-        setSubmitSuccess(false);
-        // Optional: Redirect or reset form after success
-      }, 3000);
+        navigate('/profile', { state: { tab: 'projects' } });
+      }, 1200);
     } catch (error) {
       console.error("Error submitting project:", error);
       setIsSubmitting(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './css/Login.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { freelancerAPI, clientAPI } from './api/api';
+import { freelancerAPI, clientAPI, otpAPI } from './api/api';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from './components/UserContext';
 import { useContext } from 'react';
@@ -77,6 +77,151 @@ const additionalStyles = `
     box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
     transition: all 0.3s ease;
   }
+
+  /* OTP Step Styles */
+  .otp-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .otp-icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, #6c63ff, #3ecfcf);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(108, 99, 255, 0.3);
+  }
+
+  .otp-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 8px;
+  }
+
+  .otp-subtitle {
+    font-size: 0.88rem;
+    color: #666;
+    text-align: center;
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+
+  .otp-subtitle span {
+    color: #6c63ff;
+    font-weight: 600;
+  }
+
+  .otp-inputs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .otp-input-box {
+    width: 48px;
+    height: 56px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    background: #fafafa;
+    transition: all 0.2s ease;
+    outline: none;
+    caret-color: #6c63ff;
+  }
+
+  .otp-input-box:focus {
+    border-color: #6c63ff;
+    background: #f0f0ff;
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
+  }
+
+  .otp-input-box.filled {
+    border-color: #6c63ff;
+    background: #f0f0ff;
+  }
+
+  .otp-verify-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #6c63ff, #3ecfcf);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+  }
+
+  .otp-verify-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(108, 99, 255, 0.35);
+  }
+
+  .otp-verify-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .otp-resend {
+    font-size: 0.85rem;
+    color: #888;
+    text-align: center;
+  }
+
+  .otp-resend button {
+    background: none;
+    border: none;
+    color: #6c63ff;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+    margin-left: 4px;
+    transition: opacity 0.2s;
+  }
+
+  .otp-resend button:disabled {
+    color: #aaa;
+    cursor: default;
+  }
+
+  .otp-back-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 12px;
+    padding: 4px 0;
+    transition: color 0.2s;
+  }
+
+  .otp-back-btn:hover {
+    color: #6c63ff;
+  }
+
+  .otp-timer {
+    color: #e53935;
+    font-size: 0.8rem;
+    margin-top: 6px;
+  }
 `;
 
 const Login = () => {
@@ -98,6 +243,14 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [emailValid, setEmailValid] = useState(false);
+
+  // OTP state
+  const [otpStep, setOtpStep] = useState(false);       // true = show OTP screen
+  const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
+  const [otpError, setOtpError] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);   // countdown seconds
+  const [pendingFormData, setPendingFormData] = useState(null); // store form data until OTP verified
 
   const studentDomains = ['.edu', '.edu.in', '.ac.in', '.ac.uk', '.edu.au', '.edu.ca'];
 
@@ -206,6 +359,139 @@ const Login = () => {
     }, 3000);
   };
 
+  // Start resend countdown (60s)
+  const startResendTimer = () => {
+    setResendTimer(60);
+    const interval = setInterval(() => {
+      setResendTimer(prev => {
+        if (prev <= 1) { clearInterval(interval); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Handle individual OTP box input
+  const handleOtpChange = (index, value) => {
+    if (!/^\d?$/.test(value)) return; // digits only
+    const updated = [...otpValues];
+    updated[index] = value;
+    setOtpValues(updated);
+    setOtpError('');
+    // Auto-focus next box
+    if (value && index < 5) {
+      document.getElementById(`otp-box-${index + 1}`)?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otpValues[index] && index > 0) {
+      document.getElementById(`otp-box-${index - 1}`)?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const updated = [...otpValues];
+    pasted.split('').forEach((ch, i) => { if (i < 6) updated[i] = ch; });
+    setOtpValues(updated);
+    const nextEmpty = updated.findIndex(v => !v);
+    document.getElementById(`otp-box-${nextEmpty === -1 ? 5 : nextEmpty}`)?.focus();
+  };
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0 || !pendingFormData) return;
+    try {
+      setOtpValues(['', '', '', '', '', '']);
+      setOtpError('');
+      await otpAPI.sendOTP(pendingFormData.email, pendingFormData.userType);
+      startResendTimer();
+      showToastMessage('A new OTP has been sent to your email!', 'success');
+    } catch {
+      showToastMessage('Failed to resend OTP. Please try again.', 'error');
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    const otpCode = otpValues.join('');
+    if (otpCode.length < 6) {
+      setOtpError('Please enter the complete 6-digit OTP.');
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      await otpAPI.verifyOTP(pendingFormData.email, otpCode);
+      // OTP verified — now do actual registration
+      await performRegistration(pendingFormData);
+    } catch (error) {
+      setOtpError(error.response?.data?.message || 'Invalid OTP. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const performRegistration = async (data) => {
+    const fullPhoneNumber = data.phoneNumber ? data.countryCode + data.phoneNumber : '';
+    try {
+      if (data.userType === 'freelancer') {
+        const response = await freelancerAPI.register({
+          name: data.name,
+          email: data.email,
+          phone: fullPhoneNumber,
+          password: data.password,
+          tagline: 'Professional Freelancer',
+          bio: 'New to the platform',
+          profilePhoto: 'https://i.ibb.co/N6GPXKSt/blank.jpg',
+          hourlyRate: '0',
+          jobsCompleted: 0,
+          location: 'Remote',
+          languages: ['English']
+        });
+        localStorage.setItem('token', response.data.token);
+        const userData = {
+          id: response.data.freelancer?.id,
+          name: response.data.freelancer?.name || data.name,
+          email: response.data.freelancer?.email || data.email,
+          userType: 'freelancer',
+          isLoggedIn: true
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        showToastMessage('✅ Email verified! Welcome to the Freelancer community!');
+        localStorage.setItem('newRegistration', 'true');
+        setTimeout(() => navigate('/profile'), 1500);
+      } else {
+        const response = await clientAPI.register({
+          email: data.email,
+          password: data.password,
+          companyName: data.companyName,
+          phone: fullPhoneNumber,
+          location: { country: 'Remote', city: '' },
+          verified: false,
+          profilePicture: 'https://i.ibb.co/N6GPXKSt/blank.jpg'
+        });
+        localStorage.setItem('token', response.data.token);
+        const userData = {
+          id: response.data.client?.id,
+          email: data.email,
+          companyName: data.companyName,
+          userType: 'client',
+          isLoggedIn: true
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        showToastMessage('✅ Email verified! Welcome to the Client community!');
+        setTimeout(() => navigate('/client-dashboard'), 1500);
+      }
+    } catch (error) {
+      setOtpStep(false);
+      let errorMessage = 'Registration failed. Please try again.';
+      if (error.response?.status === 409) errorMessage = 'This email is already registered. Please login instead.';
+      else if (error.response?.data?.message) errorMessage = error.response.data.message;
+      showToastMessage(errorMessage, 'error');
+    }
+  };
+
   const validateForm = () => {
     // Validate email
     if (!isValidEmail(formData.email)) {
@@ -297,76 +583,15 @@ const Login = () => {
           }, 1500);
         }
       } else {
-        // Handle signup
-        const fullPhoneNumber = formData.phoneNumber ? formData.countryCode + formData.phoneNumber : '';
-
-        if (userType === 'freelancer') {
-          const response = await freelancerAPI.register({
-            name: formData.name,
-            email: formData.email,
-            phone: fullPhoneNumber,
-            password: formData.password,
-            tagline: 'Professional Freelancer',
-            bio: 'New to the platform',
-            profilePhoto: 'https://i.ibb.co/N6GPXKSt/blank.jpg',
-            hourlyRate: '0',
-            jobsCompleted: 0,
-            location: 'Remote',
-            languages: ['English']
-          });
-
-          localStorage.setItem('token', response.data.token);
-
-          const userData = {
-            id: response.data.freelancer?.id,
-            name: response.data.freelancer?.name || formData.name,
-            email: response.data.freelancer?.email || formData.email,
-            userType: 'freelancer',
-            isLoggedIn: true
-          };
-
-          localStorage.setItem('user', JSON.stringify(userData));
-          setUser(userData);
-
-          showToastMessage('Registration successful! Welcome to our Freelancer community!');
-          localStorage.setItem('newRegistration', 'true');
-          setTimeout(() => {
-            navigate('/profile');
-          }, 1500);
-        } else {
-          // Client registration
-          const response = await clientAPI.register({
-            email: formData.email,
-            password: formData.password,
-            companyName: formData.companyName,
-            phone: fullPhoneNumber,
-            location: {
-              country: 'Remote',
-              city: ''
-            },
-            verified: false,
-            profilePicture: 'https://i.ibb.co/N6GPXKSt/blank.jpg'
-          });
-
-          localStorage.setItem('token', response.data.token);
-
-          const userData = {
-            id: response.data.client?.id,
-            email: formData.email,
-            companyName: formData.companyName,
-            userType: 'client',
-            isLoggedIn: true
-          };
-
-          localStorage.setItem('user', JSON.stringify(userData));
-          setUser(userData);
-
-          showToastMessage('Registration successful! Welcome to our Client community!');
-
-          setTimeout(() => {
-            navigate('/client-dashboard');
-          }, 1500);
-        }
+        // Handle signup — send OTP first
+        const snapshot = { ...formData, userType };
+        setPendingFormData(snapshot);
+        await otpAPI.sendOTP(formData.email, userType);
+        setOtpStep(true);
+        setOtpValues(['', '', '', '', '', '']);
+        setOtpError('');
+        startResendTimer();
+        showToastMessage(`OTP sent to ${formData.email}!`, 'success');
       }
     } catch (error) {
       console.error('Authentication error:', error);
@@ -487,16 +712,19 @@ const Login = () => {
         transition={{ duration: 0.6 }}
       >
         <div className="form-header">
-          <h1>{isLogin ? 'Welcome Back' : 'Join Us Today'}</h1>
-          <p>{isLogin ? 'Login to access your account' : 'Create an account to get started'}</p>
+          <h1>{isLogin ? 'Welcome Back' : (otpStep ? 'Verify Email' : 'Join Us Today')}</h1>
+          <p>{isLogin ? 'Login to access your account' : (otpStep ? 'Enter the OTP sent to your email' : 'Create an account to get started')}</p>
         </div>
 
+        {!otpStep && (
         <div className="toggle-container">
           <div className={`toggle-option ${isLogin ? 'active' : ''}`} onClick={() => setIsLogin(true)}>Login</div>
           <div className={`toggle-option ${!isLogin ? 'active' : ''}`} onClick={() => setIsLogin(false)}>Sign Up</div>
           <div className="slider" style={{ transform: isLogin ? 'translateX(0)' : 'translateX(100%)' }}></div>
         </div>
+        )}
 
+        {!otpStep && (
         <div className="user-type-toggle">
           <div className={`user-type-option ${userType === 'freelancer' ? 'active' : ''}`} onClick={() => toggleUserType('freelancer')}>
             Freelancer
@@ -505,8 +733,77 @@ const Login = () => {
             Client
           </div>
         </div>
+        )}
 
         <AnimatePresence mode="wait">
+          {otpStep ? (
+            <motion.div
+              key="otp-step"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.3 }}
+              className="auth-form"
+            >
+              <div className="otp-container">
+                <div className="otp-icon">✉️</div>
+                <h2 className="otp-title">Check your inbox</h2>
+                <p className="otp-subtitle">
+                  We've sent a 6-digit OTP to<br />
+                  <span>{pendingFormData?.email}</span>
+                </p>
+
+                <div className="otp-inputs">
+                  {otpValues.map((val, i) => (
+                    <input
+                      key={i}
+                      id={`otp-box-${i}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={val}
+                      onChange={e => handleOtpChange(i, e.target.value)}
+                      onKeyDown={e => handleOtpKeyDown(i, e)}
+                      onPaste={i === 0 ? handleOtpPaste : undefined}
+                      className={`otp-input-box${val ? ' filled' : ''}`}
+                      autoFocus={i === 0}
+                    />
+                  ))}
+                </div>
+
+                {otpError && <div className="error-message" style={{ marginBottom: '12px' }}>{otpError}</div>}
+
+                <button
+                  type="button"
+                  className="otp-verify-btn"
+                  onClick={handleVerifyOTP}
+                  disabled={otpLoading || otpValues.join('').length < 6}
+                >
+                  {otpLoading ? 'Verifying...' : 'Verify & Create Account'}
+                </button>
+
+                <div className="otp-resend">
+                  Didn't receive it?
+                  <button
+                    type="button"
+                    onClick={handleResendOTP}
+                    disabled={resendTimer > 0}
+                  >
+                    Resend OTP
+                  </button>
+                  {resendTimer > 0 && <div className="otp-timer">Resend in {resendTimer}s</div>}
+                </div>
+
+                <button
+                  type="button"
+                  className="otp-back-btn"
+                  onClick={() => { setOtpStep(false); setOtpError(''); }}
+                >
+                  ← Back to Sign Up
+                </button>
+              </div>
+            </motion.div>
+          ) : (
           <motion.form
             key={`${isLogin ? 'login' : 'signup'}-${userType}`}
             initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
@@ -734,6 +1031,7 @@ const Login = () => {
               </p>
             </div>
           </motion.form>
+          )}
         </AnimatePresence>
       </motion.div>
 

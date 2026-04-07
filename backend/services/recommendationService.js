@@ -1,6 +1,7 @@
 const Freelancer = require('../models/Freelancer');
 const Job = require('../models/Job');
 const UserInteraction = require('../models/UserInteraction');
+const mongoose = require('mongoose');
 
 /**
  * Recommendation Service for SkillNest
@@ -29,7 +30,10 @@ class RecommendationService {
             return this.skillIdfCache;
         }
 
-        const jobs = await Job.find({ status: 'open' });
+        // Use ALL jobs (not just open) so the IDF vocabulary includes skills
+        // from completed/in-progress jobs too — otherwise client job skills
+        // may never appear in the dictionary and get IDF=0
+        const jobs = await Job.find({});
         const totalJobs = jobs.length;
 
         if (totalJobs === 0) return {};
@@ -43,10 +47,12 @@ class RecommendationService {
             });
         });
 
-        // Calculate IDF: log(total_docs / doc_freq)
+        // Calculate IDF with +1 smoothing to avoid zero IDF on small datasets:
+        // Smoothed IDF = log(1 + total_docs / doc_freq)
+        // This ensures skills always get a positive weight even when N=1
         const skillIdf = {};
         Object.keys(skillDocFreq).forEach(skill => {
-            skillIdf[skill] = Math.log(totalJobs / skillDocFreq[skill]);
+            skillIdf[skill] = Math.log(1 + totalJobs / skillDocFreq[skill]);
         });
 
         // Update cache
@@ -451,13 +457,26 @@ class RecommendationService {
         if (jobSkills.length === 0) return 0.5;
 
         // Create skill vectors
-        const freelancerSkills = freelancer.skills.map(s => s.name);
+        const freelancerSkillNames = freelancer.skills.map(s => s.name);
         const freelancerLevels = freelancer.skills.map(s => s.level);
 
-        const freelancerVector = await this.createSkillVector(freelancerSkills, freelancerLevels);
+        const freelancerVector = await this.createSkillVector(freelancerSkillNames, freelancerLevels);
         const clientVector = await this.createSkillVector(jobSkills);
 
-        return this.cosineSimilarity(freelancerVector, clientVector);
+        const tfIdfScore = this.cosineSimilarity(freelancerVector, clientVector);
+
+        // Fallback: if TF-IDF gives 0 (e.g. empty DB or no overlap in IDF vocab),
+        // use simple Jaccard similarity on lowercase skill names so we still
+        // get a meaningful signal from direct skill overlap
+        if (tfIdfScore === 0) {
+            const freelancerSet = new Set(freelancerSkillNames.map(s => s.toLowerCase().trim()));
+            const clientSet = new Set(jobSkills.map(s => s.toLowerCase().trim()));
+            const intersection = [...freelancerSet].filter(s => clientSet.has(s)).length;
+            const union = new Set([...freelancerSet, ...clientSet]).size;
+            return union === 0 ? 0 : intersection / union;
+        }
+
+        return tfIdfScore;
     }
 
     /**
@@ -680,10 +699,14 @@ class RecommendationService {
     async getFreelancerRecommendations(clientId, options = {}) {
         const {
             limit = 20,
-            minScore = 50 // Minimum match s    core (0-100)
+            minScore = 25 // Minimum match score: lowered to 25 so realistic scores pass through
         } = options;
 
         try {
+            // Always clear the IDF cache here so stale "open-only" cached
+            // skill vectors don't persist and block fresh computation
+            this.clearCache();
+
             const Client = require('../models/Client');
 
             // Get client data
@@ -693,17 +716,39 @@ class RecommendationService {
             }
 
             // Get all jobs posted by this client
-            const clientJobs = await Job.find({
-                $or: [
-                    { 'client._id': clientId },
-                    { clientId: clientId }
-                ]
-            }).select('skills category description applications status');
+            // Bug fix: convert clientId to ObjectId for proper MongoDB comparison,
+            // and also try string comparison as a fallback
+            let clientObjectId;
+            try {
+                clientObjectId = new mongoose.Types.ObjectId(clientId);
+            } catch (e) {
+                clientObjectId = null;
+            }
 
-            // Get all verified freelancers
-            const freelancers = await Freelancer.find({
-                isVerified: true
-            });
+            const jobQuery = clientObjectId
+                ? {
+                    $or: [
+                        { 'client._id': clientObjectId },
+                        { 'client._id': clientId },
+                        { clientId: clientObjectId },
+                        { clientId: clientId }
+                    ]
+                  }
+                : {
+                    $or: [
+                        { 'client._id': clientId },
+                        { clientId: clientId }
+                    ]
+                  };
+
+            const clientJobs = await Job.find(jobQuery)
+                .select('skills category description applications status');
+
+            console.log(`[Recommendations] Client ${clientId} has ${clientJobs.length} posted jobs`);
+
+            // Get ALL active freelancers (not just verified ones).
+            // Bug fix: filtering by isVerified:true excluded most freelancers on the platform.
+            const freelancers = await Freelancer.find({});
 
             // Calculate scores for all freelancers
             const scoredFreelancers = await Promise.all(

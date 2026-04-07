@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './css/ProjectDetailPage.css';
-import { jobAPI, proposalAPI } from './api/api';
+import { jobAPI, proposalAPI, generateProposalAPI } from './api/api';
 import { UserContext } from './components/UserContext';
 
 /* ─── Delivery-time options (days) ───────────────── */
@@ -21,12 +21,61 @@ const ProposalModal = ({ project, freelancerId, onClose, onSuccess }) => {
   const [form, setForm] = useState({ bidAmount: '', deliveryTime: '', proposalText: '' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState(null);
 
   const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
 
   const handleChange = (e) => {
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
     setError(null);
+  };
+
+  // Typewriter effect — reveals text char by char for a polished AI feel
+  const typewriterEffect = (text, onUpdate, onDone) => {
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i <= text.length) {
+        onUpdate(text.slice(0, i));
+        i++;
+      } else {
+        clearInterval(interval);
+        onDone();
+      }
+    }, 12); // ~12ms per char = smooth but fast
+    return interval;
+  };
+
+  const handleGenerateWithAI = async () => {
+    if (!freelancerId) {
+      setAiError('You must be logged in as a freelancer to use AI generation.');
+      return;
+    }
+    setAiGenerating(true);
+    setAiError(null);
+    try {
+      const res = await generateProposalAPI.generate(freelancerId, {
+        title: project.title,
+        description: project.description,
+        skills: project.skills,
+        budget: project.budget,
+        category: project.category,
+        experienceLevel: project.experienceLevel,
+        projectDuration: project.projectDuration,
+      });
+      const generated = res.data?.proposal || '';
+      // Run typewriter animation into the textarea
+      setForm(p => ({ ...p, proposalText: '' }));
+      typewriterEffect(
+        generated,
+        (partial) => setForm(p => ({ ...p, proposalText: partial })),
+        () => setAiGenerating(false)
+      );
+    } catch (err) {
+      console.error('AI generation error:', err);
+      setAiError('AI generation failed. Please try again or write manually.');
+      setAiGenerating(false);
+    }
   };
 
   const validate = () => {
@@ -119,13 +168,43 @@ const ProposalModal = ({ project, freelancerId, onClose, onSuccess }) => {
 
           {/* Proposal Text */}
           <div style={ms.fieldGroup}>
-            <label style={ms.label}>
-              Cover Letter / Proposal <span style={ms.req}>*</span>
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <label style={ms.label}>
+                Cover Letter / Proposal <span style={ms.req}>*</span>
+              </label>
+              <button
+                type="button"
+                style={aiGenerating ? ms.aiButtonLoading : ms.aiButton}
+                onClick={handleGenerateWithAI}
+                disabled={aiGenerating || submitting}
+              >
+                {aiGenerating ? (
+                  <>
+                    <span style={ms.aiSpinner}>⟳</span>
+                    {' Generating…'}
+                  </>
+                ) : (
+                  '✨ Generate with AI'
+                )}
+              </button>
+            </div>
+            {aiError && (
+              <div style={{ ...ms.errorBox, marginBottom: '4px', fontSize: '12px' }}>
+                {aiError}
+              </div>
+            )}
             <textarea
               name="proposalText" value={form.proposalText} onChange={handleChange}
-              placeholder="Describe your approach, relevant experience, and why you're the best fit for this project…"
-              rows={7} style={ms.textarea} maxLength={2000}
+              placeholder={aiGenerating
+                ? 'AI is writing your proposal…'
+                : 'Describe your approach, relevant experience, and why you\'re the best fit for this project… or click \u2728 Generate with AI above!'}
+              rows={7} style={{
+                ...ms.textarea,
+                borderColor: aiGenerating ? '#6c63ff' : undefined,
+                boxShadow: aiGenerating ? '0 0 0 3px rgba(108,99,255,0.15)' : undefined,
+                transition: 'border-color 0.3s, box-shadow 0.3s'
+              }} maxLength={2000}
+              readOnly={aiGenerating}
             />
             <div style={ms.charCount}>
               <span style={{ color: charCount < 20 ? '#e74c3c' : '#6c63ff' }}>{charCount}</span>
@@ -473,6 +552,28 @@ const ms = {
     background: 'linear-gradient(135deg, #6c63ff, #48b8d0)', color: 'white',
     fontSize: '14px', fontWeight: '700', cursor: 'pointer',
     boxShadow: '0 4px 14px rgba(108,99,255,0.4)',
+  },
+  aiButton: {
+    display: 'inline-flex', alignItems: 'center', gap: '6px',
+    padding: '6px 14px', border: 'none', borderRadius: '20px',
+    background: 'linear-gradient(135deg, #6c63ff, #a78bfa)',
+    color: 'white', fontSize: '12px', fontWeight: '700',
+    cursor: 'pointer', letterSpacing: '0.3px',
+    boxShadow: '0 3px 10px rgba(108,99,255,0.35)',
+    transition: 'transform 0.15s, box-shadow 0.15s',
+    whiteSpace: 'nowrap',
+  },
+  aiButtonLoading: {
+    display: 'inline-flex', alignItems: 'center', gap: '6px',
+    padding: '6px 14px', border: 'none', borderRadius: '20px',
+    background: 'linear-gradient(135deg, #9ca3af, #6b7280)',
+    color: 'white', fontSize: '12px', fontWeight: '700',
+    cursor: 'not-allowed', letterSpacing: '0.3px',
+    whiteSpace: 'nowrap',
+  },
+  aiSpinner: {
+    display: 'inline-block',
+    animation: 'spin 0.8s linear infinite',
   },
 };
 

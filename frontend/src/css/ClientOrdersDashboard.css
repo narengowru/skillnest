@@ -1,3 +1,8 @@
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 .client-orders-dashboard {
     max-width: 1200px;
     margin: 0 auto;

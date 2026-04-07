@@ -67,6 +67,8 @@ app.use('/api/recommendations', require('./routes/recommendations')); // Recomme
 app.use('/api/upload', require('./routes/uploadRoutes')); // Cloudinary image upload
 app.use('/api/proposals', require('./routes/proposals'));   // Proposal system
 app.use('/api/invitations', require('./routes/invitations')); // Invitation system
+app.use('/api/otp', require('./routes/otp')); // OTP email verification
+app.use('/api/generate-proposal', require('./routes/generateProposal')); // AI proposal generator
 // Note: chatHandlers should be imported and used with Socket.IO, not as middleware
 
 // Serve uploaded files

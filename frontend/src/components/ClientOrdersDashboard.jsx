@@ -239,6 +239,13 @@ const ClientOrdersDashboard = ({ client }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
   const [reviewedOrders, setReviewedOrders] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [lastRefreshed, setLastRefreshed] = useState(null);
+
+  const handleRefresh = () => {
+    setLoading(true);
+    setRefreshKey((k) => k + 1);
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -257,6 +264,7 @@ const ClientOrdersDashboard = ({ client }) => {
           );
 
           setOrders(detailedOrders.filter(order => order !== null));
+          setLastRefreshed(new Date());
 
           // Load reviewed orders from localStorage
           const storedReviewedOrders = JSON.parse(localStorage.getItem('clientReviewedOrders') || '[]');
@@ -270,7 +278,7 @@ const ClientOrdersDashboard = ({ client }) => {
     };
 
     fetchOrders();
-  }, [client]);
+  }, [client, refreshKey]);
 
   const handleAcceptOrder = async (orderId) => {
     try {
@@ -498,7 +506,32 @@ const ClientOrdersDashboard = ({ client }) => {
 
   return (
     <div className="client-orders-dashboard">
-      <h2>My Orders</h2>
+      {/* Header with refresh */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#111827' }}>📦 My Orders</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {lastRefreshed && (
+            <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+              Last updated {lastRefreshed.toLocaleTimeString()}
+            </span>
+          )}
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              padding: '8px 18px', borderRadius: '10px',
+              border: '1.5px solid #6c63ff', background: loading ? '#f0f0ff' : 'transparent',
+              color: '#6c63ff', fontSize: '13px', fontWeight: '700',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            <span style={{ display: 'inline-block', animation: loading ? 'spin 0.8s linear infinite' : 'none', fontSize: '15px' }}>↻</span>
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
+      </div>
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}

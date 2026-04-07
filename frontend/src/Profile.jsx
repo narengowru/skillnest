@@ -6,12 +6,13 @@ import { freelancerAPI, jobAPI, uploadAPI } from './api/api';
 import './css/Profile.css';
 import FreelancerOrdersDashboard from './components/FreelancerOrdersDashboard';
 import FreelancerInvitations from './components/FreelancerInvitations';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ResumeParserModal from './components/ResumeParserModal';
 
 
 const Profile = ({ freelancerId }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [profileEditMode, setProfileEditMode] = useState(false);
   const [skillEditMode, setSkillEditMode] = useState(false);
   const [newSkill, setNewSkill] = useState({ name: "", level: 75 });
@@ -83,6 +84,15 @@ const Profile = ({ freelancerId }) => {
       }
     }
   }, [freelancerId, navigate]);
+
+  // Auto-switch to the tab passed via navigation state (e.g. from PostProject)
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+      // Clear the state so back-navigation doesn't re-trigger it
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     // Only show if this is a brand-new registration (flag set in Login.jsx)
@@ -927,6 +937,12 @@ const Profile = ({ freelancerId }) => {
           Invitations
         </button>
         <button
+          className={activeTab === 'projects' ? 'active' : ''}
+          onClick={() => setActiveTab('projects')}
+        >
+          Projects
+        </button>
+        <button
           className={activeTab === 'bank' ? 'active' : ''}
           onClick={() => setActiveTab('bank')}
         >
@@ -942,7 +958,69 @@ const Profile = ({ freelancerId }) => {
 
       {/* Main Content */}
       <main className="profile-main">
+        {/* Projects Tab */}
+        {activeTab === 'projects' && (
+          <div className="overview-content">
+            <section className="bio-section">
+              <div className="section-header">
+                <h2>My Applied Projects</h2>
+              </div>
+              {orders && orders.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+                  {orders.map((job, idx) => (
+                    <div
+                      key={job._id || idx}
+                      style={{
+                        background: 'white',
+                        borderRadius: '12px',
+                        padding: '18px 22px',
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '16px',
+                        borderLeft: '4px solid #6c63ff'
+                      }}
+                    >
+                      {job.imageUrl && (
+                        <img
+                          src={job.imageUrl}
+                          alt={job.title}
+                          style={{ width: '72px', height: '56px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
+                        />
+                      )}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                          <h4 style={{ margin: 0, fontSize: '1rem', color: '#1a1a2e' }}>{job.title}</h4>
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '3px 12px',
+                            borderRadius: '20px',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            background: job.status === 'completed' ? '#e8f5e9' : job.status === 'open' ? '#e3f2fd' : '#fff3e0',
+                            color: job.status === 'completed' ? '#2e7d32' : job.status === 'open' ? '#1565c0' : '#e65100',
+                          }}>
+                            {job.status ? job.status.charAt(0).toUpperCase() + job.status.slice(1) : 'Pending'}
+                          </span>
+                        </div>
+                        {job.category && <p style={{ margin: '4px 0 0', fontSize: '0.83rem', color: '#888' }}>{job.category}</p>}
+                        {job.budget && <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#555' }}>Budget: <strong>{job.budget}</strong></p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '48px 0', color: '#aaa' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📁</div>
+                  <p style={{ fontSize: '1rem', margin: 0 }}>No projects yet. Start applying to jobs!</p>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
         {activeTab === 'overview' && (
+
           <div className="overview-content">
             <section className="bio-section">
               <div className="section-header">

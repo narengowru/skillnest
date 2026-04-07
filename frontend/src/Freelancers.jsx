@@ -117,8 +117,9 @@ const Freelancers = () => {
       try {
         setLoading(true);
         const response = await freelancerAPI.getAllFreelancers();
-        const verifiedFreelancers = response.data.filter(f => f.isVerified === true);
-        setFreelancers(verifiedFreelancers);
+        // Show ALL freelancers in the All Available section — isVerified filter
+        // was hiding most new freelancers since the field defaults to true anyway
+        setFreelancers(response.data);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching freelancers:", err);
@@ -152,10 +153,13 @@ const Freelancers = () => {
           setLoadingRecommendations(true);
           const response = await recommendationAPI.getFreelancerRecommendations(user.id, {
             limit: 10,
-            minScore: 50,
+            minScore: 25,  // Lowered from 50 — the algorithm scores new freelancers ~30/100
+                           // so 50 was filtering everyone out
           });
+          console.log('[Recommendations] raw response:', response?.data);
           if (response?.data?.data?.recommendations) {
             setRecommendations(response.data.data.recommendations);
+            console.log('[Recommendations] count:', response.data.data.recommendations.length);
           }
         } catch (err) {
           console.error("Error fetching recommendations:", err);

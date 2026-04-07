@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { proposalAPI, orderAPI, jobAPI } from '../api/api';
+import { useNavigate } from 'react-router-dom';
 
 /* ─── Status badge helper ─────────────────────────── */
 const STATUS_COLORS = {
@@ -135,8 +136,10 @@ const ProposalCard = ({ proposal, job, clientId, onStatusChange }) => {
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [actionLoading, setActionLoading] = useState(null);
     const [toast, setToast] = useState(null);
+    const navigate = useNavigate();
 
     const freelancer = proposal.freelancerId || {};
+    const freelancerId = freelancer._id;
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -194,11 +197,32 @@ const ProposalCard = ({ proposal, job, clientId, onStatusChange }) => {
                 <img
                     src={freelancer.profilePhoto || 'https://i.ibb.co/N6GPXKSt/blank.jpg'}
                     alt={freelancer.name || 'Freelancer'}
-                    style={cs.avatar}
+                    style={{ ...cs.avatar, cursor: freelancerId ? 'pointer' : 'default' }}
+                    onClick={() => freelancerId && navigate(`/view-profile/${freelancerId}`)}
+                    title={freelancerId ? `View ${freelancer.name}'s profile` : ''}
                     onError={(e) => { e.target.src = '/default-profile.jpg'; }}
                 />
                 <div style={{ flex: 1 }}>
-                    <div style={cs.freelancerName}>{freelancer.name || 'Unnamed Freelancer'}</div>
+                    {/* Freelancer name — clickable link to ViewProfile */}
+                    <div style={cs.freelancerName}>
+                        {freelancerId ? (
+                            <span
+                                onClick={() => navigate(`/view-profile/${freelancerId}`)}
+                                style={cs.freelancerNameLink}
+                                title="View freelancer profile"
+                            >
+                                {freelancer.name || 'Unnamed Freelancer'}
+                                {/* <span style={cs.viewProfileArrow}></span> */}
+                            </span>
+                        ) : (
+                            freelancer.name || 'Unnamed Freelancer'
+                        )}
+                    </div>
+                    {freelancer.tagline && (
+                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '5px' }}>
+                            {freelancer.tagline}
+                        </div>
+                    )}
                     {freelancer.skills?.length > 0 && (
                         <div style={cs.skillsRow}>
                             {freelancer.skills.slice(0, 4).map((sk, i) => (
@@ -210,7 +234,17 @@ const ProposalCard = ({ proposal, job, clientId, onStatusChange }) => {
                         </div>
                     )}
                 </div>
-                <StatusBadge status={proposal.status} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <StatusBadge status={proposal.status} />
+                    {freelancerId && (
+                        <button
+                            style={cs.viewProfileBtn}
+                            onClick={() => navigate(`/view-profile/${freelancerId}`)}
+                        >
+                            View Profile
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Stats Row */}
@@ -489,6 +523,34 @@ const cs = {
     },
     freelancerName: {
         fontWeight: '700', fontSize: '16px', color: '#111827', marginBottom: '5px',
+    },
+    freelancerNameLink: {
+        cursor: 'pointer',
+        color: '#6c63ff',
+        fontWeight: '700',
+        fontSize: '16px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '5px',
+        transition: 'color 0.15s',
+        textDecoration: 'none',
+    },
+    viewProfileArrow: {
+        fontSize: '14px',
+        opacity: 0.7,
+        fontWeight: '400',
+    },
+    viewProfileBtn: {
+        padding: '4px 12px',
+        border: '1.5px solid #6c63ff',
+        borderRadius: '20px',
+        background: 'transparent',
+        color: '#6c63ff',
+        fontSize: '11px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        transition: 'all 0.15s',
     },
     skillsRow: { display: 'flex', flexWrap: 'wrap', gap: '5px' },
     skillTag: {
