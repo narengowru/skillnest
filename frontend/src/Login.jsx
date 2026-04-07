@@ -459,6 +459,7 @@ const Login = () => {
         setUser(userData);
         showToastMessage('✅ Email verified! Welcome to the Freelancer community!');
         localStorage.setItem('newRegistration', 'true');
+        sessionStorage.setItem('justLoggedIn', 'true');
         setTimeout(() => navigate('/profile'), 1500);
       } else {
         const response = await clientAPI.register({
@@ -481,6 +482,7 @@ const Login = () => {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
         showToastMessage('✅ Email verified! Welcome to the Client community!');
+        sessionStorage.setItem('justLoggedIn', 'true');
         setTimeout(() => navigate('/client-dashboard'), 1500);
       }
     } catch (error) {
@@ -554,6 +556,7 @@ const Login = () => {
           setUser(userData);
 
           showToastMessage(`Welcome back, ${response.data.freelancer?.name || 'freelancer'}!`);
+          sessionStorage.setItem('justLoggedIn', 'true');
           setTimeout(() => {
             navigate('/profile');
           }, 1500);
@@ -577,6 +580,7 @@ const Login = () => {
           setUser(userData);
 
           showToastMessage(`Welcome back, ${response.data.client?.companyName || 'client'}!`);
+          sessionStorage.setItem('justLoggedIn', 'true');
 
           setTimeout(() => {
             navigate('/client-dashboard');

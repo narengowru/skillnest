@@ -32,6 +32,7 @@ const ChatComponent = () => {
   const [, setPollingInterval] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connected', 'disconnected', 'connecting'
   const [activeTab, setActiveTab] = useState('messages'); // 'messages' | 'ai'
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -78,6 +79,21 @@ const ChatComponent = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, socket]);
+
+  // Auto-open AI assistant on first login
+  useEffect(() => {
+    if (!currentUser || hasAutoOpened) return;
+    const justLoggedIn = sessionStorage.getItem('justLoggedIn');
+    if (justLoggedIn === 'true') {
+      sessionStorage.removeItem('justLoggedIn');
+      setHasAutoOpened(true);
+      // Small delay so the component is fully mounted and data starts loading
+      setTimeout(() => {
+        setIsOpen(true);
+        setActiveTab('ai');
+      }, 800);
+    }
+  }, [currentUser, hasAutoOpened]);
 
   // Clean up typing timeout on unmount
   useEffect(() => {
